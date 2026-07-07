@@ -1,0 +1,51 @@
+[
+  {
+    "id": "work-dhp",
+    "slug": "dhammapada",
+    "title": "Dhammapada",
+    "titlePali": "Dhammapada",
+    "tradition": "theravada",
+    "category": "canonical",
+    "pitaka": "sutta",
+    "nikaya": "kn",
+    "sourceProvider": "manual",
+    "license": "Public Domain",
+    "licenseNote": "Pāli root is ancient, public domain. English: F. Max Müller, 1881 (Sacred Books of the East vol. X, Oxford), pre-1900 — public domain.",
+    "translator": "F. Max Müller (1881)",
+    "language": "en",
+    "version": "seed-1",
+    "importedAt": "2026-07-07T00:00:00.000Z"
+  },
+  {
+    "id": "work-sn",
+    "slug": "samyutta-nikaya",
+    "title": "Saṃyutta Nikāya",
+    "titlePali": "Saṃyutta Nikāya",
+    "tradition": "theravada",
+    "category": "canonical",
+    "pitaka": "sutta",
+    "nikaya": "sn",
+    "sourceProvider": "manual",
+    "license": "Public Domain",
+    "licenseNote": "Pāli root is ancient, public domain. English (Sujato, CC0) is added by the Bilara ingestion script in a later pass.",
+    "language": "en",
+    "version": "seed-1",
+    "importedAt": "2026-07-07T00:00:00.000Z"
+  },
+  {
+    "id": "work-vism",
+    "slug": "visuddhimagga",
+    "title": "Visuddhimagga",
+    "titlePali": "Visuddhimagga",
+    "tradition": "theravada",
+    "category": "commentarial",
+    "pitaka": "post_canonical",
+    "sourceProvider": "manual",
+    "license": "PENDING_LICENSE_REVIEW",
+    "licenseNote": "Post-canonical commentary by Buddhaghosa. NOT ingested in MVP. Schema/interface only. Ingestion requires license review (Ñāṇamoli/BPS edition distribution restrictions).",
+    "author": "Buddhaghosa",
+    "language": "en",
+    "version": "schema-only",
+    "importedAt": "2026-07-07T00:00:00.000Z"
+  }
+]
