@@ -9,7 +9,7 @@
  * These run without network — they read JSON from disk.
  */
 
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type {
@@ -127,5 +127,62 @@ describe("search returns results for key Pāli terms (OneShot §7 #8)", () => {
       search(corpus, "What did the Buddha say about cryptocurrency portfolio allocation?")
     ).toEqual([]);
     expect(search(corpus, "alien invasion mars negotiation tactics")).toEqual([]);
+  });
+});
+
+describe("Pass #2 Dhammapada integration (OneShot #6-#10)", () => {
+  let corpus: Corpus;
+  beforeAll(async () => {
+    corpus = await loadCorpus();
+  });
+
+  it("#6 Reader can load Dhammapada (text + ≥423 verses present)", () => {
+    const dhpText = corpus.texts.find((t) => t.id === "text-dhp");
+    expect(dhpText).toBeDefined();
+    const dhpSegs = corpus.segments.filter((s) => s.textId === "text-dhp");
+    expect(dhpSegs.length).toBe(423);
+  });
+
+  it("#7 search returns Dhammapada results for common terms", () => {
+    // "hatred" appears in Dhp 1-5 (Yamaka-vagga); a classic Dhammapada topic.
+    const results = search(corpus, "hatred", { limit: 20 });
+    const dhpHits = results.filter((r) => r.textId === "text-dhp");
+    expect(dhpHits.length).toBeGreaterThan(0);
+  });
+
+  it("search returns Dhammapada results for 'mind' / 'thought'", () => {
+    const mind = search(corpus, "mind", { limit: 20 }).filter((r) => r.textId === "text-dhp");
+    expect(mind.length).toBeGreaterThan(0);
+  });
+
+  it("#8 daily wisdom can select from Dhammapada", async () => {
+    const { getDailyWisdom } = await import("../wisdom");
+    // sample several days to find one that lands on a Dhammapada verse
+    const picked = new Set<string>();
+    for (let d = 1; d <= 60; d++) {
+      const day = `2026-07-${String(d).padStart(2, "0")}`;
+      const w = getDailyWisdom(corpus, { date: day });
+      picked.add(w.segment.textId);
+    }
+    expect(picked.has("text-dhp")).toBe(true);
+  });
+
+  it("#9 Ask Dhamma cites sources for a supported question", async () => {
+    const { askDhamma } = await import("../../ai/ask-dhamma");
+    const ans = await askDhamma(corpus, "What does the Dhammapada say about hatred and mind?");
+    expect(ans.sources.length).toBeGreaterThan(0);
+    expect(/\[.*\]/.test(ans.answer)).toBe(true);
+  });
+
+  it("#10 unsupported questions still fail closed", async () => {
+    const { askDhamma } = await import("../../ai/ask-dhamma");
+    // Use a query with NO content overlap with the corpus (no shared
+    // content-bearing tokens), so retrieval returns nothing. Note: common
+    // English words like "best"/"buy" legitimately appear in Müller's verses,
+    // so those would be real lexical hits, not a fail-closed violation.
+    const ans = await askDhamma(corpus, "supercalifragilistic quantum blockchain portfolio");
+    expect(ans.sources).toEqual([]);
+    expect(ans.confidence).toBe("low");
+    expect(ans.warnings).toContain("refused-to-fabricate");
   });
 });
