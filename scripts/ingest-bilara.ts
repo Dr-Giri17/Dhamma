@@ -1,73 +1,302 @@
 /**
- * Bilara / SuttaCentral ingestion skeleton (ТЗ §4.1, §9 Phase C).
+ * Bilara seed-sutta ingestion (OneShot §3, §4, §5).
  *
- * The full seed-sutta import (Sujato CC0 translations) is the NEXT pass —
- * it requires online access to `suttacentral/bilara-data`. This script is
- * the documented, typed entry point: it shows the exact shape a fetched
- * Bilara segment must take and validates it before writing.
+ * Fetches Pāli root + Sujato CC0 English translation for the 8 target texts
+ * from `suttacentral/bilara-data` (branch `published`), then regenerates the
+ * three corpus JSON files deterministically and in place.
  *
- * Bilara structure (ТЗ §4.1):
- *   - each text is a JSON segment map;
- *   - key  = stable segment id, e.g. `mn1:1.1`;
- *   - value = the segment text;
- *   - cognate files: root / translation / html / comment / reference / variant.
+ * Network is required at GENERATION TIME only. Runtime reads the checked-in
+ * JSON, so the app works fully offline.
+ *
+ * Merge strategy (OneShot §5):
+ *   - keep existing Dhammapada public-domain work + its segments;
+ *   - keep existing SN work, but DROP the temporary SN 56.11 "working
+ *     explanation" segments and replace them with real Bilara/Sujato CC0 data;
+ *   - add MN / DN / AN / Snp works with CC0/Sujato metadata if missing;
+ *   - add all 8 target text records;
+ *   - de-duplicate by segmentUid on every run (idempotent);
+ *   - output is deterministic (sorted, stable key order).
  *
  * Run:  npm run ingest:bilara
- *
- * License gate: only CC0 (Sujato) translations pass the allow-list.
- * See src/lib/corpus/licenses.ts and docs/CORPUS_POLICY.md.
  */
 
-import { loadCorpus, validateCorpus } from "../src/lib/corpus/seed";
-import { licenseFor } from "../src/lib/corpus/licenses";
-import type { DhammaSegment } from "../src/lib/corpus/types";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import {
+  BILARA_TARGETS,
+  SUJATO_PROVENANCE,
+  ROOT_EDITION,
+  bilaraUrl,
+  buildSegment,
+  rootPath,
+  translationPath,
+  uidToSourceRef,
+} from "../src/lib/corpus/bilara";
+import { KNOWN_LICENSES } from "../src/lib/corpus/licenses";
+import type {
+  DhammaSegment,
+  DhammaText,
+  SourceWork,
+} from "../src/lib/corpus/types";
+
+const CORPUS_DIR = path.resolve(process.cwd(), "data", "corpus");
+const FILES = {
+  works: path.join(CORPUS_DIR, "works.json"),
+  texts: path.join(CORPUS_DIR, "texts.json"),
+  segments: path.join(CORPUS_DIR, "segments.json"),
+} as const;
+
+// --- works to keep or create -------------------------------------------------
+
+/** MN / DN / AN / Snp works — CC0/Sujato. */
+const NEW_WORKS: SourceWork[] = [
+  work("work-mn", "majjhima-nikaya", "Majjhima Nikāya", "Majjhima Nikāya", "mn", "sutta"),
+  work("work-dn", "digha-nikaya", "Dīgha Nikāya", "Dīgha Nikāya", "dn", "sutta"),
+  work("work-an", "anguttara-nikaya", "Aṅguttara Nikāya", "Aṅguttara Nikāya", "an", "sutta"),
+  work("work-snp", "sutta-nipata", "Sutta Nipāta", "Sutta Nipāta", "kn", "sutta"),
+];
+
+function work(
+  id: string,
+  slug: string,
+  title: string,
+  titlePali: string,
+  nikaya: string,
+  pitaka: "sutta"
+): SourceWork {
+  return {
+    id,
+    slug,
+    title,
+    titlePali,
+    tradition: "theravada",
+    category: "canonical",
+    pitaka,
+    nikaya: nikaya as SourceWork["nikaya"],
+    sourceProvider: "bilara",
+    license: SUJATO_PROVENANCE.license,
+    licenseNote:
+      "Bhikkhu Sujato translation, CC0, via SuttaCentral/Bilara (bilara-data branch `published`). Pāli root (Mahāsaṅgīti) is public domain.",
+    translator: SUJATO_PROVENANCE.translator,
+    language: "en",
+    version: "bilara-published",
+    importedAt: "2026-07-07T00:00:00.000Z",
+  };
+}
+
+// --- fetch helpers -----------------------------------------------------------
+
+async function fetchJson(url: string): Promise<Record<string, string>> {
+  const res = await fetch(url, { redirect: "follow" });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} fetching ${url}`);
+  }
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as Record<string, string>;
+  } catch {
+    throw new Error(`Invalid JSON from ${url}`);
+  }
+}
+
+/**
+ * Merge two Bilara segment maps (root + translation) by segmentUid, preserving
+ * insertion order of the UNION. Translation order is the dominant ordering
+ * because it is the reading order the user sees; root-only segments are
+ * appended in their own order. This keeps `segmentOrder` stable across runs.
+ */
+function mergeSegmentMaps(
+  root: Record<string, string>,
+  translation: Record<string, string>
+): Array<{ uid: string; root?: string; translation?: string }> {
+  const seen = new Set<string>();
+  const out: Array<{ uid: string; root?: string; translation?: string }> = [];
+
+  // 1) translation order first
+  for (const uid of Object.keys(translation)) {
+    out.push({ uid, root: root[uid], translation: translation[uid] });
+    seen.add(uid);
+  }
+  // 2) any root-only segments
+  for (const uid of Object.keys(root)) {
+    if (!seen.has(uid)) {
+      out.push({ uid, root: root[uid] });
+      seen.add(uid);
+    }
+  }
+  return out;
+}
+
+// --- main --------------------------------------------------------------------
 
 async function main() {
-  console.log("[bilara-ingest] loading existing corpus...");
-  const corpus = await loadCorpus();
-  console.log(
-    `[bilara-ingest] current segments: ${corpus.segments.length} (seed only)`
+  console.log("[bilara-ingest] fetching seed suttas from bilara-data/published ...");
+
+  // Fetch all targets.
+  const perTarget = await Promise.all(
+    BILARA_TARGETS.map(async (t) => {
+      const rootUrl = bilaraUrl(rootPath(t));
+      const transUrl = bilaraUrl(translationPath(t));
+      console.log(`  • ${t.uid}: root + translation`);
+      const [root, translation] = await Promise.all([
+        fetchJson(rootUrl),
+        fetchJson(transUrl),
+      ]);
+      return { target: t, root, translation };
+    })
   );
 
-  const cc0 = licenseFor("bilara", "sujato");
-  console.log(
-    `[bilara-ingest] Sujato translation license = "${cc0.license}" (${cc0.note})`
-  );
+  console.log("[bilara-ingest] building texts + segments ...");
 
-  // Example shape of a future Bilara-fetched record for SN 56.11.
-  const exampleFetched: DhammaSegment = {
-    id: "sn56.11-bilara-1",
-    textId: "text-sn56.11",
-    segmentUid: "sn56.11:1.1", // STABLE — never rewrite
-    segmentOrder: 1,
-    language: "en",
-    rootText: "(Pāli root fetched from bilara-data root file)",
-    translationText: "(Sujato CC0 translation fetched from bilara-data translation file)",
-    sourceRef: "SN 56.11",
-    license: cc0.license,
-    translator: "Bhikkhu Sujato",
-    provider: "bilara",
-    metadata: { fetchedFrom: "suttacentral/bilara-data" },
-  };
-
-  try {
-    validateCorpus({
-      ...corpus,
-      segments: [...corpus.segments, exampleFetched],
+  const newTexts: DhammaText[] = [];
+  const newSegments: DhammaSegment[] = [];
+  for (const { target, root, translation } of perTarget) {
+    const sourceRef = uidToSourceRef(target.uid);
+    newTexts.push({
+      id: `text-${target.uid.replace(/\W/g, "")}`,
+      workId: target.workId,
+      uid: target.uid,
+      slug: target.uid,
+      title: sourceRef,
+      titlePali: sourceRef,
+      collection: sourceRef.split(" ")[0],
+      orderIndex: 0,
+      metadata: { ingestedFrom: "bilara-data/published", rootEdition: ROOT_EDITION },
     });
-    console.log("[bilara-ingest] contract OK for example Bilara record.");
-  } catch (err) {
-    console.error("[bilara-ingest] validation FAILED:", (err as Error).message);
-    process.exit(1);
+
+    const merged = mergeSegmentMaps(root, translation);
+    merged.forEach((entry, idx) => {
+      newSegments.push(
+        buildSegment({
+          uid: target.uid,
+          textId: `text-${target.uid.replace(/\W/g, "")}`,
+          segmentUid: entry.uid,
+          segmentOrder: idx + 1,
+          rootText: entry.root,
+          translationText: entry.translation,
+        })
+      );
+    });
   }
 
+  // --- Load existing corpus and merge ---------------------------------------
+  console.log("[bilara-ingest] merging with existing corpus ...");
+  const [existingWorks, existingTexts, existingSegments] = await Promise.all([
+    readJson<SourceWork[]>(FILES.works),
+    readJson<DhammaText[]>(FILES.texts),
+    readJson<DhammaSegment[]>(FILES.segments),
+  ]);
+
+  // Works: keep Dhammapada + Visuddhimagga(schema-only) + SN; add the new ones.
+  const keepWorkIds = new Set(["work-dhp", "work-sn", "work-vism"]);
+  const keptWorks = existingWorks.filter((w) => keepWorkIds.has(w.id));
+  const works = dedupeById([...keptWorks, ...NEW_WORKS]);
+
+  // The SN work gets refreshed metadata to reflect real Bilara ingestion now.
+  const sn = works.find((w) => w.id === "work-sn");
+  if (sn) {
+    sn.sourceProvider = "bilara";
+    sn.license = SUJATO_PROVENANCE.license;
+    sn.translator = SUJATO_PROVENANCE.translator;
+    sn.licenseNote =
+      "Bhikkhu Sujato translation, CC0, via SuttaCentral/Bilara (bilara-data branch `published`). Pāli root (Mahāsaṅgīti) is public domain.";
+    sn.version = "bilara-published";
+  }
+
+  // Texts: keep Dhammapada text; SN 56.11 text record reused (updated slug).
+  const keepTextIds = new Set(["text-dhp", "text-sn56.11"]);
+  const keptTexts = existingTexts
+    .filter((t) => keepTextIds.has(t.id))
+    .map((t) =>
+      t.id === "text-sn56.11"
+        ? {
+            ...t,
+            workId: "work-sn",
+            uid: "sn56.11",
+            slug: "sn56.11",
+            title: "SN 56.11 — Dhammacakkappavattana Sutta",
+            titlePali: "Dhammacakkappavattana Sutta",
+            metadata: { ingestedFrom: "bilara-data/published", rootEdition: ROOT_EDITION },
+          }
+        : t
+    );
+  // point the SN 56.11 target textId at the existing id "text-sn56.11"
+  for (const t of newTexts) {
+    if (t.uid === "sn56.11") t.id = "text-sn56.11";
+  }
+  for (const s of newSegments) {
+    if (s.textId === "text-sn5611") s.textId = "text-sn56.11";
+  }
+  const texts = dedupeById([...keptTexts, ...newTexts]);
+
+  // Segments: keep Dhammapada segments; DROP all old SN 56.11 working-explanation
+  // segments; add the freshly-ingested Bilara segments. De-dupe by segmentUid.
+  const dhpSegments = existingSegments.filter(
+    (s) => s.textId === "text-dhp" && s.segmentUid.startsWith("dhp:")
+  );
+  const segmentsByUid = new Map<string, DhammaSegment>();
+  for (const s of dhpSegments) segmentsByUid.set(s.segmentUid, s);
+  for (const s of newSegments) segmentsByUid.set(s.segmentUid, s);
+  const segments = [...segmentsByUid.values()].sort(compareSegment);
+
+  // --- Write deterministic JSON ---------------------------------------------
+  console.log("[bilara-ingest] writing corpus JSON ...");
+  await fs.mkdir(CORPUS_DIR, { recursive: true });
+  await writeJson(FILES.works, works);
+  await writeJson(FILES.texts, texts);
+  await writeJson(FILES.segments, segments);
+
   console.log(
-    "[bilara-ingest] Next pass: fetch root + translation from bilara-data, " +
-      "preserve segmentUid, attach CC0 license metadata, validate, then write."
+    `[bilara-ingest] done: ${works.length} works, ${texts.length} texts, ${segments.length} segments.`
   );
 }
 
+// --- utils -------------------------------------------------------------------
+
+async function readJson<T>(file: string): Promise<T> {
+  try {
+    const raw = await fs.readFile(file, "utf8");
+    return JSON.parse(raw) as T;
+  } catch {
+    return [] as unknown as T;
+  }
+}
+
+async function writeJson(file: string, data: unknown): Promise<void> {
+  const sorted = sortForOutput(data);
+  await fs.writeFile(file, JSON.stringify(sorted, null, 2) + "\n", "utf8");
+}
+
+/** Deterministic key ordering: top-level arrays sorted by a stable key. */
+function sortForOutput(data: unknown): unknown {
+  if (!Array.isArray(data)) return data;
+  const arr = data as Array<Record<string, unknown>>;
+  const byId = arr.every((x) => x && typeof x.id === "string");
+  if (byId) return [...arr].sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  return arr;
+}
+
+function compareSegment(a: DhammaSegment, b: DhammaSegment): number {
+  // textId then segmentOrder for readability
+  if (a.textId !== b.textId) return a.textId.localeCompare(b.textId);
+  return a.segmentOrder - b.segmentOrder;
+}
+
+function dedupeById<T extends { id: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const it of items) {
+    if (!seen.has(it.id)) {
+      seen.add(it.id);
+      out.push(it);
+    }
+  }
+  return out;
+}
+
+void KNOWN_LICENSES; // referenced for clarity; values used via SUJATO_PROVENANCE
+
 main().catch((err) => {
-  console.error(err);
+  console.error("[bilara-ingest] FAILED:", err);
   process.exit(1);
 });

@@ -75,6 +75,28 @@ const STOPWORDS = new Set([
   "и", "в", "во", "не", "на", "что", "как", "это", "этом", "ли", "же",
 ]);
 
+/**
+ * High-frequency corpus-framing words that are too common to act as a
+ * meaningful query signal on their own. These are NOT removed from the token
+ * stream (they may contribute marginally), but a match that relies ONLY on
+ * these words does NOT count as a real retrieval hit. This prevents filler
+ * matches like "the Buddha was staying near..." from surfacing for an
+ * unrelated question such as "cryptocurrency portfolio allocation".
+ */
+export const CORPUS_FILLER = new Set([
+  // narrative framing ubiquitous across suttas
+  "buddha", "buddhas", "monk", "monks", "mendicant", "mendicants",
+  "bhikkhu", "bhikkhus", "bhagava", "bhagavan", "lord", "sir", "sirs",
+  "venerable", "reverend", "say", "says", "said", "saying", "spoken",
+  "speak", "speaks", "told", "tell", "tells", "asked", "ask", "asks",
+  "replied", "reply", "answer", "answered", "one", "two", "three",
+  "time", "then", "now", "near", "stay", "staying", "stayed", "place",
+  "large", "several", "many", "well", "also", "thus", "so", "therefore",
+  // extremely common connective/relational words in translation prose
+  "thing", "things", "way", "ways", "man", "men", "person", "people",
+  "world", "day", "night", "good", "bad",
+]);
+
 export function tokenize(input: string): string[] {
   const raw = normalizeForSearch(input)
     // split on whitespace and any non-letter (keeps ascii letters only after normalize)
@@ -87,6 +109,11 @@ export function tokenize(input: string): string[] {
     }
   }
   return out;
+}
+
+/** True if a token is content-bearing (not a corpus-filler word). */
+export function isContentToken(token: string): boolean {
+  return !CORPUS_FILLER.has(token.toLowerCase());
 }
 
 /**
