@@ -1,5 +1,19 @@
 [
   {
+    "id": "text-an365",
+    "workId": "work-an",
+    "uid": "an3.65",
+    "slug": "an3.65",
+    "title": "AN 3.65",
+    "titlePali": "AN 3.65",
+    "collection": "AN",
+    "orderIndex": 0,
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
+  },
+  {
     "id": "text-dhp",
     "workId": "work-dhp",
     "uid": "dhp",
@@ -8,17 +22,107 @@
     "titlePali": "Dhammapada",
     "collection": "Khuddaka Nikāya",
     "orderIndex": 1,
-    "metadata": { "chapters": 26, "verses": 423 }
+    "metadata": {
+      "chapters": 26,
+      "verses": 423
+    }
+  },
+  {
+    "id": "text-dn31",
+    "workId": "work-dn",
+    "uid": "dn31",
+    "slug": "dn31",
+    "title": "DN 31",
+    "titlePali": "DN 31",
+    "collection": "DN",
+    "orderIndex": 0,
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
+  },
+  {
+    "id": "text-mn10",
+    "workId": "work-mn",
+    "uid": "mn10",
+    "slug": "mn10",
+    "title": "MN 10",
+    "titlePali": "MN 10",
+    "collection": "MN",
+    "orderIndex": 0,
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
+  },
+  {
+    "id": "text-mn118",
+    "workId": "work-mn",
+    "uid": "mn118",
+    "slug": "mn118",
+    "title": "MN 118",
+    "titlePali": "MN 118",
+    "collection": "MN",
+    "orderIndex": 0,
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
   },
   {
     "id": "text-sn56.11",
     "workId": "work-sn",
     "uid": "sn56.11",
-    "slug": "dhammacakkappavattana-sutta",
-    "title": "Dhammacakkappavattana Sutta",
+    "slug": "sn56.11",
+    "title": "SN 56.11 — Dhammacakkappavattana Sutta",
     "titlePali": "Dhammacakkappavattana Sutta",
     "collection": "Saṃyutta Nikāya 56",
     "orderIndex": 11,
-    "metadata": { "chapter": 56, "sutta": 11 }
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
+  },
+  {
+    "id": "text-snp18",
+    "workId": "work-snp",
+    "uid": "snp1.8",
+    "slug": "snp1.8",
+    "title": "Snp 1.8",
+    "titlePali": "Snp 1.8",
+    "collection": "Snp",
+    "orderIndex": 0,
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
+  },
+  {
+    "id": "text-snp21",
+    "workId": "work-snp",
+    "uid": "snp2.1",
+    "slug": "snp2.1",
+    "title": "Snp 2.1",
+    "titlePali": "Snp 2.1",
+    "collection": "Snp",
+    "orderIndex": 0,
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
+  },
+  {
+    "id": "text-snp24",
+    "workId": "work-snp",
+    "uid": "snp2.4",
+    "slug": "snp2.4",
+    "title": "Snp 2.4",
+    "titlePali": "Snp 2.4",
+    "collection": "Snp",
+    "orderIndex": 0,
+    "metadata": {
+      "ingestedFrom": "bilara-data/published",
+      "rootEdition": "Mahāsaṅgīti / ms"
+    }
   }
 ]
