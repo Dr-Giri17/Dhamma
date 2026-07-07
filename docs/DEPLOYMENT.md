@@ -5,12 +5,25 @@ to Vercel, and records the deploy-safety design decisions in the codebase.
 
 ## Current status
 
-- **Stable milestone:** `main` @ tag `dhamma-mvp-v0.1`
-- **Automated deployment from this environment:** **BLOCKED** — no Vercel CLI
-  installed and no pre-existing auth token; the headless environment cannot
-  perform the interactive browser OAuth that `vercel login` requires.
-- **Recommended path:** connect the GitHub repo to Vercel via the web UI
-  (manual, ~2 minutes). Steps below.
+- **Live production deployment (canonical):** **https://dhamma-tau.vercel.app/**
+  - Verified serving the Dhamma app: correct `<title>`, footer, sourced Wisdom
+    of the Day, `/api/search` returns results, `/api/ask` cites sources, and
+    unsupported questions **fail closed**
+    (`sources: []`, `refused-to-fabricate`).
+  - The `tau` suffix is Vercel's auto-uniqueness suffix: the bare slug
+    `dhamma.vercel.app` belongs to an **unrelated** project (Sinhala
+    "බෞද්ධ පොත්" / "Buddhist Books") owned by a different user — do **not**
+    treat it as this project's URL.
+- **Stable milestone:** `main` @ tag `dhamma-mvp-v0.1` (`99d070d`), with the
+  subsequent Next.js security patch (PR #4, `next` 15.5.4 → 15.5.9) merged at
+  `f31c0f6`.
+- **Historical preview URL (not production):**
+  `https://dhamma-git-vercel-react-server-compo-b7a0c6-dr-giri17s-projects.vercel.app/`
+  — a Vercel branch/preview deployment from the security-patch branch. Kept
+  here for history only; the production alias above is canonical.
+- **Earlier automated-deploy attempt from a headless environment:** blocked
+  (no Vercel CLI / no auth). The manual GitHub→Vercel connection was used
+  instead; see steps below.
 
 ## Why the app is Vercel-ready (deploy-safety)
 
