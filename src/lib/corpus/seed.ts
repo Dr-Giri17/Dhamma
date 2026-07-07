@@ -61,6 +61,23 @@ export async function loadCorpus(): Promise<Corpus> {
   return { works, texts, segments };
 }
 
+/**
+ * Build and validate a Corpus from already-loaded objects (no FS read).
+ *
+ * Used by `src/lib/server.ts`, which imports the JSON statically so that
+ * Next.js bundles the corpus into each page/function — making the app
+ * deploy-safe on serverless hosts (Vercel) without relying on the file
+ * tracer. The validation contract is identical to `loadCorpus()`.
+ */
+export function loadCorpusFromObjects(input: {
+  works: SourceWork[];
+  texts: DhammaText[];
+  segments: DhammaSegment[];
+}): Corpus {
+  validateCorpus(input);
+  return { ...input };
+}
+
 /** Synchronous validator — usable from tests without touching the filesystem. */
 export function validateCorpus(corpus: Corpus): void {
   const { works, texts, segments } = corpus;

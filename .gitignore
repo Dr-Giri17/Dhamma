@@ -32,3 +32,6 @@ yarn-error.log*
 
 # generated indexes (regenerated from data/corpus)
 /data/indexes/*.json
+
+# vercel (local project files may contain account/org IDs — never commit)
+/.vercel
