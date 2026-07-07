@@ -24,6 +24,7 @@ import type {
   SourceWork,
 } from "./types";
 import {
+  isContentToken,
   normalizeForSearch,
   stripPaliDiacritics,
   tokenize,
@@ -103,11 +104,15 @@ function scoreSegment(
 
   let score = 0;
   let reason: RetrievedSegment["reason"] = "lexical";
+  let contentMatchCount = 0;
 
-  // 1. exact whole-query substring
-  if (normalizedQuery && haystack.includes(normalizedQuery)) {
+  // 1. exact whole-query substring — only meaningful when the query has a
+  //    content-bearing token; pure-filler queries must not substring-match.
+  const hasContent = terms.some(isContentToken) || normalizedQuery.trim().length >= 4;
+  if (normalizedQuery && hasContent && haystack.includes(normalizedQuery)) {
     score += 10;
     reason = "exact";
+    contentMatchCount++;
   }
 
   // 2. term-level matches (Pāli terms get elevated weight)
@@ -117,18 +122,29 @@ function scoreSegment(
     if (isTerm && haystack.includes(t)) {
       score += 6;
       termHits++;
+      contentMatchCount++;
     }
   }
   if (termHits > 0 && reason !== "exact") reason = "term";
 
-  // 3. lexical token overlap
+  // 3. lexical token overlap — ONLY content-bearing tokens count, so a match
+  //    built solely on filler ("buddha", "said", "one", "time") does not
+  //    surface a segment. This is the anti-hallucination guard for retrieval:
+  //    an unrelated question must return NO sources so askDhamma fails closed.
   const hayTokens = new Set(haystack.split(/[^a-z0-9]+/i).filter(Boolean));
   let overlap = 0;
   for (const t of terms) {
-    if (hayTokens.has(t)) overlap++;
+    if (hayTokens.has(t) && isContentToken(t)) {
+      overlap++;
+      contentMatchCount++;
+    }
   }
   score += overlap * 2;
 
+  // Require at least one content-bearing match. Without this, common framing
+  // segments ("At one time the Buddha was staying...") would match any query
+  // that mentions "buddha"/"said", breaking the fail-closed contract.
+  if (contentMatchCount === 0) return null;
   if (score === 0) return null;
 
   // re-rank: canonical above commentarial / modern_explanation
