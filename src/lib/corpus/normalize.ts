@@ -118,11 +118,38 @@ export function isContentToken(token: string): boolean {
 
 /**
  * Detect the user's language at a coarse level for the answer layer.
- * ТЗ §6.1 step 1. Returns an ISO-639-1-ish code. Cyrillic → "ru", Latin → "en".
+ * ТЗ §6.1 step 1. Returns an ISO-639-1-ish code.
+ *
+ * - Cyrillic script  → "ru" (reliable: distinct Unicode block)
+ * - Indonesian       → "id" ONLY when a strong Indonesian signal word is
+ *                      present. Indonesian uses plain Latin script without
+ *                      diacritics, so it cannot be distinguished from English
+ *                      by script alone; we require an explicit keyword to
+ *                      avoid false-positives that would mis-English-speakers.
+ * - otherwise        → "en" (default, conservative)
  */
+const INDONESIAN_SIGNAL_WORDS = new Set([
+  // question words
+  "apa", "apakah", "bagaimana", "mengapa", "kenapa", "siapa", "dimana",
+  "ke mana", "dari mana", "berapa", "kapankan", "kapan",
+  // very common function words distinctive of Indonesian
+  "itu", "ini", "adalah", "tidak", "bukan", "dengan", "untuk", "pada",
+  "tentang", "yang", "sebuah",
+]);
+
 export function detectLanguage(input: string): string {
   if (!input) return "en";
+  // Cyrillic is unambiguous.
   if (/[а-яё]/i.test(input)) return "ru";
-  if (/[à-ÿ]/i.test(input) && !/[а-яё]/i.test(input)) return "id";
+  // Indonesian: require a signal word to avoid English false-positives.
+  const tokens = new Set(
+    input
+      .toLowerCase()
+      .split(/[^a-zà-ÿ]+/i)
+      .filter(Boolean)
+  );
+  for (const w of INDONESIAN_SIGNAL_WORDS) {
+    if (tokens.has(w)) return "id";
+  }
   return "en";
 }
