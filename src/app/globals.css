@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-ivory text-ink font-serif antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Dark mode: a calm night reading surface. */
+@media (prefers-color-scheme: dark) {
+  body {
+    @apply bg-[#1c1812] text-[#e8ddc6];
+  }
+  .prose-dhamma {
+    color: #e8ddc6;
+  }
+}
+
+.prose-dhamma {
+  line-height: 1.75;
+  max-width: 68ch;
+}
+
+/* Pāli terms rendered distinctly from surrounding English. */
+.pali {
+  font-style: italic;
+  color: #6b4a2a;
+}
+@media (prefers-color-scheme: dark) {
+  .pali {
+    color: #d9b678;
+  }
+}
+
+/* Quiet link style. */
+.link-dhamma {
+  @apply underline decoration-gold/40 underline-offset-4 hover:decoration-gold;
+}
+
+/* Card surface used across reader / search / ask. */
+.card-dhamma {
+  @apply bg-ivory-soft border border-gold/20 rounded-lg p-5;
+}
+@media (prefers-color-scheme: dark) {
+  .card-dhamma {
+    background-color: #261f17;
+    border-color: rgba(169, 134, 65, 0.25);
+  }
+}

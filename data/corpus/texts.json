@@ -1,0 +1,24 @@
+[
+  {
+    "id": "text-dhp",
+    "workId": "work-dhp",
+    "uid": "dhp",
+    "slug": "dhammapada",
+    "title": "Dhammapada",
+    "titlePali": "Dhammapada",
+    "collection": "Khuddaka Nikāya",
+    "orderIndex": 1,
+    "metadata": { "chapters": 26, "verses": 423 }
+  },
+  {
+    "id": "text-sn56.11",
+    "workId": "work-sn",
+    "uid": "sn56.11",
+    "slug": "dhammacakkappavattana-sutta",
+    "title": "Dhammacakkappavattana Sutta",
+    "titlePali": "Dhammacakkappavattana Sutta",
+    "collection": "Saṃyutta Nikāya 56",
+    "orderIndex": 11,
+    "metadata": { "chapter": 56, "sutta": 11 }
+  }
+]
