@@ -4,7 +4,7 @@
  * Contract (ТЗ §6.3): an answer with NO sources is forbidden. When retrieval
  * returns nothing (or only weak commentarial material for a "what did the
  * Buddha say" question), `askDhamma` refuses to fabricate and returns the
- * canonical "I could not find reliable support in the current corpus"
+ * localized "I could not find reliable support in the current corpus"
  * message with `confidence: "low"` and a warning.
  *
  * Two answer paths share the same contract:
@@ -13,8 +13,10 @@
  *   - PROVIDER (optional, later): if an LlmProvider is supplied, the
  *     retrieved context is sent to it under the Dhamma system prompt.
  *
- * In both paths the answer must include citations, and commentarial sources
- * are never dressed up as words of the Buddha.
+ * Localization: only answer FRAMING is localized (see src/lib/ai/i18n.ts).
+ * Retrieved source excerpts stay in the corpus language (English Müller /
+ * Sujato) and a localized note says so — excerpts are never presented as
+ * canonical translations into the user's language.
  */
 
 import type { Corpus, DhammaAnswer, RetrievedSegment } from "../corpus/types";
@@ -23,6 +25,7 @@ import { isDhammaTerm, DHAMMA_TERMS } from "../corpus/search";
 import { tokenize, detectLanguage } from "../corpus/normalize";
 import { DHAMMA_SYSTEM_PROMPT } from "./dhamma-system-prompt";
 import { buildUserMessage } from "./prompts";
+import { stringsFor } from "./i18n";
 import type { LlmProvider } from "./provider";
 
 export interface AskOptions {
@@ -31,14 +34,13 @@ export interface AskOptions {
   provider?: LlmProvider | null;
 }
 
-/** Refusal message returned when retrieval is empty (ТЗ §6.3). */
-export const NO_SOURCE_REFUSAL_EN =
-  "I could not find reliable support for this in the current corpus. " +
-  "I can offer a general orientation, but I will not present it as a canonical quotation.";
-
-export const NO_SOURCE_REFUSAL_RU =
-  "Я не нашёл достаточно надёжной опоры в текущем корпусе. " +
-  "Могу дать общую ориентировку, но не буду выдавать её как каноническую цитату.";
+/**
+ * Refusal message returned when retrieval is empty (ТЗ §6.3).
+ * Kept as named exports for backward compatibility with tests; the i18n table
+ * is the canonical source.
+ */
+export const NO_SOURCE_REFUSAL_EN = stringsFor("en").noSourceRefusal;
+export const NO_SOURCE_REFUSAL_RU = stringsFor("ru").noSourceRefusal;
 
 /**
  * The canonical Ask Dhamma entry point.
@@ -52,6 +54,7 @@ export async function askDhamma(
 ): Promise<DhammaAnswer> {
   const language = options.language ?? detectLanguage(question);
   const limit = options.limit ?? 6;
+  const t = stringsFor(language);
 
   const retrieved = search(corpus, question, {
     limit,
@@ -61,8 +64,7 @@ export async function askDhamma(
   // Fail closed: no sources → no doctrinal answer (ТЗ §6.3).
   if (retrieved.length === 0) {
     return {
-      answer:
-        language === "ru" ? NO_SOURCE_REFUSAL_RU : NO_SOURCE_REFUSAL_EN,
+      answer: t.noSourceRefusal,
       sources: [],
       retrievedSegments: [],
       confidence: "low",
@@ -117,67 +119,51 @@ function confidenceFor(retrieved: RetrievedSegment[]): "high" | "medium" | "low"
 
 /**
  * Compose a deterministic, citation-bearing answer from the top retrieved
- * segments. This is intentionally conservative — it quotes/paraphrases the
- * corpus, names every source, and explicitly labels non-Buddha-voice
- * material (commentarial) rather than presenting it as scripture.
+ * segments. Only FRAMING strings are localized; source excerpts are emitted
+ * verbatim from the corpus (English) with a localized availability note, so
+ * they are never presented as translations into the user's language.
  */
 function composeLocalAnswer(
   question: string,
   retrieved: RetrievedSegment[],
   language: string
 ): string {
+  const t = stringsFor(language);
   const top = retrieved.slice(0, 3);
-  const termHits = tokenize(question).filter((t) => isDhammaTerm(t));
+  const termHits = tokenize(question).filter((tk) => isDhammaTerm(tk));
 
   const lines: string[] = [];
 
   // Short answer: extract a tight gloss from the strongest segment.
+  // The gloss stays in the corpus language (English); only the label is localized.
   const strongest = top[0];
   const gloss = (strongest.translationText || strongest.rootText || "").trim();
-  const shortAnswer =
-    language === "ru"
-      ? `Краткий ответ: ${truncate(gloss)}`
-      : `Short answer: ${truncate(gloss)}`;
-  lines.push(shortAnswer, "");
+  lines.push(`${t.shortAnswerLabel}: ${truncate(gloss)}`, "");
 
-  // Sources block with explicit refs.
-  lines.push(language === "ru" ? "Опора в текстах:" : "Sources:");
+  // Sources block with explicit refs. Excerpts are NOT translated.
+  lines.push(t.sourcesHeading);
   top.forEach((s, i) => {
     const quote = truncate((s.translationText || s.rootText || "").trim(), 220);
     lines.push(`${i + 1}. [${s.sourceRef}] ${quote}`);
   });
   lines.push("");
 
+  // Localized note: excerpts are in the available English translation.
+  lines.push(t.sourceExcerptNote, "");
+
   // Explanation: surface matched Pāli terms with their canonical form.
   if (termHits.length > 0) {
     const terms = termHits
-      .map((t) => `${DHAMMA_TERMS[t] ?? t}`)
+      .map((term) => `${DHAMMA_TERMS[term] ?? term}`)
       .join(", ");
-    lines.push(
-      language === "ru"
-        ? `Объяснение: в вопросе есть термины пали — ${terms}.`
-        : `Explanation: the question touches on the Pāli term(s): ${terms}.`
-    );
-    lines.push(
-      language === "ru"
-        ? "Это объяснение опирается на приведённые источники, а не на выдумку."
-        : "This explanation is grounded in the cited sources, not generated from memory."
-    );
+    lines.push(t.explanationWithTerms(terms));
   } else {
-    lines.push(
-      language === "ru"
-        ? "Объяснение: ответ построен строго из приведённых цитат."
-        : "Explanation: this answer is built strictly from the cited passages."
-    );
+    lines.push(t.explanationGeneric);
   }
-  lines.push("");
+  lines.push(t.explanationGrounded, "");
 
   // Confidence line.
-  lines.push(
-    language === "ru"
-      ? "Уверенность: см. поле confidence."
-      : "Confidence: see the confidence field."
-  );
+  lines.push(t.confidenceLine);
 
   return lines.join("\n");
 }
