@@ -96,15 +96,15 @@ function deriveTheme(seg: DhammaSegment): string {
     if (typeof topic === "string") return topic;
   }
   if (seg.chapter) return seg.chapter;
-  return "Dhamma reflection";
+  return "Размышление о Дхамме";
 }
 
 /** Templated reflection — explicitly marked as explanation, not scripture. */
 function reflectionFor(seg: DhammaSegment): string {
   const ref = seg.sourceRef;
-  return `(${ref} — reflection, not scripture) This passage points to the power of mind and intention. Consider how your present thoughts are shaping what follows.`;
+  return `(${ref} — размышление, не канонический текст) Этот фрагмент указывает на силу ума и намерения. Обратите внимание: ваши нынешние мысли формируют то, что за ними следует.`;
 }
 
 function practicePromptFor(_seg: DhammaSegment): string {
-  return "Today, notice the link between a thought and what follows it — without judgment, just observation.";
+  return "Сегодня мягко понаблюдайте связь между мыслью и тем, что следует за ней — без оценки, просто замечая.";
 }

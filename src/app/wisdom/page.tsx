@@ -46,7 +46,7 @@ export default async function WisdomPage() {
       </div>
 
       <p className="text-xs text-ink-faint">
-        {UI.wisdom.createdByNote}{wisdom.createdBy}).
+        {UI.wisdom.createdByNote} ({UI.wisdom.createdByManual}).
       </p>
     </div>
   );

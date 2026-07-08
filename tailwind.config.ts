@@ -12,26 +12,26 @@ const config: Config = {
     extend: {
       colors: {
         ivory: {
-          DEFAULT: "#faf8f5",
+          DEFAULT: "#f9f6f1",
           soft: "#ffffff",
-          deep: "#f0ede8",
+          deep: "#f0ece4",
         },
         ink: {
-          DEFAULT: "#3d3d3d",
-          soft: "#5a5a5a",
-          faint: "#8a8a8a",
+          DEFAULT: "#3a3a3a",
+          soft: "#5c5c5c",
+          faint: "#909090",
         },
         gold: {
-          DEFAULT: "#b8860b",
-          soft: "#d4a843",
+          DEFAULT: "#c49030",
+          soft: "#d4aa50",
         },
         forest: {
-          DEFAULT: "#7a7050",
-          soft: "#8a8060",
+          DEFAULT: "#a08030",
+          soft: "#b09040",
         },
         saffron: {
-          DEFAULT: "#c8963e",
-          soft: "#dab060",
+          DEFAULT: "#c89040",
+          soft: "#d8a850",
         },
       },
       fontFamily: {

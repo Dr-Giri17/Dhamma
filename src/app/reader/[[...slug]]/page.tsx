@@ -118,7 +118,7 @@ export default async function ReaderPage({
             <p>{s.translationText}</p>
             <p className="text-xs text-gold mt-1">
               {s.sourceRef}
-              {s.verseNumber ? ` · verse ${s.verseNumber}` : ""}
+              {s.verseNumber ? ` · стих ${s.verseNumber}` : ""}
             </p>
           </section>
         ))}

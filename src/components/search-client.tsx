@@ -63,7 +63,7 @@ export default function SearchClient({ initialQuery = "", initialResults = [] }:
             <div className="flex justify-between text-xs text-gold mb-1">
               <span>{r.sourceRef}</span>
               <span className="uppercase tracking-wide text-ink-faint">
-                {r.reason} · score {r.score}
+                {UI.meta.reason[r.reason as keyof typeof UI.meta.reason] ?? r.reason} · {UI.meta.score} {r.score}
               </span>
             </div>
             {r.rootText ? <p className="pali text-sm mb-1">{r.rootText}</p> : null}

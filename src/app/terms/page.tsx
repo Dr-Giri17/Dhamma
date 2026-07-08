@@ -26,7 +26,7 @@ export default function TermsPage() {
               ) : null}
             </dt>
             <dd className="mt-1">
-              <p className="prose-dhamma">{t.shortDefinition}</p>
+              <p className="prose-dhamma">{t.shortDefinitionRu ?? t.shortDefinition}</p>
               <p className="text-xs text-gold mt-1">
                 {UI.terms.refs}{" "}
                 {t.canonicalRefs.map((r, i) => (

@@ -20,7 +20,7 @@ export default function AskClient() {
         const res = await fetch("/api/ask", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({ question, language: "ru" }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as DhammaAnswer;
@@ -70,7 +70,7 @@ export default function AskClient() {
           <div className="flex items-center gap-3 text-sm">
             <span>{UI.ask.confidence}</span>
             <span className={`font-semibold uppercase ${confidenceColor}`}>
-              {answer.confidence}
+              {UI.meta.confidence[answer.confidence as keyof typeof UI.meta.confidence] ?? answer.confidence}
             </span>
             {answer.warnings.length > 0 ? (
               <span className="text-ink-faint">
@@ -87,7 +87,7 @@ export default function AskClient() {
               {answer.sources.map((s) => (
                 <li key={s.id}>
                   <div className="text-xs text-gold mb-1">
-                    {s.sourceRef} · {s.reason} · score {s.score}
+                    {s.sourceRef} · {UI.meta.reason[s.reason as keyof typeof UI.meta.reason] ?? s.reason} · {UI.meta.score} {s.score}
                   </div>
                   <p className="prose-dhamma text-sm">{s.translationText}</p>
                 </li>

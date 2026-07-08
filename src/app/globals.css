@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 html {
@@ -15,14 +15,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Dark mode: a calm night reading surface. */
-@media (prefers-color-scheme: dark) {
-  body {
-    @apply bg-[#1a1917] text-[#e0ddd8];
-  }
-  .prose-dhamma {
-    color: #e0ddd8;
-  }
+/* Dark mode: a calm night reading surface (class-based, not prefers-color-scheme). */
+.dark body {
+  @apply bg-[#1a1917] text-[#e0ddd8];
+}
+.dark .prose-dhamma {
+  color: #e0ddd8;
 }
 
 .prose-dhamma {
@@ -33,12 +31,10 @@ body {
 /* Pāli terms rendered distinctly from surrounding text. */
 .pali {
   font-style: italic;
-  color: #8a7040;
+  color: #907838;
 }
-@media (prefers-color-scheme: dark) {
-  .pali {
-    color: #d4b870;
-  }
+.dark .pali {
+  color: #d4b870;
 }
 
 /* Quiet link style. */
@@ -50,9 +46,7 @@ body {
 .card-dhamma {
   @apply bg-ivory-soft border border-gold/20 rounded-lg p-5;
 }
-@media (prefers-color-scheme: dark) {
-  .card-dhamma {
-    background-color: #222220;
-    border-color: rgba(184, 134, 11, 0.25);
-  }
+.dark .card-dhamma {
+  background-color: #222220;
+  border-color: rgba(196, 144, 48, 0.25);
 }
