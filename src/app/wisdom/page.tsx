@@ -1,5 +1,6 @@
 import { getCorpus } from "@/lib/server";
 import { getDailyWisdom } from "@/lib/corpus/wisdom";
+import { UI } from "@/lib/ui";
 
 export default async function WisdomPage() {
   const corpus = await getCorpus();
@@ -9,9 +10,9 @@ export default async function WisdomPage() {
   } catch {
     return (
       <div className="space-y-4">
-        <h1 className="font-serif text-3xl">Daily Wisdom</h1>
+        <h1 className="font-serif text-3xl">{UI.wisdom.title}</h1>
         <p className="text-ink-soft">
-          No eligible wisdom segment is available yet.
+          {UI.wisdom.notAvailable}
         </p>
       </div>
     );
@@ -21,7 +22,7 @@ export default async function WisdomPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-serif text-3xl">Daily Wisdom</h1>
+      <h1 className="font-serif text-3xl">{UI.wisdom.title}</h1>
 
       <blockquote className="card-dhamma prose-dhamma italic">
         {seg.translationText}
@@ -35,18 +36,17 @@ export default async function WisdomPage() {
       </div>
 
       <div className="space-y-2">
-        <h2 className="font-serif text-xl">Reflection</h2>
+        <h2 className="font-serif text-xl">{UI.wisdom.reflection}</h2>
         <p className="prose-dhamma text-ink-soft">{wisdom.shortReflection}</p>
       </div>
 
       <div className="space-y-2">
-        <h2 className="font-serif text-xl">Practice for today</h2>
+        <h2 className="font-serif text-xl">{UI.wisdom.practice}</h2>
         <p className="prose-dhamma">{wisdom.practicePrompt}</p>
       </div>
 
       <p className="text-xs text-ink-faint">
-        Reflection and practice prompts are explanatory, not scripture
-        (created_by: {wisdom.createdBy}).
+        {UI.wisdom.createdByNote}{wisdom.createdBy}).
       </p>
     </div>
   );

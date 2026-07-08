@@ -2,13 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCorpus } from "@/lib/server";
 import { isVisuddhimaggaSlug } from "@/lib/corpus/licenses";
+import { UI } from "@/lib/ui";
 
 /**
  * Reader. Two modes:
  *   /reader            — list of readable texts grouped by collection
  *   /reader/{slug}     — the full text with Pāli + English
  * Visuddhimagga appears in the index as "schema only — pending license
- * review" and cannot be read (ТЗ §4.3).
+ * review" and cannot be read.
  */
 export default async function ReaderPage({
   params,
@@ -28,10 +29,9 @@ export default async function ReaderPage({
 
     return (
       <div className="space-y-6">
-        <h1 className="font-serif text-3xl">Read</h1>
+        <h1 className="font-serif text-3xl">{UI.reader.title}</h1>
         <p className="prose-dhamma text-ink-soft">
-          Browse the corpus by collection. Each text shows its source,
-          translator, and license.
+          {UI.reader.description}
         </p>
         <ul className="space-y-3">
           {textsByWork.map(({ text, work, segmentCount }) => {
@@ -58,13 +58,10 @@ export default async function ReaderPage({
                 ) : null}
                 <p className="text-sm text-ink-soft mt-1">
                   {blocked ? (
-                    <em>
-                      Post-canonical commentary (Buddhaghosa). Schema/interface
-                      only — ingestion pending license review.
-                    </em>
+                    <em>{UI.reader.schemaOnly}</em>
                   ) : (
                     <>
-                      {segmentCount} segments · {work.translator || work.author || "—"} ·{" "}
+                      {segmentCount} {UI.reader.segments} · {work.translator || work.author || "—"} ·{" "}
                       <span className="text-gold">{work.license}</span>
                     </>
                   )}
@@ -87,16 +84,9 @@ export default async function ReaderPage({
     return (
       <div className="space-y-4">
         <h1 className="font-serif text-3xl">{text.title}</h1>
-        <p className="card-dhamma text-ink-soft">
-          This text is the Visuddhimagga — a post-canonical commentary by
-          Buddhaghosa. It is <strong>not</strong> part of the Tipiṭaka and is
-          not words attributed to the Buddha. Content ingestion is pending
-          license review (see{" "}
-          <Link href="/" className="link-dhamma">
-            docs/CORPUS_POLICY.md
-          </Link>
-          ).
-        </p>
+        <p className="card-dhamma text-ink-soft"
+          dangerouslySetInnerHTML={{ __html: UI.reader.blockedText }}
+        />
       </div>
     );
   }

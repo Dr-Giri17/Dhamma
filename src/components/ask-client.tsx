@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { DhammaAnswer } from "@/lib/corpus/types";
+import { UI } from "@/lib/ui";
 
 export default function AskClient() {
   const [question, setQuestion] = useState("");
@@ -43,7 +44,7 @@ export default function AskClient() {
         <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="What did the Buddha say about suffering?  ·  Что такое taṇhā?"
+          placeholder={UI.ask.placeholder}
           rows={3}
           className="w-full px-4 py-3 rounded border border-gold/30 bg-ivory-soft text-ink focus:outline-none focus:border-gold"
         />
@@ -52,12 +53,12 @@ export default function AskClient() {
           disabled={pending}
           className="px-5 py-2 rounded bg-forest text-ivory disabled:opacity-50 hover:bg-forest-soft"
         >
-          {pending ? "Asking…" : "Ask Dhamma"}
+          {pending ? UI.ask.pending : UI.ask.button}
         </button>
       </form>
 
       {error ? (
-        <p className="text-saffron text-sm">Error: {error}</p>
+        <p className="text-saffron text-sm">{UI.ask.error} {error}</p>
       ) : null}
 
       {answer ? (
@@ -67,20 +68,20 @@ export default function AskClient() {
           </div>
 
           <div className="flex items-center gap-3 text-sm">
-            <span>Confidence:</span>
+            <span>{UI.ask.confidence}</span>
             <span className={`font-semibold uppercase ${confidenceColor}`}>
               {answer.confidence}
             </span>
             {answer.warnings.length > 0 ? (
               <span className="text-ink-faint">
-                warnings: {answer.warnings.join(", ")}
+                {UI.ask.warnings} {answer.warnings.join(", ")}
               </span>
             ) : null}
           </div>
 
           <details className="card-dhamma">
             <summary className="cursor-pointer text-sm text-ink-soft">
-              Retrieved passages ({answer.sources.length})
+              {UI.ask.retrievedPassages} ({answer.sources.length})
             </summary>
             <ul className="mt-3 space-y-3">
               {answer.sources.map((s) => (

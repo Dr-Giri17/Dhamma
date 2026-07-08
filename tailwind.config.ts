@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
-// Dhamma palette (ТЗ §8.2): warm ivory, dark brown text, muted gold, forest/saffron.
-// Typography-first, quiet, minimal.
+// Dhamma palette: warm white, golden-gray, soft amber accents.
+// Light, clean, contemplative, luminous.
 const config: Config = {
   content: [
     "./src/app/**/*.{ts,tsx}",
@@ -12,26 +12,26 @@ const config: Config = {
     extend: {
       colors: {
         ivory: {
-          DEFAULT: "#f6f1e7",
-          soft: "#fbf7ee",
-          deep: "#efe7d4",
+          DEFAULT: "#faf8f5",
+          soft: "#ffffff",
+          deep: "#f0ede8",
         },
         ink: {
-          DEFAULT: "#3a2e22",
-          soft: "#5a4a3a",
-          faint: "#8a7a68",
+          DEFAULT: "#3d3d3d",
+          soft: "#5a5a5a",
+          faint: "#8a8a8a",
         },
         gold: {
-          DEFAULT: "#a98641",
-          soft: "#c4a45a",
+          DEFAULT: "#b8860b",
+          soft: "#d4a843",
         },
         forest: {
-          DEFAULT: "#3a5a47",
-          soft: "#5a7a64",
+          DEFAULT: "#7a7050",
+          soft: "#8a8060",
         },
         saffron: {
-          DEFAULT: "#c0792a",
-          soft: "#d99a4d",
+          DEFAULT: "#c8963e",
+          soft: "#dab060",
         },
       },
       fontFamily: {

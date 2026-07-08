@@ -18,10 +18,10 @@ body {
 /* Dark mode: a calm night reading surface. */
 @media (prefers-color-scheme: dark) {
   body {
-    @apply bg-[#1c1812] text-[#e8ddc6];
+    @apply bg-[#1a1917] text-[#e0ddd8];
   }
   .prose-dhamma {
-    color: #e8ddc6;
+    color: #e0ddd8;
   }
 }
 
@@ -30,14 +30,14 @@ body {
   max-width: 68ch;
 }
 
-/* Pāli terms rendered distinctly from surrounding English. */
+/* Pāli terms rendered distinctly from surrounding text. */
 .pali {
   font-style: italic;
-  color: #6b4a2a;
+  color: #8a7040;
 }
 @media (prefers-color-scheme: dark) {
   .pali {
-    color: #d9b678;
+    color: #d4b870;
   }
 }
 
@@ -52,7 +52,7 @@ body {
 }
 @media (prefers-color-scheme: dark) {
   .card-dhamma {
-    background-color: #261f17;
-    border-color: rgba(169, 134, 65, 0.25);
+    background-color: #222220;
+    border-color: rgba(184, 134, 11, 0.25);
   }
 }
