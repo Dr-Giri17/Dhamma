@@ -1,6 +1,7 @@
 import { getCorpus } from "@/lib/server";
 import { search } from "@/lib/corpus/search";
 import SearchClient from "@/components/search-client";
+import { UI } from "@/lib/ui";
 
 export default async function SearchPage({
   searchParams,
@@ -14,10 +15,9 @@ export default async function SearchPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl">Search</h1>
+        <h1 className="font-serif text-3xl">{UI.search.title}</h1>
         <p className="prose-dhamma text-ink-soft">
-          Search the canonical corpus by Pāli or English. Canonical texts rank
-          above commentarial; exact Pāli terms rank above loose matches.
+          {UI.search.description}
         </p>
       </div>
       <SearchClient initialQuery={q ?? ""} initialResults={results} />

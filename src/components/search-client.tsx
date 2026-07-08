@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { RetrievedSegment } from "@/lib/corpus/types";
+import { UI } from "@/lib/ui";
 
 interface Props {
   initialQuery?: string;
@@ -31,7 +32,7 @@ export default function SearchClient({ initialQuery = "", initialResults = [] }:
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="dukkha, anattā, suffering, mindfulness…"
+          placeholder={UI.search.placeholder}
           className="flex-1 px-4 py-2 rounded border border-gold/30 bg-ivory-soft text-ink focus:outline-none focus:border-gold"
         />
         <button
@@ -39,18 +40,23 @@ export default function SearchClient({ initialQuery = "", initialResults = [] }:
           disabled={pending}
           className="px-5 py-2 rounded bg-forest text-ivory disabled:opacity-50 hover:bg-forest-soft"
         >
-          {pending ? "Searching…" : "Search"}
+          {pending ? UI.search.pending : UI.search.button}
         </button>
       </form>
 
-      <p className="text-sm text-ink-faint">
-        Search is diacritic-insensitive: <code>anatta</code> matches{" "}
-        <span className="pali">anattā</span>.
-      </p>
+      <p className="text-sm text-ink-faint"
+        dangerouslySetInnerHTML={{
+          __html: UI.search.diacriticNote
+            .replace("<code>", "<code>")
+            .replace("</code>", "</code>")
+            .replace("<pali>", '<span className="pali">')
+            .replace("</pali>", "</span>"),
+        }}
+      />
 
       <ul className="space-y-3">
         {results.length === 0 && !pending ? (
-          <li className="text-ink-soft">No results yet — try a Pāli term.</li>
+          <li className="text-ink-soft">{UI.search.noResults}</li>
         ) : null}
         {results.map((r) => (
           <li key={r.id} className="card-dhamma">

@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
+import { UI } from "@/lib/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Dhamma — a source-grounded Theravāda companion",
+  title: "Дхамма — источниковедческое приложение к Тхераваде",
   description:
-    "Read, search, and reflect on Theravāda Buddhist texts with source-grounded, citation-first explanations.",
+    "Читайте, ищите и размышляйте над текстами Тхеравады с источникамиедческими пояснениями и цитатами.",
 };
 
 const navItems = [
-  { href: "/", label: "Home" },
-  { href: "/reader", label: "Read" },
-  { href: "/search", label: "Search" },
-  { href: "/ask", label: "Ask Dhamma" },
-  { href: "/wisdom", label: "Daily Wisdom" },
-  { href: "/terms", label: "Terms" },
+  { href: "/", label: UI.nav.home },
+  { href: "/reader", label: UI.nav.read },
+  { href: "/search", label: UI.nav.search },
+  { href: "/ask", label: UI.nav.ask },
+  { href: "/wisdom", label: UI.nav.wisdom },
+  { href: "/terms", label: UI.nav.terms },
 ];
 
 export default function RootLayout({
@@ -22,16 +23,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="ru">
       <body>
         <div className="min-h-screen flex flex-col">
           <header className="border-b border-gold/20 bg-ivory-soft/80 backdrop-blur sticky top-0 z-10">
             <nav className="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center gap-x-6 gap-y-2">
               <a href="/" className="font-serif text-xl tracking-wide text-ink">
-                Dhamma
+                Дхамма
               </a>
               <span className="text-ink-faint text-sm hidden sm:inline">
-                a source-grounded Theravāda companion
+                {UI.subtitle}
               </span>
               <div className="ml-auto flex flex-wrap gap-x-5 gap-y-1 text-sm">
                 {navItems.map((n) => (
@@ -47,15 +48,8 @@ export default function RootLayout({
           </main>
           <footer className="border-t border-gold/20 text-xs text-ink-faint py-6">
             <div className="max-w-4xl mx-auto px-4 space-y-1">
-              <p>
-                Corpus: Pāli roots (public domain) · Dhammapada English by F. Max
-                Müller, 1881 (public domain) · Sutta translations via Sujato
-                (CC0, SuttaCentral/Bilara) as the corpus grows.
-              </p>
-              <p>
-                Dhamma App does not give medical, psychiatric, legal, or financial
-                advice. For crisis or self-harm, contact local emergency services.
-              </p>
+              <p>{UI.footer.corpus}</p>
+              <p>{UI.footer.disclaimer}</p>
             </div>
           </footer>
         </div>
