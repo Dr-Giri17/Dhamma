@@ -15,12 +15,14 @@
  * filename and repo-root metadata. See docs/CORPUS_POLICY.md.
  */
 
-import type { DhammaSegment } from "./types";
+import type { DhammaSegment, TranslationSegment } from "./types";
 import { KNOWN_LICENSES } from "./licenses";
 
 /** Branch of bilara-data we consume. `main` does NOT exist — must be `published`. */
 export const BILARA_BRANCH = "published";
-export const BILARA_BASE = `https://raw.githubusercontent.com/suttacentral/bilara-data/${BILARA_BRANCH}`;
+/** Audited head of `published` on 2026-07-09; pinning prevents silent corpus drift. */
+export const BILARA_REVISION = "ba752906b439d3c1abb870044c1b38e39f8cdb21";
+export const BILARA_BASE = `https://raw.githubusercontent.com/suttacentral/bilara-data/${BILARA_REVISION}`;
 
 /** Mahāsaṅgīti Pāli root edition identifier used by Bilara. */
 export const ROOT_EDITION = "Mahāsaṅgīti / ms";
@@ -57,6 +59,65 @@ export const BILARA_TARGETS: readonly BilaraTarget[] = [
   { uid: "snp2.4", workId: "work-snp", collectionDir: "kn/snp/vagga2" },
 ];
 
+export interface BilaraAdditionalTranslation {
+  uid: string;
+  language: "ru" | "id";
+  translator: string;
+  authorUid: string;
+  collectionDir: string;
+  publicationNumber: string;
+  publicationStatus: string;
+}
+
+/** Only translations verified in the `published` branch and publication metadata. */
+export const BILARA_ADDITIONAL_TRANSLATIONS: readonly BilaraAdditionalTranslation[] = [
+  {
+    uid: "mn10",
+    language: "ru",
+    translator: "SV theravada.ru",
+    authorUid: "sv",
+    collectionDir: "mn",
+    publicationNumber: "scpub88",
+    publicationStatus: "Завершен",
+  },
+  {
+    uid: "mn118",
+    language: "ru",
+    translator: "SV theravada.ru",
+    authorUid: "sv",
+    collectionDir: "mn",
+    publicationNumber: "scpub88",
+    publicationStatus: "Завершен",
+  },
+  {
+    uid: "dn31",
+    language: "ru",
+    translator: "Khantibalo",
+    authorUid: "khantibalo",
+    collectionDir: "dn",
+    publicationNumber: "scpub134",
+    publicationStatus: "В процессе",
+  },
+  {
+    uid: "sn56.11",
+    language: "ru",
+    translator: "SV theravada.ru",
+    authorUid: "sv",
+    collectionDir: "sn/sn56",
+    publicationNumber: "scpub105",
+    publicationStatus: "Завершен",
+  },
+  {
+    uid: "snp1.8",
+    language: "ru",
+    translator: "SV theravada.ru",
+    authorUid: "sv",
+    collectionDir: "kn/snp/vagga1",
+    publicationNumber: "scpub117",
+    publicationStatus: "Завершен",
+  },
+];
+
 /** Resolve the bilara-data path for a UID's Pāli root file. */
 export function rootPath(t: BilaraTarget): string {
   return `root/pli/ms/sutta/${t.collectionDir}/${t.uid}_root-pli-ms.json`;
@@ -65,6 +126,27 @@ export function rootPath(t: BilaraTarget): string {
 /** Resolve the bilara-data path for a UID's Sujato English translation file. */
 export function translationPath(t: BilaraTarget): string {
   return `translation/en/sujato/sutta/${t.collectionDir}/${t.uid}_translation-en-sujato.json`;
+}
+
+export function additionalTranslationPath(t: BilaraAdditionalTranslation): string {
+  return `translation/${t.language}/${t.authorUid}/sutta/${t.collectionDir}/${t.uid}_translation-${t.language}-${t.authorUid}.json`;
+}
+
+export function additionalTranslationRecord(
+  target: BilaraAdditionalTranslation,
+  text: string
+): TranslationSegment {
+  return {
+    language: target.language,
+    text,
+    translator: target.translator,
+    provider: "bilara",
+    license: KNOWN_LICENSES.CC0,
+    sourcePath: additionalTranslationPath(target),
+    published: true,
+    publicationStatus: target.publicationStatus,
+    publicationNumber: target.publicationNumber,
+  };
 }
 
 /** Full URL for a bilara-data path. */
@@ -123,8 +205,19 @@ export function buildSegment(input: {
   segmentOrder: number;
   rootText?: string;
   translationText?: string;
+  translationSourcePath?: string;
+  translations?: DhammaSegment["translations"];
 }): DhammaSegment {
-  const { uid, textId, segmentUid, segmentOrder, rootText, translationText } = input;
+  const {
+    uid,
+    textId,
+    segmentUid,
+    segmentOrder,
+    rootText,
+    translationText,
+    translationSourcePath,
+    translations,
+  } = input;
 
   const hasTranslation = typeof translationText === "string" && translationText.length > 0;
 
@@ -138,6 +231,10 @@ export function buildSegment(input: {
     metadata.translationLicense = SUJATO_PROVENANCE.license;
     metadata.translationProvider = SUJATO_PROVENANCE.provider;
     metadata.translator = SUJATO_PROVENANCE.translator;
+    metadata.translationLanguage = "en";
+    metadata.translationSourcePath = translationSourcePath;
+    metadata.translationPublished = true;
+    metadata.translationPublicationStatus = "bilara-data published branch";
   }
 
   return {
@@ -148,6 +245,7 @@ export function buildSegment(input: {
     language: "en",
     rootText: rootText && rootText.length > 0 ? rootText : undefined,
     translationText: hasTranslation ? translationText : undefined,
+    translations: translations && Object.keys(translations).length > 0 ? translations : undefined,
     sourceRef: uidToSourceRef(uid),
     license: hasTranslation ? SUJATO_PROVENANCE.license : KNOWN_LICENSES.PUBLIC_DOMAIN,
     provider: SUJATO_PROVENANCE.provider,

@@ -91,6 +91,32 @@ describe("regenerated corpus (OneShot §7 #6, #7)", () => {
     const targets = ["mn10", "mn118", "dn31", "an3.65", "sn56.11", "snp1.8", "snp2.1", "snp2.4"];
     for (const u of targets) expect(uids.has(u)).toBe(true);
   });
+
+  it("imports only the five verified published CC0 Russian translations", async () => {
+    corpus = await loadCorpus();
+    const expected = new Set(["mn10", "mn118", "dn31", "sn56.11", "snp1.8"]);
+    for (const text of corpus.texts) {
+      const segments = corpus.segments.filter((segment) => segment.textId === text.id);
+      const russian = segments.flatMap((segment) => segment.translations?.ru ?? []);
+      if (expected.has(text.uid)) {
+        expect(russian.length).toBeGreaterThan(0);
+        for (const translation of russian) {
+          expect(translation.language).toBe("ru");
+          expect(translation.license).toBe("CC0 1.0 Universal (CC0 1.0)");
+          expect(translation.provider).toBe("bilara");
+          expect(translation.published).toBe(true);
+          expect(translation.sourcePath).toMatch(/^translation\/ru\//);
+        }
+      } else {
+        expect(russian).toEqual([]);
+      }
+    }
+  });
+
+  it("does not fabricate or import unavailable Indonesian translations", async () => {
+    corpus = await loadCorpus();
+    expect(corpus.segments.some((segment) => segment.translations?.id)).toBe(false);
+  });
 });
 
 describe("search returns results for key Pāli terms (OneShot §7 #8)", () => {

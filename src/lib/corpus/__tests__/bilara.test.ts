@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   BILARA_TARGETS,
+  BILARA_ADDITIONAL_TRANSLATIONS,
+  BILARA_REVISION,
   SUJATO_PROVENANCE,
   ROOT_EDITION,
   bilaraUrl,
+  additionalTranslationPath,
+  additionalTranslationRecord,
   buildSegment,
   rootPath,
   segmentUidPrefix,
@@ -43,7 +47,7 @@ describe("Bilara path resolver (OneShot §7 #1)", () => {
 
   it("builds the full raw.githubusercontent URL on the published branch", () => {
     expect(bilaraUrl(rootPath(target("dn31", "dn")))).toBe(
-      "https://raw.githubusercontent.com/suttacentral/bilara-data/published/root/pli/ms/sutta/dn/dn31_root-pli-ms.json"
+      `https://raw.githubusercontent.com/suttacentral/bilara-data/${BILARA_REVISION}/root/pli/ms/sutta/dn/dn31_root-pli-ms.json`
     );
   });
 
@@ -52,6 +56,23 @@ describe("Bilara path resolver (OneShot §7 #1)", () => {
     expect(uids).toEqual(
       ["an3.65", "dn31", "mn10", "mn118", "sn56.11", "snp1.8", "snp2.1", "snp2.4"].sort()
     );
+  });
+
+  it("pins the five verified Russian source paths", () => {
+    expect(BILARA_ADDITIONAL_TRANSLATIONS.map((item) => item.uid).sort()).toEqual(
+      ["dn31", "mn10", "mn118", "sn56.11", "snp1.8"].sort()
+    );
+    const mn10 = BILARA_ADDITIONAL_TRANSLATIONS.find((item) => item.uid === "mn10")!;
+    expect(additionalTranslationPath(mn10)).toBe(
+      "translation/ru/sv/sutta/mn/mn10_translation-ru-sv.json"
+    );
+    expect(additionalTranslationRecord(mn10, "Так я слышал.")).toMatchObject({
+      language: "ru",
+      translator: "SV theravada.ru",
+      license: KNOWN_LICENSES.CC0,
+      published: true,
+      publicationNumber: "scpub88",
+    });
   });
 });
 

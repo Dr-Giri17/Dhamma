@@ -157,6 +157,25 @@ export function validateCorpus(corpus: Corpus): void {
       );
     }
 
+    for (const [language, translation] of Object.entries(seg.translations ?? {})) {
+      if (
+        !translation ||
+        translation.language !== language ||
+        !translation.text ||
+        !translation.translator ||
+        !translation.provider ||
+        !translation.sourcePath ||
+        !translation.publicationStatus ||
+        translation.published !== true ||
+        !isAllowedLicense(translation.license)
+      ) {
+        throw new CorpusValidationError(
+          `Segment "${seg.segmentUid}" has invalid ${language} translation provenance`,
+          { segment: seg }
+        );
+      }
+    }
+
     // Visuddhimagga must contribute no segments in MVP (ТЗ §4.3)
     const text = textById.get(seg.textId);
     if (text) {

@@ -18,6 +18,7 @@ export default async function RootLayout({
   const ui = getUi(language);
   const navItems = [
     { href: "/", label: ui.nav.home },
+    { href: "/library", label: ui.nav.library },
     { href: "/reader", label: ui.nav.read },
     { href: "/search", label: ui.nav.search },
     { href: "/ask", label: ui.nav.ask },
