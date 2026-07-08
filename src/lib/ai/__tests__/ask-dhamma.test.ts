@@ -47,8 +47,23 @@ describe("askDhamma — fail-closed RAG (ТЗ §9 Phase G #6, #7)", () => {
     const answer = await askDhamma(corpus, "supercalifragilistic quantum");
     expect(answer.sources).toEqual([]);
     expect(answer.confidence).toBe("low");
+    expect(answer.warnings).toContain("no-retrieved-sources");
     expect(answer.warnings).toContain("refused-to-fabricate");
     expect(answer.answer).toBe(NO_SOURCE_REFUSAL_EN);
+  });
+
+  it("fails closed for unsupported English questions with weak lexical noise", async () => {
+    const corpus = corpusWith([
+      seg({
+        translationText:
+          "This is the noble truth of dukkha: birth is suffering.",
+      }),
+    ]);
+    const answer = await askDhamma(corpus, "zzz gibberish no corpus match xyz");
+    expect(answer.sources).toEqual([]);
+    expect(answer.confidence).toBe("low");
+    expect(answer.warnings).toContain("no-retrieved-sources");
+    expect(answer.warnings).toContain("refused-to-fabricate");
   });
 
   it("ALWAYS includes citations when an answer is given (#7)", async () => {

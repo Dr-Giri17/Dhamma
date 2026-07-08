@@ -55,6 +55,7 @@ export const DHAMMA_TERMS: Record<string, string> = {
 };
 
 const TERM_KEYS = new Set(Object.keys(DHAMMA_TERMS));
+const MIN_RELEVANCE_SCORE = 4;
 
 /** True if `term` (already normalized ASCII) is a recognized Dhamma term. */
 export function isDhammaTerm(term: string): boolean {
@@ -146,6 +147,7 @@ function scoreSegment(
   // that mentions "buddha"/"said", breaking the fail-closed contract.
   if (contentMatchCount === 0) return null;
   if (score === 0) return null;
+  if (score < MIN_RELEVANCE_SCORE) return null;
 
   // re-rank: canonical above commentarial / modern_explanation
   if (work?.category === "canonical") score += 3;

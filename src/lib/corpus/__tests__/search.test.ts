@@ -105,4 +105,62 @@ describe("search (ТЗ §9 Phase G #4, #5)", () => {
     const results = search(c, "supercalifragilistic");
     expect(results).toEqual([]);
   });
+
+  it("drops weak one-token lexical overlap before canonical re-rank", () => {
+    const c = corpusOf([
+      seg({
+        id: "a",
+        segmentUid: "dhp:1.1",
+        translationText: "A corpus doorway into stillness.",
+      }),
+      seg({
+        id: "b",
+        segmentUid: "dhp:1.2",
+        translationText: "Practice needs wise allocation of attention.",
+      }),
+    ]);
+    expect(search(c, "zzz gibberish no corpus match xyz")).toEqual([]);
+    expect(search(c, "cryptocurrency portfolio allocation")).toEqual([]);
+  });
+
+  it("preserves multi-token lexical, term, and exact matches", () => {
+    const lexical = searchSegments(
+      [
+        seg({
+          id: "a",
+          segmentUid: "sn56.11:1.1",
+          translationText: "Birth is suffering, aging is suffering.",
+        }),
+      ],
+      "birth aging"
+    );
+    expect(lexical).toHaveLength(1);
+    expect(lexical[0].score).toBeGreaterThanOrEqual(4);
+
+    const term = searchSegments(
+      [
+        seg({
+          id: "b",
+          segmentUid: "sn56.11:1.2",
+          translationText: "This is the noble truth of dukkha.",
+        }),
+      ],
+      "What is dukkha?"
+    );
+    expect(term).toHaveLength(1);
+    expect(term[0].score).toBeGreaterThanOrEqual(6);
+
+    const exact = searchSegments(
+      [
+        seg({
+          id: "c",
+          segmentUid: "sn56.11:1.3",
+          translationText: "This is the noble truth of dukkha.",
+        }),
+      ],
+      "noble truth"
+    );
+    expect(exact).toHaveLength(1);
+    expect(exact[0].score).toBeGreaterThanOrEqual(10);
+  });
 });
