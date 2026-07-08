@@ -3,26 +3,31 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
+  --color-canvas: 255 253 248;
+  --color-surface: 248 249 247;
+  --color-muted: 239 241 238;
+  --color-line: 216 222 226;
+  --color-ink: 31 37 43;
+  --color-ink-soft: 78 91 101;
+  --color-ink-faint: 116 128 139;
+  --color-accent: 241 216 145;
+  --color-accent-soft: 255 246 216;
+  --color-accent-strong: 157 113 0;
+  --color-action: 51 65 85;
+  --color-action-soft: 71 85 105;
+  --color-warn: 180 35 24;
 }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
-  @apply bg-ivory text-ink font-serif antialiased;
+  @apply bg-canvas text-ink font-serif antialiased;
   text-rendering: optimizeLegibility;
-}
-
-/* Dark mode: a calm night reading surface. */
-@media (prefers-color-scheme: dark) {
-  body {
-    @apply bg-[#1a1917] text-[#e0ddd8];
-  }
-  .prose-dhamma {
-    color: #e0ddd8;
-  }
+  overflow-x: hidden;
 }
 
 .prose-dhamma {
@@ -30,29 +35,15 @@ body {
   max-width: 68ch;
 }
 
-/* Pāli terms rendered distinctly from surrounding text. */
 .pali {
   font-style: italic;
-  color: #8a7040;
-}
-@media (prefers-color-scheme: dark) {
-  .pali {
-    color: #d4b870;
-  }
+  color: rgb(var(--color-action));
 }
 
-/* Quiet link style. */
 .link-dhamma {
-  @apply underline decoration-gold/40 underline-offset-4 hover:decoration-gold;
+  @apply underline decoration-accent/70 underline-offset-4 hover:decoration-accent-strong;
 }
 
-/* Card surface used across reader / search / ask. */
 .card-dhamma {
-  @apply bg-ivory-soft border border-gold/20 rounded-lg p-5;
-}
-@media (prefers-color-scheme: dark) {
-  .card-dhamma {
-    background-color: #222220;
-    border-color: rgba(184, 134, 11, 0.25);
-  }
+  @apply bg-surface border border-line rounded-lg p-5 shadow-sm;
 }

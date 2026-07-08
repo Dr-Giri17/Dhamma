@@ -1,16 +1,20 @@
 import AskClient from "@/components/ask-client";
-import { UI } from "@/lib/ui";
+import { getRequestLanguage } from "@/lib/i18n/server";
+import { getUi } from "@/lib/ui";
 
-export default function AskPage() {
+export default async function AskPage() {
+  const language = await getRequestLanguage();
+  const ui = getUi(language);
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl">{UI.ask.title}</h1>
+        <h1 className="font-serif text-3xl">{ui.ask.title}</h1>
         <p className="prose-dhamma text-ink-soft">
-          {UI.ask.description}
+          {ui.ask.description}
         </p>
       </div>
-      <AskClient />
+      <AskClient language={language} ui={ui.ask} />
     </div>
   );
 }

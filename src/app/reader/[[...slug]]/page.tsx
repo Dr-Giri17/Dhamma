@@ -2,24 +2,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCorpus } from "@/lib/server";
 import { isVisuddhimaggaSlug } from "@/lib/corpus/licenses";
-import { UI } from "@/lib/ui";
+import { getRequestLanguage } from "@/lib/i18n/server";
+import { getUi } from "@/lib/ui";
 
-/**
- * Reader. Two modes:
- *   /reader            — list of readable texts grouped by collection
- *   /reader/{slug}     — the full text with Pāli + English
- * Visuddhimagga appears in the index as "schema only — pending license
- * review" and cannot be read.
- */
 export default async function ReaderPage({
   params,
 }: {
   params: Promise<{ slug?: string[] }>;
 }) {
   const { slug } = await params;
+  const language = await getRequestLanguage();
+  const ui = getUi(language);
   const corpus = await getCorpus();
 
-  // Index view
   if (!slug || slug.length === 0) {
     const textsByWork = corpus.texts.map((t) => ({
       text: t,
@@ -29,9 +24,9 @@ export default async function ReaderPage({
 
     return (
       <div className="space-y-6">
-        <h1 className="font-serif text-3xl">{UI.reader.title}</h1>
+        <h1 className="font-serif text-3xl">{ui.reader.title}</h1>
         <p className="prose-dhamma text-ink-soft">
-          {UI.reader.description}
+          {ui.reader.description}
         </p>
         <ul className="space-y-3">
           {textsByWork.map(({ text, work, segmentCount }) => {
@@ -58,11 +53,11 @@ export default async function ReaderPage({
                 ) : null}
                 <p className="text-sm text-ink-soft mt-1">
                   {blocked ? (
-                    <em>{UI.reader.schemaOnly}</em>
+                    <em>{ui.reader.schemaOnly}</em>
                   ) : (
                     <>
-                      {segmentCount} {UI.reader.segments} · {work.translator || work.author || "—"} ·{" "}
-                      <span className="text-gold">{work.license}</span>
+                      {segmentCount} {ui.reader.segments} · {work.translator || work.author || "-"} ·{" "}
+                      <span className="text-accent-strong">{work.license}</span>
                     </>
                   )}
                 </p>
@@ -74,7 +69,6 @@ export default async function ReaderPage({
     );
   }
 
-  // Text view
   const requestedSlug = slug[0];
   const text = corpus.texts.find((t) => t.slug === requestedSlug);
   if (!text) notFound();
@@ -84,9 +78,7 @@ export default async function ReaderPage({
     return (
       <div className="space-y-4">
         <h1 className="font-serif text-3xl">{text.title}</h1>
-        <p className="card-dhamma text-ink-soft"
-          dangerouslySetInnerHTML={{ __html: UI.reader.blockedText }}
-        />
+        <p className="card-dhamma text-ink-soft">{ui.reader.blockedText}</p>
       </div>
     );
   }
@@ -101,8 +93,8 @@ export default async function ReaderPage({
         <h1 className="font-serif text-3xl">{text.title}</h1>
         {text.titlePali ? <p className="pali text-lg">{text.titlePali}</p> : null}
         <p className="text-sm text-ink-faint mt-1">
-          {work?.title} · {work?.translator || work?.author || "—"} ·{" "}
-          <span className="text-gold">{work?.license}</span>
+          {work?.title} · {work?.translator || work?.author || "-"} ·{" "}
+          <span className="text-accent-strong">{work?.license}</span>
         </p>
       </div>
 
@@ -116,9 +108,9 @@ export default async function ReaderPage({
               <p className="pali mb-1">{s.rootText}</p>
             ) : null}
             <p>{s.translationText}</p>
-            <p className="text-xs text-gold mt-1">
+            <p className="text-xs text-accent-strong mt-1">
               {s.sourceRef}
-              {s.verseNumber ? ` · verse ${s.verseNumber}` : ""}
+              {s.verseNumber ? ` · ${ui.reader.verse} ${s.verseNumber}` : ""}
             </p>
           </section>
         ))}

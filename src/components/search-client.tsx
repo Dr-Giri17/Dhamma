@@ -2,14 +2,19 @@
 
 import { useState, useTransition } from "react";
 import type { RetrievedSegment } from "@/lib/corpus/types";
-import { UI } from "@/lib/ui";
+import type { UiStrings } from "@/lib/ui";
 
 interface Props {
   initialQuery?: string;
   initialResults?: RetrievedSegment[];
+  ui: UiStrings["search"];
 }
 
-export default function SearchClient({ initialQuery = "", initialResults = [] }: Props) {
+export default function SearchClient({
+  initialQuery = "",
+  initialResults = [],
+  ui,
+}: Props) {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<RetrievedSegment[]>(initialResults);
   const [pending, startTransition] = useTransition();
@@ -32,35 +37,27 @@ export default function SearchClient({ initialQuery = "", initialResults = [] }:
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={UI.search.placeholder}
-          className="flex-1 px-4 py-2 rounded border border-gold/30 bg-ivory-soft text-ink focus:outline-none focus:border-gold"
+          placeholder={ui.placeholder}
+          className="flex-1 px-4 py-2 rounded-md border border-line bg-surface text-ink focus:outline-none focus:border-accent-strong"
         />
         <button
           type="submit"
           disabled={pending}
-          className="px-5 py-2 rounded bg-forest text-ivory disabled:opacity-50 hover:bg-forest-soft"
+          className="px-5 py-2 rounded-md bg-action text-white disabled:opacity-50 hover:bg-action-soft"
         >
-          {pending ? UI.search.pending : UI.search.button}
+          {pending ? ui.pending : ui.button}
         </button>
       </form>
 
-      <p className="text-sm text-ink-faint"
-        dangerouslySetInnerHTML={{
-          __html: UI.search.diacriticNote
-            .replace("<code>", "<code>")
-            .replace("</code>", "</code>")
-            .replace("<pali>", '<span className="pali">')
-            .replace("</pali>", "</span>"),
-        }}
-      />
+      <p className="text-sm text-ink-faint">{ui.diacriticNote}</p>
 
       <ul className="space-y-3">
         {results.length === 0 && !pending ? (
-          <li className="text-ink-soft">{UI.search.noResults}</li>
+          <li className="text-ink-soft">{ui.noResults}</li>
         ) : null}
         {results.map((r) => (
           <li key={r.id} className="card-dhamma">
-            <div className="flex justify-between text-xs text-gold mb-1">
+            <div className="flex justify-between text-xs text-accent-strong mb-1">
               <span>{r.sourceRef}</span>
               <span className="uppercase tracking-wide text-ink-faint">
                 {r.reason} · score {r.score}

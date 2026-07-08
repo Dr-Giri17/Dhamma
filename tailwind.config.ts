@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
-// Dhamma palette: warm white, golden-gray, soft amber accents.
-// Light, clean, contemplative, luminous.
+const withAlpha = (name: string) => `rgb(var(${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./src/app/**/*.{ts,tsx}",
@@ -11,28 +11,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ivory: {
-          DEFAULT: "#faf8f5",
-          soft: "#ffffff",
-          deep: "#f0ede8",
-        },
+        canvas: withAlpha("--color-canvas"),
+        surface: withAlpha("--color-surface"),
+        muted: withAlpha("--color-muted"),
+        line: withAlpha("--color-line"),
         ink: {
-          DEFAULT: "#3d3d3d",
-          soft: "#5a5a5a",
-          faint: "#8a8a8a",
+          DEFAULT: withAlpha("--color-ink"),
+          soft: withAlpha("--color-ink-soft"),
+          faint: withAlpha("--color-ink-faint"),
         },
-        gold: {
-          DEFAULT: "#b8860b",
-          soft: "#d4a843",
+        accent: {
+          DEFAULT: withAlpha("--color-accent"),
+          soft: withAlpha("--color-accent-soft"),
+          strong: withAlpha("--color-accent-strong"),
         },
-        forest: {
-          DEFAULT: "#7a7050",
-          soft: "#8a8060",
+        action: {
+          DEFAULT: withAlpha("--color-action"),
+          soft: withAlpha("--color-action-soft"),
         },
-        saffron: {
-          DEFAULT: "#c8963e",
-          soft: "#dab060",
-        },
+        warn: withAlpha("--color-warn"),
       },
       fontFamily: {
         serif: ["Georgia", "Cambria", "'Times New Roman'", "Times", "serif"],
