@@ -20,6 +20,7 @@ export const WARNING_LABELS: Record<SupportedLanguage, Record<TeacherWarning, st
     "refused-to-impersonate-buddha": "Refused literal Buddha impersonation.",
     "refused-to-fabricate-quote": "Refused to fabricate a Buddha quote or scripture.",
     "not-an-ordained-monk": "This app is not an ordained monk.",
+    "no-direct-concept-match": "No exact mapped concept was found; this is general orientation.",
     "source-limited": "Source support is limited to the checked-in corpus map.",
   },
   ru: {
@@ -28,6 +29,7 @@ export const WARNING_LABELS: Record<SupportedLanguage, Record<TeacherWarning, st
     "refused-to-impersonate-buddha": "Отказ от буквального представления себя Буддой.",
     "refused-to-fabricate-quote": "Отказ придумывать цитату Будды или писание.",
     "not-an-ordained-monk": "Это приложение не является посвящённым монахом.",
+    "no-direct-concept-match": "Точное понятие в локальной карте не найдено; это общая ориентация.",
     "source-limited": "Опора на источники ограничена проверенной локальной картой корпуса.",
   },
   id: {
@@ -36,6 +38,7 @@ export const WARNING_LABELS: Record<SupportedLanguage, Record<TeacherWarning, st
     "refused-to-impersonate-buddha": "Menolak peniruan literal sebagai Buddha.",
     "refused-to-fabricate-quote": "Menolak membuat kutipan Buddha atau kitab suci palsu.",
     "not-an-ordained-monk": "Aplikasi ini bukan bhikkhu tertahbis.",
+    "no-direct-concept-match": "Tidak ada konsep tepat yang dipetakan; ini adalah orientasi umum.",
     "source-limited": "Dukungan sumber terbatas pada peta korpus lokal yang tersedia.",
   },
 };
