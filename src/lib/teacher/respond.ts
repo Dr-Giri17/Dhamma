@@ -21,20 +21,22 @@ export function respondTeacher(request: TeacherRequest): TeacherAnswer {
   const mode = request.mode;
   const language = resolveTeacherLanguage(query, request.language);
   const concepts = findConcepts(query);
-  const chosen = concepts.length > 0 ? concepts : fallbackConcepts(query);
+  const hasDirectConceptHit = concepts.length > 0;
+  const chosen = hasDirectConceptHit ? concepts : fallbackConcepts(query);
   const warnings = warningSet(mode);
 
   const impersonation = asksForBuddhaImpersonation(query);
   const fabricatedQuote = asksForFabricatedQuote(query);
   const claimsMonk = asksForMonkIdentity(query);
 
+  if (!hasDirectConceptHit) warnings.add("no-direct-concept-match");
   if (impersonation) warnings.add("refused-to-impersonate-buddha");
   if (fabricatedQuote) warnings.add("refused-to-fabricate-quote");
   if (claimsMonk) warnings.add("not-an-ordained-monk");
 
   const sourceRefs = unique(chosen.flatMap((concept) => concept.sourceRefs));
   if (sourceRefs.length === 0) warnings.add("no-source-found");
-  if (mode === "strict_source" && concepts.length === 0) warnings.add("no-source-found");
+  if (mode === "strict_source" && !hasDirectConceptHit) warnings.add("no-source-found");
   if (mode === "strict_source" && sourceRefs.length > 0) warnings.add("source-limited");
 
   return {
@@ -42,7 +44,7 @@ export function respondTeacher(request: TeacherRequest): TeacherAnswer {
       language,
       mode,
       concepts: chosen,
-      hasDirectConceptHit: concepts.length > 0,
+      hasDirectConceptHit,
       impersonation,
       fabricatedQuote,
       claimsMonk,
@@ -146,6 +148,10 @@ function composeAnswer(input: {
     }
     lines.push("", sourceLine[language](sourceRefs));
     return lines.join("\n");
+  }
+
+  if (!input.hasDirectConceptHit) {
+    lines.push(fallbackOrientation[language], "");
   }
 
   if (mode === "explain_simple") {
@@ -260,6 +266,12 @@ const strictNoSource = {
   en: "I could not find a mapped source for that direct source claim in the current local teacher map, so I will not present it as scripture.",
   ru: "Я не нашёл сопоставленного источника для такого прямого утверждения в текущей локальной карте учения, поэтому не буду представлять это как писание.",
   id: "Saya tidak menemukan sumber yang dipetakan untuk klaim langsung itu dalam peta ajaran lokal saat ini, jadi saya tidak akan menyajikannya sebagai kitab suci.",
+};
+
+const fallbackOrientation = {
+  en: "I did not find an exact mapped concept, so this is a general orientation rather than a direct source-matched answer.",
+  ru: "Я не нашёл точного понятия в локальной карте, поэтому это общая ориентация, а не прямой ответ по сопоставленному источнику.",
+  id: "Saya tidak menemukan konsep yang tepat dalam peta lokal, jadi ini orientasi umum, bukan jawaban yang langsung dipetakan ke sumber.",
 };
 
 const explainIntro = {
