@@ -15,6 +15,19 @@ describe("teacher response", () => {
     expect(answer.answer).toMatch(/жажд|цеплян/);
     expect(answer.sourceRefs).toContain("SN 56.11");
     expect(answer.warnings).toContain("not-canonical-quote");
+    expect(answer.warnings).not.toContain("no-direct-concept-match");
+  });
+
+  it("marks fallback explanations when no direct concept is mapped", () => {
+    const answer = respondTeacher({
+      query: "How should I choose a laptop?",
+      mode: "explain_simple",
+    });
+
+    expect(answer.language).toBe("en");
+    expect(answer.warnings).toContain("no-direct-concept-match");
+    expect(answer.warnings).toContain("not-canonical-quote");
+    expect(answer.answer).toContain("I did not find an exact mapped concept");
   });
 
   it("refuses literal Buddha impersonation while allowing Dhamma Voice style", () => {
@@ -51,6 +64,7 @@ describe("teacher response", () => {
     expect(answer.concepts).toContain("anicca");
     expect(answer.answer).toContain("impermanence");
     expect(answer.warnings).toContain("not-canonical-quote");
+    expect(answer.warnings).not.toContain("no-direct-concept-match");
   });
 
   it("answers mettā in Indonesian", () => {
@@ -63,5 +77,6 @@ describe("teacher response", () => {
     expect(answer.concepts).toContain("metta");
     expect(answer.answer).toContain("cinta kasih");
     expect(answer.warnings).toContain("not-canonical-quote");
+    expect(answer.warnings).not.toContain("no-direct-concept-match");
   });
 });
