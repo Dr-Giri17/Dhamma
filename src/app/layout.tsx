@@ -22,6 +22,7 @@ export default async function RootLayout({
     { href: "/reader", label: ui.nav.read },
     { href: "/search", label: ui.nav.search },
     { href: "/ask", label: ui.nav.ask },
+    { href: "/voice", label: ui.nav.voice },
     { href: "/wisdom", label: ui.nav.wisdom },
     { href: "/terms", label: ui.nav.terms },
   ];
