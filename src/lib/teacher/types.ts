@@ -8,6 +8,7 @@ export type TeacherWarning =
   | "refused-to-impersonate-buddha"
   | "refused-to-fabricate-quote"
   | "not-an-ordained-monk"
+  | "no-direct-concept-match"
   | "source-limited";
 
 export type InterpretationLevel =
