@@ -1,0 +1,24 @@
+{
+  "edition": "Complete Chaṭṭha Saṅgāyana Pāli Tipiṭaka edition",
+  "sourceRevision": "77b57a6daca231b3ca265400fb8a411822f025f4",
+  "expectedWorks": 59,
+  "mappedWorks": 59,
+  "importedWorks": 59,
+  "missingWorks": [],
+  "duplicateMappings": [],
+  "unknownFiles": [],
+  "canonicalSegmentCount": 155918,
+  "pitakaSegmentCounts": {
+    "vinaya": 12957,
+    "sutta": 102589,
+    "abhidhamma": 40372
+  },
+  "visuddhimagga": {
+    "expectedVolumes": 2,
+    "importedVolumes": 2,
+    "segmentCount": 4068,
+    "canonicalStatus": "post-canonical"
+  },
+  "blockers": [],
+  "fullTipitakaImported": true
+}

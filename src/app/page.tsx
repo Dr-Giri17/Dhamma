@@ -3,11 +3,13 @@ import { getCorpus } from "@/lib/server";
 import { getDailyWisdom } from "@/lib/corpus/wisdom";
 import { getRequestLanguage } from "@/lib/i18n/server";
 import { getUi } from "@/lib/ui";
+import { fullCorpusSummary } from "@/lib/corpus/full-corpus";
 
 export default async function HomePage() {
   const language = await getRequestLanguage();
   const ui = getUi(language);
   const corpus = await getCorpus();
+  const full = fullCorpusSummary();
   let wisdom = null;
   try {
     wisdom = getDailyWisdom(corpus, { language });
@@ -52,12 +54,12 @@ export default async function HomePage() {
           <h2 className="font-serif text-2xl text-ink">{ui.tipitaka.title}</h2>
           <Link href="/library" className="link-dhamma text-sm">{ui.nav.library} →</Link>
         </div>
-        <p className="text-sm text-ink-soft">{ui.tipitaka.partialNote}</p>
-        <p className="text-sm font-medium text-accent-strong">{ui.tipitaka.fullCanonMissing}</p>
+        <p className="text-sm text-ink-soft">Complete Chaṭṭha Saṅgāyana Pāli Tipiṭaka edition.</p>
+        <p className="text-sm font-medium text-accent-strong">{full.paliCanonicalWorks} canonical volumes · {full.canonicalSegmentCount.toLocaleString()} canonical segments</p>
         <div className="grid sm:grid-cols-3 gap-4">
-          <div className="card-dhamma opacity-70">
+          <div className="card-dhamma">
             <h3 className="font-serif text-lg mb-1">{ui.tipitaka.vinaya}</h3>
-            <p className="text-sm text-ink-faint">{ui.tipitaka.vinayaDesc}</p>
+            <p className="text-sm text-ink-soft">{ui.tipitaka.vinayaDesc}</p>
           </div>
           <div className="card-dhamma">
             <h3 className="font-serif text-lg mb-1">{ui.tipitaka.sutta}</h3>
@@ -78,9 +80,9 @@ export default async function HomePage() {
               ))}
             </ul>
           </div>
-          <div className="card-dhamma opacity-70">
+          <div className="card-dhamma">
             <h3 className="font-serif text-lg mb-1">{ui.tipitaka.abhidhamma}</h3>
-            <p className="text-sm text-ink-faint">{ui.tipitaka.abhidhammaDesc}</p>
+            <p className="text-sm text-ink-soft">{ui.tipitaka.abhidhammaDesc}</p>
           </div>
         </div>
       </section>
@@ -89,7 +91,7 @@ export default async function HomePage() {
         <h2 className="font-serif text-lg mb-1">
           <Link href="/reader/visuddhimagga" className="link-dhamma">{ui.visuddhimagga.title}</Link>
         </h2>
-        <p className="text-sm text-ink-faint">{ui.visuddhimagga.status}</p>
+        <p className="text-sm text-ink-faint">Complete VRI Pāli text · {full.visuddhimagga.segmentCount.toLocaleString()} segments · post-canonical.</p>
       </section>
 
       <section className="grid sm:grid-cols-2 gap-4">

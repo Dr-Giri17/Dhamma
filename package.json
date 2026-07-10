@@ -14,9 +14,17 @@
     "test:watch": "vitest",
     "ingest:dhammapada": "tsx scripts/ingest-dhammapada.ts",
     "ingest:bilara": "tsx scripts/ingest-bilara.ts",
-    "build:index": "tsx scripts/build-search-index.ts",
+    "build:index": "tsx scripts/build-search-index.ts && tsx scripts/corpus/build-full-index.ts",
     "corpus:metadata": "tsx scripts/corpus/build-metadata.ts",
-    "corpus:validate": "tsx scripts/corpus/build-metadata.ts"
+    "corpus:validate": "tsx scripts/corpus/build-metadata.ts && tsx scripts/corpus/validate-full.ts",
+    "corpus:validate:full": "tsx scripts/corpus/validate-full.ts",
+    "corpus:inventory:vri": "tsx scripts/corpus/vri.ts inventory",
+    "corpus:inventory:bilara": "tsx scripts/corpus/bilara.ts inventory",
+    "corpus:inventory:theravada": "tsx scripts/corpus/theravada.ts inventory",
+    "corpus:ingest:pali": "tsx scripts/corpus/vri.ts ingest",
+    "corpus:ingest:en": "tsx scripts/corpus/bilara.ts ingest",
+    "corpus:ingest:ru": "tsx scripts/corpus/theravada.ts ingest",
+    "corpus:coverage": "tsx scripts/corpus/vri.ts coverage"
   },
   "dependencies": {
     "next": "15.5.20",

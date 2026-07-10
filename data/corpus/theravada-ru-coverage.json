@@ -1,0 +1,17 @@
+{
+  "crawlDate": "2026-07-10T16:01:33.950Z",
+  "robotsUrl": "https://www.theravada.ru/robots.txt",
+  "indexUrl": "https://www.theravada.ru/Teaching/Canon/Suttanta/all-suttas-list.htm",
+  "inventoryPages": 3853,
+  "importedEditions": 3488,
+  "importedWorks": 3369,
+  "importedSegments": 159577,
+  "excludedPages": 365,
+  "decisions": {
+    "allowed-with-direct-link": 3488,
+    "excluded-robots": 3,
+    "metadata-only": 43,
+    "unmapped": 319
+  },
+  "directAttributionLinks": 3488
+}

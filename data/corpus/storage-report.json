@@ -1,0 +1,12 @@
+{
+  "corpusAssetFiles": 10088,
+  "corpusAssetBytes": 78103051,
+  "readerAssetFiles": 10037,
+  "readerAssetBytes": 52040747,
+  "searchShardFiles": 51,
+  "searchShardBytes": 26062304,
+  "largestReaderAssetBytes": 50584,
+  "largestSearchShardBytes": 2851624,
+  "decodedReaderPageSegmentLimit": 200,
+  "renderedReaderPageSegmentLimit": 80
+}

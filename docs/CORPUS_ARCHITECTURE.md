@@ -1,4 +1,9 @@
-# Corpus architecture
+# Corpus architecture (seed retrieval layer)
+
+> Historical seed-retrieval architecture. The full static corpus layer is
+> documented in [FULL_CORPUS_ARCHITECTURE.md](./FULL_CORPUS_ARCHITECTURE.md).
+> Ask/Guide intentionally continue to use this validated seed layer so their
+> fail-closed behavior is unchanged.
 
 The repository separates catalog structure, imported editions, normalized segments, and the generated search index. A catalog entry does not imply that its text exists locally.
 

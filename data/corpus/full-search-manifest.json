@@ -1,0 +1,414 @@
+{
+  "schemaVersion": 1,
+  "postingLimit": 40,
+  "shards": [
+    {
+      "language": "en",
+      "collection": "an",
+      "documentCount": 37397,
+      "termCount": 7688,
+      "asset": "/corpus/indexes/en/an.json.gz",
+      "byteSize": 1745569
+    },
+    {
+      "language": "en",
+      "collection": "cp",
+      "documentCount": 1617,
+      "termCount": 1679,
+      "asset": "/corpus/indexes/en/cp.json.gz",
+      "byteSize": 79683
+    },
+    {
+      "language": "en",
+      "collection": "dhp",
+      "documentCount": 3704,
+      "termCount": 2733,
+      "asset": "/corpus/indexes/en/dhp.json.gz",
+      "byteSize": 177416
+    },
+    {
+      "language": "en",
+      "collection": "dn",
+      "documentCount": 14418,
+      "termCount": 6407,
+      "asset": "/corpus/indexes/en/dn.json.gz",
+      "byteSize": 799467
+    },
+    {
+      "language": "en",
+      "collection": "iti",
+      "documentCount": 2733,
+      "termCount": 1805,
+      "asset": "/corpus/indexes/en/iti.json.gz",
+      "byteSize": 125085
+    },
+    {
+      "language": "en",
+      "collection": "ja",
+      "documentCount": 735,
+      "termCount": 925,
+      "asset": "/corpus/indexes/en/ja.json.gz",
+      "byteSize": 35361
+    },
+    {
+      "language": "en",
+      "collection": "kp",
+      "documentCount": 357,
+      "termCount": 686,
+      "asset": "/corpus/indexes/en/kp.json.gz",
+      "byteSize": 19598
+    },
+    {
+      "language": "en",
+      "collection": "mil",
+      "documentCount": 2652,
+      "termCount": 3321,
+      "asset": "/corpus/indexes/en/mil.json.gz",
+      "byteSize": 168905
+    },
+    {
+      "language": "en",
+      "collection": "mn",
+      "documentCount": 23228,
+      "termCount": 7079,
+      "asset": "/corpus/indexes/en/mn.json.gz",
+      "byteSize": 1234222
+    },
+    {
+      "language": "en",
+      "collection": "pli",
+      "documentCount": 12822,
+      "termCount": 3335,
+      "asset": "/corpus/indexes/en/pli.json.gz",
+      "byteSize": 531690
+    },
+    {
+      "language": "en",
+      "collection": "pv",
+      "documentCount": 17,
+      "termCount": 49,
+      "asset": "/corpus/indexes/en/pv.json.gz",
+      "byteSize": 1366
+    },
+    {
+      "language": "en",
+      "collection": "sn",
+      "documentCount": 36788,
+      "termCount": 6980,
+      "asset": "/corpus/indexes/en/sn.json.gz",
+      "byteSize": 1626276
+    },
+    {
+      "language": "en",
+      "collection": "snp",
+      "documentCount": 5703,
+      "termCount": 3988,
+      "asset": "/corpus/indexes/en/snp.json.gz",
+      "byteSize": 291706
+    },
+    {
+      "language": "en",
+      "collection": "thag",
+      "documentCount": 6368,
+      "termCount": 3797,
+      "asset": "/corpus/indexes/en/thag.json.gz",
+      "byteSize": 301723
+    },
+    {
+      "language": "en",
+      "collection": "thig",
+      "documentCount": 4842,
+      "termCount": 3118,
+      "asset": "/corpus/indexes/en/thig.json.gz",
+      "byteSize": 234179
+    },
+    {
+      "language": "en",
+      "collection": "ud",
+      "documentCount": 2268,
+      "termCount": 2442,
+      "asset": "/corpus/indexes/en/ud.json.gz",
+      "byteSize": 137963
+    },
+    {
+      "language": "pli",
+      "collection": "abhidhamma",
+      "documentCount": 40372,
+      "termCount": 17563,
+      "asset": "/corpus/indexes/pli/abhidhamma.json.gz",
+      "byteSize": 1823776
+    },
+    {
+      "language": "pli",
+      "collection": "an",
+      "documentCount": 8866,
+      "termCount": 24506,
+      "asset": "/corpus/indexes/pli/an.json.gz",
+      "byteSize": 812937
+    },
+    {
+      "language": "pli",
+      "collection": "dn",
+      "documentCount": 4003,
+      "termCount": 17340,
+      "asset": "/corpus/indexes/pli/dn.json.gz",
+      "byteSize": 404251
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0501m",
+      "documentCount": 254,
+      "termCount": 660,
+      "asset": "/corpus/indexes/pli/kn-s0501m.json.gz",
+      "byteSize": 15571
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0502m",
+      "documentCount": 1337,
+      "termCount": 2978,
+      "asset": "/corpus/indexes/pli/kn-s0502m.json.gz",
+      "byteSize": 74932
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0503m",
+      "documentCount": 865,
+      "termCount": 4176,
+      "asset": "/corpus/indexes/pli/kn-s0503m.json.gz",
+      "byteSize": 79661
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0504m",
+      "documentCount": 1050,
+      "termCount": 3207,
+      "asset": "/corpus/indexes/pli/kn-s0504m.json.gz",
+      "byteSize": 72568
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0505m",
+      "documentCount": 3892,
+      "termCount": 8617,
+      "asset": "/corpus/indexes/pli/kn-s0505m.json.gz",
+      "byteSize": 234358
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0506m",
+      "documentCount": 3047,
+      "termCount": 4722,
+      "asset": "/corpus/indexes/pli/kn-s0506m.json.gz",
+      "byteSize": 154296
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0507m",
+      "documentCount": 2537,
+      "termCount": 4913,
+      "asset": "/corpus/indexes/pli/kn-s0507m.json.gz",
+      "byteSize": 142065
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0508m",
+      "documentCount": 4072,
+      "termCount": 8075,
+      "asset": "/corpus/indexes/pli/kn-s0508m.json.gz",
+      "byteSize": 231377
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0509m",
+      "documentCount": 1609,
+      "termCount": 3538,
+      "asset": "/corpus/indexes/pli/kn-s0509m.json.gz",
+      "byteSize": 92255
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0510m1",
+      "documentCount": 13618,
+      "termCount": 11961,
+      "asset": "/corpus/indexes/pli/kn-s0510m1.json.gz",
+      "byteSize": 638368
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0510m2",
+      "documentCount": 10112,
+      "termCount": 9686,
+      "asset": "/corpus/indexes/pli/kn-s0510m2.json.gz",
+      "byteSize": 490047
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0511m",
+      "documentCount": 3220,
+      "termCount": 3522,
+      "asset": "/corpus/indexes/pli/kn-s0511m.json.gz",
+      "byteSize": 157932
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0512m",
+      "documentCount": 1117,
+      "termCount": 2292,
+      "asset": "/corpus/indexes/pli/kn-s0512m.json.gz",
+      "byteSize": 63157
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0513m",
+      "documentCount": 9347,
+      "termCount": 14710,
+      "asset": "/corpus/indexes/pli/kn-s0513m.json.gz",
+      "byteSize": 529077
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0514m",
+      "documentCount": 11414,
+      "termCount": 16886,
+      "asset": "/corpus/indexes/pli/kn-s0514m.json.gz",
+      "byteSize": 609756
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0515m",
+      "documentCount": 2888,
+      "termCount": 13305,
+      "asset": "/corpus/indexes/pli/kn-s0515m.json.gz",
+      "byteSize": 272010
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0516m",
+      "documentCount": 2680,
+      "termCount": 10520,
+      "asset": "/corpus/indexes/pli/kn-s0516m.json.gz",
+      "byteSize": 222910
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0517m",
+      "documentCount": 1760,
+      "termCount": 8316,
+      "asset": "/corpus/indexes/pli/kn-s0517m.json.gz",
+      "byteSize": 173748
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0519m",
+      "documentCount": 1435,
+      "termCount": 7551,
+      "asset": "/corpus/indexes/pli/kn-s0519m.json.gz",
+      "byteSize": 141121
+    },
+    {
+      "language": "pli",
+      "collection": "mn",
+      "documentCount": 4550,
+      "termCount": 21775,
+      "asset": "/corpus/indexes/pli/mn.json.gz",
+      "byteSize": 509256
+    },
+    {
+      "language": "pli",
+      "collection": "sn",
+      "documentCount": 8916,
+      "termCount": 22065,
+      "asset": "/corpus/indexes/pli/sn.json.gz",
+      "byteSize": 722321
+    },
+    {
+      "language": "pli",
+      "collection": "vinaya",
+      "documentCount": 12957,
+      "termCount": 31131,
+      "asset": "/corpus/indexes/pli/vinaya.json.gz",
+      "byteSize": 1027993
+    },
+    {
+      "language": "pli",
+      "collection": "visuddhimagga",
+      "documentCount": 4068,
+      "termCount": 35511,
+      "asset": "/corpus/indexes/pli/visuddhimagga.json.gz",
+      "byteSize": 611715
+    },
+    {
+      "language": "ru",
+      "collection": "an",
+      "documentCount": 56020,
+      "termCount": 17951,
+      "asset": "/corpus/indexes/ru/an.json.gz",
+      "byteSize": 2851624
+    },
+    {
+      "language": "ru",
+      "collection": "dn",
+      "documentCount": 4288,
+      "termCount": 3612,
+      "asset": "/corpus/indexes/ru/dn.json.gz",
+      "byteSize": 230734
+    },
+    {
+      "language": "ru",
+      "collection": "iti",
+      "documentCount": 2978,
+      "termCount": 3122,
+      "asset": "/corpus/indexes/ru/iti.json.gz",
+      "byteSize": 163400
+    },
+    {
+      "language": "ru",
+      "collection": "mn",
+      "documentCount": 39660,
+      "termCount": 16611,
+      "asset": "/corpus/indexes/ru/mn.json.gz",
+      "byteSize": 2127886
+    },
+    {
+      "language": "ru",
+      "collection": "sn",
+      "documentCount": 51387,
+      "termCount": 16486,
+      "asset": "/corpus/indexes/ru/sn.json.gz",
+      "byteSize": 2563501
+    },
+    {
+      "language": "ru",
+      "collection": "snp",
+      "documentCount": 4224,
+      "termCount": 5141,
+      "asset": "/corpus/indexes/ru/snp.json.gz",
+      "byteSize": 240622
+    },
+    {
+      "language": "ru",
+      "collection": "thag",
+      "documentCount": 340,
+      "termCount": 663,
+      "asset": "/corpus/indexes/ru/thag.json.gz",
+      "byteSize": 21162
+    },
+    {
+      "language": "ru",
+      "collection": "thig",
+      "documentCount": 283,
+      "termCount": 646,
+      "asset": "/corpus/indexes/ru/thig.json.gz",
+      "byteSize": 18772
+    },
+    {
+      "language": "ru",
+      "collection": "ud",
+      "documentCount": 397,
+      "termCount": 774,
+      "asset": "/corpus/indexes/ru/ud.json.gz",
+      "byteSize": 26936
+    }
+  ]
+}

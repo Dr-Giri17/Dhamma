@@ -5,6 +5,7 @@ import { getUi } from "@/lib/ui";
 import { POST_CANONICAL_CATALOG, TIPITAKA_CATALOG } from "@/lib/corpus/catalog";
 import { translationLanguages } from "@/lib/corpus/translations";
 import type { CatalogNode } from "@/lib/corpus/types";
+import { fullCorpusEditions, fullCorpusSummary } from "@/lib/corpus/full-corpus";
 
 const availabilityCopy = {
   en: {
@@ -35,25 +36,57 @@ export default async function LibraryPage() {
   const ui = getUi(language);
   const corpus = getCorpus();
   const t = availabilityCopy[language];
+  const full = fullCorpusSummary();
+  const fullEditions = fullCorpusEditions();
+  const canonicalVolumes = fullEditions.filter((edition) => edition.canonicalStatus === "canonical");
 
   return (
     <div className="space-y-8">
       <header className="space-y-2">
         <h1 className="font-serif text-3xl">{ui.tipitaka.title}</h1>
-        <p className="text-ink-soft">{ui.tipitaka.partialNote}</p>
-        <p className="font-medium text-accent-strong">{ui.tipitaka.fullCanonMissing}</p>
+        <p className="text-ink-soft">Complete Chaṭṭha Saṅgāyana Pāli Tipiṭaka edition, with machine-verified coverage.</p>
+        <p className="font-medium text-accent-strong">All three Piṭakas contain imported local text.</p>
         <div className="flex flex-wrap gap-2 text-xs">
           <Badge active>{t.structure}</Badge>
-          <Badge active>{t.local}: 9 texts</Badge>
+          <Badge active>Pāli canonical volumes: {full.paliCanonicalWorks}</Badge>
+          <Badge active>Pāli post-canonical volumes: {full.paliPostCanonicalWorks}</Badge>
+          <Badge active>English translated works: {full.englishTranslatedWorks.toLocaleString()}</Badge>
+          <Badge active>Russian translated works: {full.russianTranslatedWorks.toLocaleString()}</Badge>
+          <Badge active>Total Pāli segments: {full.totalSegments.toLocaleString()}</Badge>
           <Badge>ID: 0 imported editions</Badge>
         </div>
       </header>
 
       <div className="grid lg:grid-cols-3 gap-4">
         {TIPITAKA_CATALOG.map((basket) => (
-          <Basket key={basket.id} node={basket} corpus={corpus} structureOnly={t.structureOnly} exactCoverage={t.exactCoverage} />
+          <Basket key={basket.id} node={basket} corpus={corpus} structureOnly={t.structureOnly} exactCoverage={t.exactCoverage} fullPali={full.fullTipitakaImported} />
         ))}
       </div>
+
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-serif text-2xl">Full Pāli canon</h2>
+          <p className="text-sm text-ink-soft">Volumes are loaded in bounded pages; corpus text is not included in the client JavaScript bundle.</p>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {(["vinaya", "sutta", "abhidhamma"] as const).map((pitaka) => (
+            <div key={pitaka} className="card-dhamma space-y-3">
+              <h3 className="font-serif text-xl capitalize">{pitaka} Piṭaka</h3>
+              <ul className="space-y-2 text-sm">
+                {canonicalVolumes.filter((edition) => edition.pitaka === pitaka).map((edition) => {
+                  const slug = edition.sourceFile.split("/").pop()?.replace(/\.mul\.xml$/i, "") ?? edition.textId;
+                  return (
+                    <li key={edition.textId}>
+                      <Link href={`/reader/${slug}`} className="link-dhamma font-medium">{edition.title}</Link>
+                      <span className="block text-xs text-ink-faint">{edition.segmentCount.toLocaleString()} segments · {edition.collection}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-serif text-2xl">Post-canonical Theravāda literature</h2>
@@ -65,16 +98,16 @@ export default async function LibraryPage() {
                 {ui.visuddhimagga.classification}
               </span>
             </div>
-            <p className="text-sm text-ink-soft">{ui.visuddhimagga.status}</p>
+            <p className="text-sm text-ink-soft">The complete VRI Pāli edition is imported locally in paginated form.</p>
             <p className="text-sm text-ink-faint">{ui.visuddhimagga.notBuddhaQuote}</p>
-            <Badge>{t.sourceGated}</Badge>
+            <Badge active>{full.visuddhimagga.segmentCount.toLocaleString()} Pāli segments</Badge>
             <div className="flex flex-wrap gap-4 text-sm">
               <Link href="/reader/visuddhimagga" className="link-dhamma">
                 {ui.visuddhimagga.title} →
               </Link>
               {work.sourceUrl ? (
                 <a href={work.sourceUrl} className="link-dhamma">
-                  BPS metadata ↗
+                  VRI Pāli source ↗
                 </a>
               ) : null}
             </div>
@@ -90,11 +123,13 @@ function Basket({
   corpus,
   structureOnly,
   exactCoverage,
+  fullPali,
 }: {
   node: CatalogNode;
   corpus: ReturnType<typeof getCorpus>;
   structureOnly: string;
   exactCoverage: string;
+  fullPali: boolean;
 }) {
   return (
     <section className="card-dhamma space-y-4">
@@ -119,7 +154,7 @@ function Basket({
             <li key={collection.id} className="border-t border-line pt-3 first:border-t-0 first:pt-0">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-medium">{collection.title}</h3>
-                <Badge active={texts.length > 0}>{texts.length > 0 ? exactCoverage : structureOnly}</Badge>
+                <Badge active={texts.length > 0 || fullPali}>{texts.length > 0 ? exactCoverage : fullPali ? "full Pāli text" : structureOnly}</Badge>
               </div>
               {texts.length > 0 ? (
                 <ul className="mt-2 space-y-2">

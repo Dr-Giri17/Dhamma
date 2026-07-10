@@ -32,8 +32,9 @@ describe("UI string lookup", () => {
     }
   });
 
-  it("keeps Visuddhimagga visibly post-canonical and source-gated", () => {
+  it("keeps Visuddhimagga visibly post-canonical and excludes protected English", () => {
     expect(getUi("en").visuddhimagga.classification).toContain("post-canonical");
-    expect(getUi("en").visuddhimagga.status).toContain("source and license verification");
+    expect(getUi("en").visuddhimagga.status).toContain("VRI Pāli");
+    expect(getUi("en").visuddhimagga.status).toContain("BPS English");
   });
 });

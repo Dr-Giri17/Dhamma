@@ -1,0 +1,21 @@
+{
+  "sourceRevision": "5da786784498ac5b202d24c66ddcb96010f4022f",
+  "inventoryEditions": 4868,
+  "importedEditions": 4425,
+  "importedWorks": 4321,
+  "importedSegments": 155649,
+  "translators": [
+    "brahmali",
+    "kelly",
+    "kovilo",
+    "soma",
+    "suddhaso",
+    "sujato"
+  ],
+  "excludedEditions": 443,
+  "exclusions": {
+    "excluded-missing-root": 76,
+    "excluded-segment-mismatch": 367
+  },
+  "licenseName": "CC0 1.0 Universal (CC0 1.0)"
+}
