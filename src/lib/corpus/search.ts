@@ -22,6 +22,7 @@ import type {
   RetrievedSegment,
   SearchFilters,
   SourceWork,
+  DhammaText,
 } from "./types";
 import {
   isContentToken,
@@ -30,6 +31,7 @@ import {
   tokenize,
 } from "./normalize";
 import { searchableSegments } from "./seed";
+import { indexedDocument } from "./search-index";
 
 /** Known Pāli / Dhamma terms — match these with elevated weight. */
 export const DHAMMA_TERMS: Record<string, string> = {
@@ -56,6 +58,7 @@ export const DHAMMA_TERMS: Record<string, string> = {
 
 const TERM_KEYS = new Set(Object.keys(DHAMMA_TERMS));
 const MIN_RELEVANCE_SCORE = 4;
+const MAX_RETRIEVED_SEGMENTS = 12;
 
 /** True if `term` (already normalized ASCII) is a recognized Dhamma term. */
 export function isDhammaTerm(term: string): boolean {
@@ -70,12 +73,32 @@ export interface SearchOptions {
 /** Apply filter predicates to a segment given its owning work. */
 function passesFilters(
   seg: DhammaSegment,
+  text: DhammaText | undefined,
   work: SourceWork | undefined,
   filters: SearchFilters
 ): boolean {
   if (filters.category && work?.category !== filters.category) return false;
-  if (filters.workId && seg.textId !== filters.workId) return false;
-  if (filters.language && seg.language !== filters.language) return false;
+  if (filters.workId && text?.workId !== filters.workId) return false;
+  if (filters.language) {
+    const available = filters.language === "pli"
+      ? Boolean(seg.rootText)
+      : filters.language === "en"
+        ? Boolean(seg.translationText)
+        : Boolean(seg.translations?.[filters.language as "ru" | "id"]);
+    if (!available) return false;
+  }
+  if (filters.sourceType === "root" && !seg.rootText) return false;
+  if (filters.sourceType === "translation" && !seg.translationText) return false;
+  if (filters.canonicalStatus) {
+    const status = work?.pitaka === "post_canonical"
+      ? "post-canonical"
+      : work?.category === "canonical"
+        ? "canonical"
+        : work?.category === "commentarial"
+          ? "commentarial"
+          : "modern-explanation";
+    if (status !== filters.canonicalStatus) return false;
+  }
   if (filters.uidPrefix) {
     const prefix = filters.uidPrefix.toLowerCase();
     if (!seg.segmentUid.toLowerCase().startsWith(prefix)) return false;
@@ -101,7 +124,10 @@ function scoreSegment(
 ): { score: number; reason: RetrievedSegment["reason"] } | null {
   const haystackRoot = normalizeForSearch(seg.rootText || "");
   const haystackTrans = normalizeForSearch(seg.translationText || "");
-  const haystack = `${haystackRoot} ${haystackTrans}`;
+  const localizedTranslations = Object.values(seg.translations ?? {})
+    .map((translation) => normalizeForSearch(translation?.text ?? ""))
+    .join(" ");
+  const haystack = `${haystackRoot} ${haystackTrans} ${localizedTranslations}`;
 
   let score = 0;
   let reason: RetrievedSegment["reason"] = "lexical";
@@ -132,7 +158,10 @@ function scoreSegment(
   //    built solely on filler ("buddha", "said", "one", "time") does not
   //    surface a segment. This is the anti-hallucination guard for retrieval:
   //    an unrelated question must return NO sources so askDhamma fails closed.
-  const hayTokens = new Set(haystack.split(/[^a-z0-9]+/i).filter(Boolean));
+  const indexed = indexedDocument(seg.segmentUid);
+  const hayTokens = new Set(
+    indexed?.tokens ?? haystack.split(/[^a-z0-9]+/i).filter(Boolean)
+  );
   let overlap = 0;
   for (const t of terms) {
     if (hayTokens.has(t) && isContentToken(t)) {
@@ -167,7 +196,7 @@ export function search(
   const normalizedQuery = normalizeForSearch(query);
   const terms = tokenize(query);
   const filters = options.filters ?? {};
-  const limit = options.limit ?? 20;
+  const limit = Math.min(options.limit ?? 20, MAX_RETRIEVED_SEGMENTS);
 
   const workById = new Map(corpus.works.map((w) => [w.id, w]));
   const textById = new Map(corpus.texts.map((t) => [t.id, t]));
@@ -178,7 +207,7 @@ export function search(
   for (const seg of candidates) {
     const text = textById.get(seg.textId);
     const work = text ? workById.get(text.workId) : undefined;
-    if (!passesFilters(seg, work, filters)) continue;
+    if (!passesFilters(seg, text, work, filters)) continue;
 
     const scored = scoreSegment(seg, normalizedQuery, terms, work);
     if (!scored) continue;

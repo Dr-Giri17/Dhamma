@@ -14,7 +14,9 @@
     "test:watch": "vitest",
     "ingest:dhammapada": "tsx scripts/ingest-dhammapada.ts",
     "ingest:bilara": "tsx scripts/ingest-bilara.ts",
-    "build:index": "tsx scripts/build-search-index.ts"
+    "build:index": "tsx scripts/build-search-index.ts",
+    "corpus:metadata": "tsx scripts/corpus/build-metadata.ts",
+    "corpus:validate": "tsx scripts/corpus/build-metadata.ts"
   },
   "dependencies": {
     "next": "15.5.9",

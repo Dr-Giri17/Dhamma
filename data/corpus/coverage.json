@@ -1,0 +1,49 @@
+{
+  "generatedFrom": "src/lib/corpus/registry.ts",
+  "importedEditionCount": 22,
+  "importedTextCount": 9,
+  "languages": [
+    {
+      "language": "pli",
+      "importedEditions": 8,
+      "sourceGated": []
+    },
+    {
+      "language": "en",
+      "importedEditions": 9,
+      "sourceGated": []
+    },
+    {
+      "language": "ru",
+      "importedEditions": 5,
+      "sourceGated": []
+    },
+    {
+      "language": "id",
+      "importedEditions": 0,
+      "sourceGated": [
+        "No published CC0 Indonesian Theravāda Pāli edition matches the local seed works."
+      ]
+    }
+  ],
+  "canonicalWorksImported": [
+    "work-dhp",
+    "work-mn",
+    "work-dn",
+    "work-an",
+    "work-sn",
+    "work-snp"
+  ],
+  "sourceGatedWorks": [
+    {
+      "workId": "work-vism",
+      "title": "Visuddhimagga",
+      "canonicalStatus": "post-canonical",
+      "reason": "BPS Ñāṇamoli edition is all rights reserved; metadata link only."
+    }
+  ],
+  "claims": {
+    "fullTipitakaImported": false,
+    "structureAvailable": true
+  }
+}
