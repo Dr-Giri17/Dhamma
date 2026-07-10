@@ -175,6 +175,10 @@ export function verseToSegment(verse: ParsedVerse): DhammaSegment {
     translator: MULLER_PROVENANCE.translator,
     metadata: {
       edition: MULLER_PROVENANCE.edition,
+      translationLanguage: "en",
+      translationSourcePath: DHAMMAPADA_GUTENBERG_URL,
+      translationPublished: true,
+      translationPublicationStatus: "Project Gutenberg published edition",
       vaggaNumber: vagga?.number,
     },
   };

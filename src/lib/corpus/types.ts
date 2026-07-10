@@ -31,6 +31,18 @@ export type SourceProvider =
   | "project_gutenberg"
   | "manual";
 
+export interface TranslationSegment {
+  language: string;
+  text: string;
+  translator: string;
+  provider: SourceProvider;
+  license: string;
+  sourcePath: string;
+  published: boolean;
+  publicationStatus: string;
+  publicationNumber?: string;
+}
+
 /** Nikāya / collection shorthand. */
 export type Nikaya = "dn" | "mn" | "sn" | "an" | "kn";
 
@@ -88,6 +100,8 @@ export interface DhammaSegment {
   language: string;
   rootText?: string;
   translationText?: string;
+  /** Additional verified translations. `translationText` remains the English retrieval text. */
+  translations?: Partial<Record<"ru" | "id", TranslationSegment>>;
   htmlTemplate?: string;
   speaker?: string;
   sectionTitle?: string;

@@ -24,9 +24,12 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import {
   BILARA_TARGETS,
+  BILARA_ADDITIONAL_TRANSLATIONS,
   SUJATO_PROVENANCE,
   ROOT_EDITION,
   bilaraUrl,
+  additionalTranslationPath,
+  additionalTranslationRecord,
   buildSegment,
   rootPath,
   translationPath,
@@ -138,11 +141,21 @@ async function main() {
       const rootUrl = bilaraUrl(rootPath(t));
       const transUrl = bilaraUrl(translationPath(t));
       console.log(`  • ${t.uid}: root + translation`);
-      const [root, translation] = await Promise.all([
+      const additionalTargets = BILARA_ADDITIONAL_TRANSLATIONS.filter(
+        (candidate) => candidate.uid === t.uid
+      );
+      const [root, translation, ...additionalMaps] = await Promise.all([
         fetchJson(rootUrl),
         fetchJson(transUrl),
+        ...additionalTargets.map((candidate) =>
+          fetchJson(bilaraUrl(additionalTranslationPath(candidate)))
+        ),
       ]);
-      return { target: t, root, translation };
+      const additional = additionalTargets.map((candidate, index) => ({
+        target: candidate,
+        segments: additionalMaps[index],
+      }));
+      return { target: t, root, translation, additional };
     })
   );
 
@@ -150,7 +163,7 @@ async function main() {
 
   const newTexts: DhammaText[] = [];
   const newSegments: DhammaSegment[] = [];
-  for (const { target, root, translation } of perTarget) {
+  for (const { target, root, translation, additional } of perTarget) {
     const sourceRef = uidToSourceRef(target.uid);
     newTexts.push({
       id: `text-${target.uid.replace(/\W/g, "")}`,
@@ -174,6 +187,20 @@ async function main() {
           segmentOrder: idx + 1,
           rootText: entry.root,
           translationText: entry.translation,
+          translationSourcePath: translationPath(target),
+          translations: Object.fromEntries(
+            additional.flatMap(({ target: translationTarget, segments }) => {
+              const translated = segments[entry.uid];
+              return translated
+                ? [
+                    [
+                      translationTarget.language,
+                      additionalTranslationRecord(translationTarget, translated),
+                    ],
+                  ]
+                : [];
+            })
+          ),
         })
       );
     });

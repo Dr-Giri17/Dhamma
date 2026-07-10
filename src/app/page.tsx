@@ -48,8 +48,12 @@ export default async function HomePage() {
       ) : null}
 
       <section className="space-y-4">
-        <h2 className="font-serif text-2xl text-ink">{ui.tipitaka.title}</h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-serif text-2xl text-ink">{ui.tipitaka.title}</h2>
+          <Link href="/library" className="link-dhamma text-sm">{ui.nav.library} →</Link>
+        </div>
         <p className="text-sm text-ink-soft">{ui.tipitaka.partialNote}</p>
+        <p className="text-sm font-medium text-accent-strong">{ui.tipitaka.fullCanonMissing}</p>
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="card-dhamma opacity-70">
             <h3 className="font-serif text-lg mb-1">{ui.tipitaka.vinaya}</h3>
@@ -67,7 +71,7 @@ export default async function HomePage() {
               </li>
               {["MN 10", "MN 118", "DN 31", "AN 3.65", "SN 56.11", "Snp 1.8", "Snp 2.1", "Snp 2.4"].map((ref) => (
                 <li key={ref}>
-                  <Link href={`/search?q=${encodeURIComponent(ref)}`} className="link-dhamma">
+                  <Link href={`/reader/${ref.toLowerCase().replace(/\s+/g, "")}`} className="link-dhamma">
                     {ref}
                   </Link>
                 </li>
@@ -82,7 +86,9 @@ export default async function HomePage() {
       </section>
 
       <section className="card-dhamma border-dashed border-accent/60">
-        <h2 className="font-serif text-lg mb-1">{ui.visuddhimagga.title}</h2>
+        <h2 className="font-serif text-lg mb-1">
+          <Link href="/reader/visuddhimagga" className="link-dhamma">{ui.visuddhimagga.title}</Link>
+        </h2>
         <p className="text-sm text-ink-faint">{ui.visuddhimagga.status}</p>
       </section>
 

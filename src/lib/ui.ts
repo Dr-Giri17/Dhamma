@@ -6,6 +6,7 @@ export interface UiStrings {
   };
   nav: {
     home: string;
+    library: string;
     read: string;
     search: string;
     ask: string;
@@ -50,10 +51,16 @@ export interface UiStrings {
     abhidhamma: string;
     abhidhammaDesc: string;
     available: string;
+    unavailable: string;
+    fullCanonMissing: string;
+    currentCoverage: string;
+    fallbackEnglish: string;
   };
   visuddhimagga: {
     title: string;
     status: string;
+    classification: string;
+    notBuddhaQuote: string;
   };
   ask: {
     title: string;
@@ -82,6 +89,15 @@ export interface UiStrings {
     schemaOnly: string;
     blockedText: string;
     verse: string;
+    paliText: string;
+    translation: string;
+    englishAvailable: string;
+    selectedMissing: string;
+    fallbackEnglish: string;
+    partialTranslation: string;
+    sourceAndLicense: string;
+    backToLibrary: string;
+    fallbackBadge: string;
   };
   terms: {
     title: string;
@@ -95,6 +111,7 @@ const en: UiStrings = {
   language: { label: "Language" },
   nav: {
     home: "Home",
+    library: "Library",
     read: "Reader",
     search: "Search",
     ask: "Ask",
@@ -146,11 +163,17 @@ const en: UiStrings = {
     abhidhamma: "Abhidhamma Pitaka",
     abhidhammaDesc: "Systematic teachings, not yet represented in the corpus.",
     available: "available",
+    unavailable: "not yet available",
+    fullCanonMissing: "Full canon is not yet included.",
+    currentCoverage: "Current verified coverage",
+    fallbackEnglish: "fallback EN",
   },
   visuddhimagga: {
     title: "Visuddhimagga",
     status:
-      "Not included in the corpus. This section remains schema-only until source and license review is complete.",
+      "Visuddhimagga is not yet included in the corpus. The section is prepared, but the text will be added only after source and license verification.",
+    classification: "Commentarial / post-canonical",
+    notBuddhaQuote: "Not presented as words of the Buddha.",
   },
   ask: {
     title: "Ask about Dhamma",
@@ -184,6 +207,15 @@ const en: UiStrings = {
     blockedText:
       "This text is the Visuddhimagga, a post-canonical commentary by Buddhaghosa. It is not part of the Tipitaka and is not presented as words of the Buddha. Text ingestion is pending source and license review.",
     verse: "verse",
+    paliText: "Pāli text",
+    translation: "Translation",
+    englishAvailable: "English translation is available.",
+    selectedMissing: "Selected-language translation is not yet in the corpus.",
+    fallbackEnglish: "The available English translation is shown.",
+    partialTranslation: "Some segments do not yet have the selected-language translation.",
+    sourceAndLicense: "Source and license",
+    backToLibrary: "Library / Tipiṭaka",
+    fallbackBadge: "fallback EN",
   },
   terms: {
     title: "Terms",
@@ -198,6 +230,7 @@ const ru: UiStrings = {
   language: { label: "Язык" },
   nav: {
     home: "Главная",
+    library: "Библиотека",
     read: "Чтение",
     search: "Поиск",
     ask: "Спросить",
@@ -249,11 +282,17 @@ const ru: UiStrings = {
     abhidhamma: "Абхидхамма-питака",
     abhidhammaDesc: "Систематическое учение пока не представлено в корпусе.",
     available: "доступно",
+    unavailable: "пока недоступно",
+    fullCanonMissing: "Полный канон ещё не включён.",
+    currentCoverage: "Текущее проверенное покрытие",
+    fallbackEnglish: "резервный EN",
   },
   visuddhimagga: {
     title: "Висуддхимагга",
     status:
-      "Не включена в корпус. Раздел остается только схемой до проверки источника и лицензии.",
+      "Висуддхимагга пока не включена в корпус. Раздел подготовлен, но текст будет добавлен только после проверки источника и лицензии.",
+    classification: "Комментарий / post-canonical",
+    notBuddhaQuote: "Не представлено как слова Будды.",
   },
   ask: {
     title: "Спросить о Дхамме",
@@ -287,6 +326,15 @@ const ru: UiStrings = {
     blockedText:
       "Этот текст - Висуддхимагга, постканонический комментарий Буддхагхоши. Он не является частью Tipitaka и не представлен как слова Будды. Добавление текста ожидает проверки источника и лицензии.",
     verse: "строфа",
+    paliText: "Текст на пали",
+    translation: "Перевод",
+    englishAvailable: "Доступен английский перевод.",
+    selectedMissing: "Русский перевод пока не включён в корпус.",
+    fallbackEnglish: "Показан доступный английский перевод.",
+    partialTranslation: "Для некоторых фрагментов перевод на выбранный язык пока отсутствует.",
+    sourceAndLicense: "Источник и лицензия",
+    backToLibrary: "Библиотека / Трипитака",
+    fallbackBadge: "резервный EN",
   },
   terms: {
     title: "Термины",
@@ -301,6 +349,7 @@ const id: UiStrings = {
   language: { label: "Bahasa" },
   nav: {
     home: "Beranda",
+    library: "Pustaka",
     read: "Pembaca",
     search: "Cari",
     ask: "Tanya",
@@ -352,11 +401,17 @@ const id: UiStrings = {
     abhidhamma: "Abhidhamma Pitaka",
     abhidhammaDesc: "Ajaran sistematis belum ada dalam korpus.",
     available: "tersedia",
+    unavailable: "belum tersedia",
+    fullCanonMissing: "Kanon lengkap belum tersedia.",
+    currentCoverage: "Cakupan terverifikasi saat ini",
+    fallbackEnglish: "cadangan EN",
   },
   visuddhimagga: {
     title: "Visuddhimagga",
     status:
-      "Tidak disertakan dalam korpus. Bagian ini tetap berupa skema sampai sumber dan lisensi selesai ditinjau.",
+      "Visuddhimagga belum termasuk dalam korpus. Bagian ini sudah disiapkan, tetapi teks hanya akan ditambahkan setelah sumber dan lisensinya diverifikasi.",
+    classification: "Komentar / pascakanonis",
+    notBuddhaQuote: "Tidak disajikan sebagai sabda Buddha.",
   },
   ask: {
     title: "Tanya tentang Dhamma",
@@ -390,6 +445,15 @@ const id: UiStrings = {
     blockedText:
       "Teks ini adalah Visuddhimagga, komentar pascakanonis oleh Buddhaghosa. Ini bukan bagian dari Tipitaka dan tidak disajikan sebagai sabda Buddha. Pemuatan teks menunggu pemeriksaan sumber dan lisensi.",
     verse: "syair",
+    paliText: "Teks Pāli",
+    translation: "Terjemahan",
+    englishAvailable: "Terjemahan bahasa Inggris tersedia.",
+    selectedMissing: "Terjemahan bahasa Indonesia belum tersedia dalam korpus.",
+    fallbackEnglish: "Terjemahan bahasa Inggris yang tersedia ditampilkan.",
+    partialTranslation: "Beberapa bagian belum memiliki terjemahan dalam bahasa yang dipilih.",
+    sourceAndLicense: "Sumber dan lisensi",
+    backToLibrary: "Pustaka / Tipiṭaka",
+    fallbackBadge: "cadangan EN",
   },
   terms: {
     title: "Istilah",
