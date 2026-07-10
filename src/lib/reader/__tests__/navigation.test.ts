@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildEditionHref, normalizeTextEdition } from "../navigation";
+import {
+  buildEditionHref,
+  missingEditionMessage,
+  normalizeTextEdition,
+} from "../navigation";
 
 describe("reader edition navigation", () => {
   it("keeps the segment position while switching edition", () => {
@@ -23,5 +27,9 @@ describe("reader edition navigation", () => {
     expect(buildEditionHref({ slug: "mn10", edition: "pli", parallel: true }))
       .toBe("/reader/mn10?edition=pli");
   });
-});
 
+  it("names the requested missing edition rather than the interface language", () => {
+    expect(missingEditionMessage("ru", "id")).toContain("Индонезийский перевод");
+    expect(missingEditionMessage("ru", "id")).not.toContain("Русский перевод");
+  });
+});

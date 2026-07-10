@@ -12,6 +12,7 @@ import {
 } from "@/lib/corpus/translations";
 import {
   buildEditionHref,
+  missingEditionMessage,
   normalizeTextEdition,
   type TextEditionLanguage,
 } from "@/lib/reader/navigation";
@@ -132,6 +133,7 @@ export default async function ReaderPage({
   }));
   const selectedCount = selected.filter(({ selection }) => selection.requestedLanguageAvailable).length;
   const fallbackCount = selected.filter(({ selection }) => selection.isFallback && selection.translation).length;
+  const missingEdition = missingEditionMessage(language, requestedEdition);
 
   return (
     <div className="space-y-6">
@@ -156,12 +158,12 @@ export default async function ReaderPage({
 
       <div className="card-dhamma bg-accent-soft/35 text-sm space-y-1">
         {requestedEdition === "en" && availability.en ? <p>{ui.reader.englishAvailable}</p> : null}
-        {requestedEdition !== "pli" && selectedCount === 0 ? <p>{ui.reader.selectedMissing}</p> : null}
+        {requestedEdition !== "pli" && selectedCount === 0 ? <p>{missingEdition}</p> : null}
         {requestedEdition !== "pli" && selectedCount > 0 && fallbackCount > 0 ? (
           <p>{ui.reader.partialTranslation}</p>
         ) : null}
         {fallbackCount > 0 ? <p>{ui.reader.fallbackEnglish}</p> : null}
-        {requestedEdition === "pli" && !availability.pli ? <p>{ui.reader.selectedMissing}</p> : null}
+        {requestedEdition === "pli" && !availability.pli ? <p>{missingEdition}</p> : null}
       </div>
 
       <article className="space-y-7">
@@ -179,7 +181,8 @@ export default async function ReaderPage({
                 <EditionBlock
                   label={ui.reader.paliText}
                   text={segment.rootText}
-                  language="pli"
+                  languageCode="pli"
+                  badgeLabel="Pāli"
                   edition={rootEdition}
                   sourceLabel={ui.reader.sourceAndLicense}
                 />
@@ -188,7 +191,8 @@ export default async function ReaderPage({
                 <EditionBlock
                   label={ui.reader.translation}
                   text={selection.translation.text}
-                  language={selection.isFallback ? ui.reader.fallbackBadge : selection.translation.language.toUpperCase()}
+                  languageCode={selection.translation.language}
+                  badgeLabel={selection.isFallback ? ui.reader.fallbackBadge : selection.translation.language.toUpperCase()}
                   edition={translationEdition}
                   fallback={selection.isFallback}
                   sourceLabel={ui.reader.sourceAndLicense}
@@ -219,25 +223,27 @@ export default async function ReaderPage({
 function EditionBlock({
   label,
   text,
-  language,
+  languageCode,
+  badgeLabel,
   edition,
   fallback = false,
   sourceLabel,
 }: {
   label: string;
   text: string;
-  language: string;
+  languageCode: string;
+  badgeLabel: string;
   edition?: ReturnType<typeof manifestEdition>;
   fallback?: boolean;
   sourceLabel: string;
 }) {
   return (
-    <div className="mb-4" data-edition-language={language.toLowerCase()}>
+    <div className="mb-4" data-edition-language={languageCode.toLowerCase()}>
       <div className="flex flex-wrap items-center gap-2 mb-1">
         <p className="text-xs uppercase tracking-wide text-ink-faint">{label}</p>
-        <Badge muted={fallback}>{language}</Badge>
+        <Badge muted={fallback}>{badgeLabel}</Badge>
       </div>
-      <p className={language === "pli" ? "pali" : undefined}>{text}</p>
+      <p className={languageCode === "pli" ? "pali" : undefined}>{text}</p>
       {edition ? (
         <details className="mt-3 text-xs text-ink-faint">
           <summary className="cursor-pointer text-accent-strong">{sourceLabel}</summary>
@@ -253,6 +259,7 @@ function EditionBlock({
     </div>
   );
 }
+
 
 function Badge({ children, muted = false }: { children: React.ReactNode; muted?: boolean }) {
   return (
