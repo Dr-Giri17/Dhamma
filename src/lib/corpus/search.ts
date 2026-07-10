@@ -120,7 +120,8 @@ function scoreSegment(
   seg: DhammaSegment,
   normalizedQuery: string,
   terms: string[],
-  work?: SourceWork
+  work?: SourceWork,
+  useBuildIndex = true
 ): { score: number; reason: RetrievedSegment["reason"] } | null {
   const haystackRoot = normalizeForSearch(seg.rootText || "");
   const haystackTrans = normalizeForSearch(seg.translationText || "");
@@ -158,7 +159,7 @@ function scoreSegment(
   //    built solely on filler ("buddha", "said", "one", "time") does not
   //    surface a segment. This is the anti-hallucination guard for retrieval:
   //    an unrelated question must return NO sources so askDhamma fails closed.
-  const indexed = indexedDocument(seg.segmentUid);
+  const indexed = useBuildIndex ? indexedDocument(seg.segmentUid) : undefined;
   const hayTokens = new Set(
     indexed?.tokens ?? haystack.split(/[^a-z0-9]+/i).filter(Boolean)
   );
@@ -240,7 +241,7 @@ export function searchSegments(
   const terms = tokenize(query);
   const results: RetrievedSegment[] = [];
   for (const seg of segments) {
-    const scored = scoreSegment(seg, normalizedQuery, terms, undefined);
+    const scored = scoreSegment(seg, normalizedQuery, terms, undefined, false);
     if (!scored) continue;
     results.push({ ...seg, score: scored.score, reason: scored.reason });
   }
