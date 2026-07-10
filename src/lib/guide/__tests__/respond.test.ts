@@ -30,6 +30,20 @@ describe("source-grounded Dhamma Guide", () => {
     }
   });
 
+  it("strict_source returns exactly one excerpt and its matching citation", async () => {
+    const answer = await answerGuide(corpus, {
+      question: "What is dukkha?",
+      language: "en",
+      mode: "strict_source",
+    });
+    expect(answer.citations).toHaveLength(1);
+    expect(answer.retrievedSegments).toHaveLength(1);
+    expect(answer.directExcerpts).toHaveLength(1);
+    expect(answer.answer).toBe(answer.retrievedSegments[0].text);
+    expect(answer.citations[0].id).toBe(answer.retrievedSegments[0].id);
+    expect(answer.directExcerpts[0].id).toBe(answer.retrievedSegments[0].id);
+  });
+
   it("uses verified Russian and explicit Indonesian fallback editions", async () => {
     const russian = await answerGuide(corpus, {
       question: "Что такое dukkha?",
@@ -141,5 +155,133 @@ describe("source-grounded Dhamma Guide", () => {
     expect(answer.groundingStatus).toBe("validated-synthesis");
     expect(answer.citations).toHaveLength(1);
     expect(answer.answer).toContain("validated app explanation");
+  });
+
+  it.each([
+    'The source says "this fabricated quotation is not in the retrieved corpus".',
+    "The source says “this fabricated quotation is not in the retrieved corpus”.",
+    "The source says «this fabricated quotation is not in the retrieved corpus».",
+    "The source says „this fabricated quotation is not in the retrieved corpus“.",
+  ])("rejects a fabricated quote hidden in the synthesized answer: %s", async (generated) => {
+    const invalid: GuideSynthesisAdapter = {
+      id: "hidden-quote-test",
+      async synthesize(input) {
+        return {
+          answer: generated,
+          citationIds: [input.allowedCitationIds[0]],
+          directQuotes: [],
+        };
+      },
+    };
+    const answer = await answerGuide(corpus, {
+      question: "What is dukkha?",
+      language: "en",
+      mode: "explain_simple",
+      adapter: invalid,
+    });
+    expect(answer.warnings).toContain("synthesis-validation-failed");
+    expect(answer.answer).not.toContain("fabricated quotation");
+  });
+
+  it("does not treat a short quoted term as a direct quotation", async () => {
+    const valid: GuideSynthesisAdapter = {
+      id: "short-term-test",
+      async synthesize(input) {
+        return {
+          answer: "The term “dukkha” is discussed in the retrieved source.",
+          citationIds: [input.allowedCitationIds[0]],
+          directQuotes: [],
+        };
+      },
+    };
+    const answer = await answerGuide(corpus, {
+      question: "What is dukkha?",
+      language: "en",
+      mode: "explain_simple",
+      adapter: valid,
+    });
+    expect(answer.groundingStatus).toBe("validated-synthesis");
+  });
+
+  it("rejects an unknown citation ID even without direct quotes", async () => {
+    const invalid: GuideSynthesisAdapter = {
+      id: "unknown-citation-test",
+      async synthesize() {
+        return {
+          answer: "Generated app explanation.",
+          citationIds: ["missing-segment"],
+          directQuotes: [],
+        };
+      },
+    };
+    const answer = await answerGuide(corpus, {
+      question: "What is dukkha?",
+      language: "en",
+      mode: "explain_simple",
+      adapter: invalid,
+    });
+    expect(answer.warnings).toContain("synthesis-validation-failed");
+  });
+
+  it("rejects a quote formed by concatenating two retrieved segments", async () => {
+    const invalid: GuideSynthesisAdapter = {
+      id: "cross-segment-quote-test",
+      async synthesize(input) {
+        const quote = `${input.excerpts[0].text.slice(-24)}\n${input.excerpts[1].text.slice(0, 24)}`;
+        return {
+          answer: "Generated app explanation.",
+          citationIds: input.allowedCitationIds.slice(0, 2),
+          directQuotes: [quote],
+        };
+      },
+    };
+    const answer = await answerGuide(corpus, {
+      question: "What is dukkha?",
+      language: "en",
+      mode: "explain_simple",
+      adapter: invalid,
+    });
+    expect(answer.warnings).toContain("synthesis-validation-failed");
+  });
+
+  it("accepts a declared quote contained in one retrieved segment", async () => {
+    const valid: GuideSynthesisAdapter = {
+      id: "single-segment-quote-test",
+      async synthesize(input) {
+        const quote = input.excerpts[0].text.slice(0, 40);
+        return {
+          answer: `The retrieved passage says “${quote}”.`,
+          citationIds: [input.allowedCitationIds[0]],
+          directQuotes: [quote],
+        };
+      },
+    };
+    const answer = await answerGuide(corpus, {
+      question: "What is dukkha?",
+      language: "en",
+      mode: "explain_simple",
+      adapter: valid,
+    });
+    expect(answer.groundingStatus).toBe("validated-synthesis");
+  });
+
+  it("rejects an empty synthesized answer even with a valid citation", async () => {
+    const invalid: GuideSynthesisAdapter = {
+      id: "empty-answer-test",
+      async synthesize(input) {
+        return {
+          answer: "   ",
+          citationIds: [input.allowedCitationIds[0]],
+          directQuotes: [],
+        };
+      },
+    };
+    const answer = await answerGuide(corpus, {
+      question: "What is dukkha?",
+      language: "en",
+      mode: "explain_simple",
+      adapter: invalid,
+    });
+    expect(answer.warnings).toContain("synthesis-validation-failed");
   });
 });

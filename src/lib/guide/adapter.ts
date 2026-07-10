@@ -12,11 +12,45 @@ export function validateSynthesis(
   const allowedIds = new Set(retrieved.map((segment) => segment.id));
   if (!output.answer.trim() || output.citationIds.length === 0) return { valid: false };
   if (output.citationIds.some((id) => !allowedIds.has(id))) return { valid: false };
-  const corpusText = retrieved.map((segment) => segment.text).join("\n");
-  if (output.directQuotes.some((quote) => !quote || !corpusText.includes(quote))) {
+
+  const citationIds = new Set(output.citationIds);
+  const normalizedDirectQuotes = output.directQuotes.map((quote) => quote.trim());
+  if (normalizedDirectQuotes.some((quote) => {
+    if (!quote) return true;
+    return !retrieved.some(
+      (segment) => citationIds.has(segment.id) && segment.text.includes(quote)
+    );
+  })) {
     return { valid: false };
   }
-  return { valid: true, citations: Array.from(new Set(output.citationIds)) };
+
+  const declaredQuotes = new Set(normalizedDirectQuotes);
+  for (const quote of quoteLikeSpans(output.answer)) {
+    if (!declaredQuotes.has(quote)) return { valid: false };
+    if (!retrieved.some((segment) => segment.text.includes(quote))) return { valid: false };
+  }
+
+  return { valid: true, citations: Array.from(citationIds) };
+}
+
+const MIN_QUOTE_CHARS = 20;
+const QUOTE_PATTERNS = [
+  /"([^"\r\n]+)"/gu,
+  /“([^”\r\n]+)”/gu,
+  /«([^»\r\n]+)»/gu,
+  /„([^“\r\n]+)“/gu,
+];
+
+function quoteLikeSpans(answer: string): string[] {
+  const spans: string[] = [];
+  for (const pattern of QUOTE_PATTERNS) {
+    pattern.lastIndex = 0;
+    for (const match of answer.matchAll(pattern)) {
+      const quote = match[1].trim();
+      if (quote.length >= MIN_QUOTE_CHARS) spans.push(quote);
+    }
+  }
+  return spans;
 }
 
 /**

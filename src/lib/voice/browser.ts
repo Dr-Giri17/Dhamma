@@ -20,6 +20,7 @@ export type VoiceSessionAction =
   | { type: "start" }
   | { type: "transcript"; value: string }
   | { type: "stop" }
+  | { type: "end" }
   | { type: "cancel" }
   | { type: "error"; error: VoiceErrorCode }
   | { type: "play" }
@@ -42,6 +43,11 @@ export function voiceSessionReducer(
     case "transcript":
       return { ...state, transcript: normalizeTranscript(action.value) };
     case "stop":
+      return { ...state, listening: false, status: "stopped" };
+    case "end":
+      if (state.status === "error" || state.status === "cancelled") {
+        return { ...state, listening: false };
+      }
       return { ...state, listening: false, status: "stopped" };
     case "cancel":
       return { ...state, listening: false, status: "cancelled" };

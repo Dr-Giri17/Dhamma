@@ -85,16 +85,34 @@ export async function answerGuide(
   }
 
   if (request.mode === "strict_source") {
+    const segment = retrieval.segments[0];
+    const citation = retrieval.citations.find((candidate) => candidate.id === segment.id);
+
+    if (!citation) {
+      return {
+        answerType: "unsupported",
+        language,
+        mode: request.mode,
+        answer: copy[language].unsupported,
+        warnings: unique([...baseWarnings, "no-relevant-source"]),
+        citations: [],
+        retrievedSegments: [],
+        directExcerpts: [],
+        fallbackUsed: false,
+        groundingStatus: "unsupported",
+      };
+    }
+
     return {
       answerType: "extractive",
       language,
       mode: request.mode,
-      answer: [...safety.prefixes, retrieval.segments[0].text].join("\n\n"),
+      answer: segment.text,
       warnings: unique(baseWarnings),
-      citations: retrieval.citations,
-      retrievedSegments: retrieval.segments,
-      directExcerpts: retrieval.segments,
-      fallbackUsed,
+      citations: [citation],
+      retrievedSegments: [segment],
+      directExcerpts: [segment],
+      fallbackUsed: segment.fallbackUsed,
       groundingStatus: "grounded",
     };
   }

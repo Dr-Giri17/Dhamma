@@ -36,4 +36,26 @@ describe("browser voice helpers", () => {
     expect(playing.playing).toBe(true);
     expect(voiceSessionReducer(playing, { type: "stop-playback" }).playing).toBe(false);
   });
+
+  it.each(["permission-denied", "no-speech"] as const)(
+    "preserves %s after recognition ends",
+    (error) => {
+      const listening = voiceSessionReducer(INITIAL_VOICE_STATE, { type: "start" });
+      const failed = voiceSessionReducer(listening, { type: "error", error });
+      const ended = voiceSessionReducer(failed, { type: "end" });
+      expect(ended.status).toBe("error");
+      expect(ended.error).toBe(error);
+    }
+  );
+
+  it("turns a normal recognition end into stopped", () => {
+    const listening = voiceSessionReducer(INITIAL_VOICE_STATE, { type: "start" });
+    expect(voiceSessionReducer(listening, { type: "end" }).status).toBe("stopped");
+  });
+
+  it("preserves cancelled after recognition ends", () => {
+    const listening = voiceSessionReducer(INITIAL_VOICE_STATE, { type: "start" });
+    const cancelled = voiceSessionReducer(listening, { type: "cancel" });
+    expect(voiceSessionReducer(cancelled, { type: "end" }).status).toBe("cancelled");
+  });
 });

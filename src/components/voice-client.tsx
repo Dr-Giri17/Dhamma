@@ -47,6 +47,7 @@ export default function VoiceClient({ language }: { language: SupportedLanguage 
   const [ttsSupported, setTtsSupported] = useState<boolean | null>(null);
   const [statusMessage, setStatusMessage] = useState("");
   const recognitionRef = useRef<RecognitionLike | null>(null);
+  const recognitionEndReasonRef = useRef<"error" | "cancelled" | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
   const t = copy[language];
 
@@ -74,7 +75,11 @@ export default function VoiceClient({ language }: { language: SupportedLanguage 
       setStatusMessage(t.errors.unsupported);
       return;
     }
-    recognitionRef.current?.abort();
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.abort();
+    }
+    recognitionEndReasonRef.current = null;
     const recognition = new Constructor();
     recognition.lang = recognitionLocale(voiceLanguage);
     recognition.interimResults = true;
@@ -89,12 +94,15 @@ export default function VoiceClient({ language }: { language: SupportedLanguage 
     };
     recognition.onerror = (event) => {
       const error = mapRecognitionError(event.error);
+      recognitionEndReasonRef.current = "error";
       dispatch({ type: "error", error });
       setStatusMessage(t.errors[error]);
     };
     recognition.onend = () => {
-      dispatch({ type: "stop" });
-      setStatusMessage(t.stopped);
+      const endReason = recognitionEndReasonRef.current;
+      dispatch({ type: "end" });
+      if (!endReason) setStatusMessage(t.stopped);
+      recognitionEndReasonRef.current = null;
     };
     recognitionRef.current = recognition;
     try {
@@ -114,6 +122,7 @@ export default function VoiceClient({ language }: { language: SupportedLanguage 
   }
 
   function cancelListening() {
+    recognitionEndReasonRef.current = "cancelled";
     recognitionRef.current?.abort();
     dispatch({ type: "cancel" });
     setStatusMessage(t.cancelled);
