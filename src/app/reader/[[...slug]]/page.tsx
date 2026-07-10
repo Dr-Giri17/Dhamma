@@ -1,22 +1,32 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import EditionControls from "@/components/edition-controls";
 import { getCorpus } from "@/lib/server";
 import { getRequestLanguage } from "@/lib/i18n/server";
 import { getUi } from "@/lib/ui";
+import { manifestEdition } from "@/lib/corpus/manifest";
 import {
   selectTranslation,
   translationLanguages,
+  type SelectedTranslation,
 } from "@/lib/corpus/translations";
+import {
+  buildEditionHref,
+  normalizeTextEdition,
+  type TextEditionLanguage,
+} from "@/lib/reader/navigation";
 
 export default async function ReaderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug?: string[] }>;
+  searchParams: Promise<{ edition?: string; parallel?: string }>;
 }) {
-  const { slug } = await params;
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   const language = await getRequestLanguage();
   const ui = getUi(language);
-  const corpus = await getCorpus();
+  const corpus = getCorpus();
 
   if (!slug || slug.length === 0) {
     const texts = corpus.texts.map((text) => {
@@ -84,6 +94,15 @@ export default async function ReaderPage({
         <div className="card-dhamma space-y-2 text-ink-soft">
           <p>{ui.visuddhimagga.status}</p>
           <p>{ui.visuddhimagga.notBuddhaQuote}</p>
+          <a
+            href="https://bps.lk/library-search-select.php?id=bp207h"
+            className="link-dhamma text-sm"
+          >
+            Buddhist Publication Society metadata ↗
+          </a>
+          <p className="text-xs text-ink-faint">
+            Ñāṇamoli/BPS edition: all rights reserved; text not stored locally.
+          </p>
         </div>
       </div>
     );
@@ -95,9 +114,21 @@ export default async function ReaderPage({
   const segments = corpus.segments
     .filter((segment) => segment.textId === text.id)
     .sort((a, b) => a.segmentOrder - b.segmentOrder);
+  const languages = translationLanguages(segments);
+  const requestedEdition = normalizeTextEdition(query.edition ?? language);
+  const parallel = query.parallel === "1" && requestedEdition !== "pli";
+  const availability: Record<TextEditionLanguage, boolean> = {
+    pli: segments.some((segment) => Boolean(segment.rootText)),
+    en: languages.has("en"),
+    ru: languages.has("ru"),
+    id: languages.has("id"),
+  };
   const selected = segments.map((segment) => ({
     segment,
-    selection: selectTranslation(segment, language),
+    selection:
+      requestedEdition === "pli"
+        ? ({ isFallback: false, requestedLanguageAvailable: Boolean(segment.rootText) } satisfies SelectedTranslation)
+        : selectTranslation(segment, requestedEdition),
   }));
   const selectedCount = selected.filter(({ selection }) => selection.requestedLanguageAvailable).length;
   const fallbackCount = selected.filter(({ selection }) => selection.isFallback && selection.translation).length;
@@ -115,58 +146,110 @@ export default async function ReaderPage({
         </p>
       </div>
 
+      <EditionControls
+        slug={text.slug}
+        interfaceLanguage={language}
+        selectedEdition={requestedEdition}
+        parallel={parallel}
+        availability={availability}
+      />
+
       <div className="card-dhamma bg-accent-soft/35 text-sm space-y-1">
-        {language === "en" ? <p>{ui.reader.englishAvailable}</p> : null}
-        {language !== "en" && selectedCount === 0 ? <p>{ui.reader.selectedMissing}</p> : null}
-        {language !== "en" && selectedCount > 0 && fallbackCount > 0 ? (
+        {requestedEdition === "en" && availability.en ? <p>{ui.reader.englishAvailable}</p> : null}
+        {requestedEdition !== "pli" && selectedCount === 0 ? <p>{ui.reader.selectedMissing}</p> : null}
+        {requestedEdition !== "pli" && selectedCount > 0 && fallbackCount > 0 ? (
           <p>{ui.reader.partialTranslation}</p>
         ) : null}
         {fallbackCount > 0 ? <p>{ui.reader.fallbackEnglish}</p> : null}
+        {requestedEdition === "pli" && !availability.pli ? <p>{ui.reader.selectedMissing}</p> : null}
       </div>
 
       <article className="space-y-7">
-        {selected.map(({ segment, selection }) => (
-          <section key={segment.id} className="card-dhamma prose-dhamma">
-            {segment.sectionTitle ? (
-              <h2 className="font-serif text-xl mb-2">{segment.sectionTitle}</h2>
-            ) : null}
-            {segment.rootText ? (
-              <div className="mb-4">
-                <p className="text-xs uppercase tracking-wide text-ink-faint mb-1">
-                  {ui.reader.paliText}
-                </p>
-                <p className="pali">{segment.rootText}</p>
-              </div>
-            ) : null}
-            {selection.translation ? (
-              <div>
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <p className="text-xs uppercase tracking-wide text-ink-faint">
-                    {ui.reader.translation}
-                  </p>
-                  <Badge muted={selection.isFallback}>
-                    {selection.isFallback ? ui.reader.fallbackBadge : selection.translation.language.toUpperCase()}
-                  </Badge>
-                </div>
-                <p>{selection.translation.text}</p>
-                <details className="mt-3 text-xs text-ink-faint">
-                  <summary className="cursor-pointer text-accent-strong">
-                    {ui.reader.sourceAndLicense}
-                  </summary>
-                  <p className="mt-1 break-words">
-                    {selection.translation.translator} · {selection.translation.provider} · {selection.translation.license}
-                    {selection.translation.sourcePath ? ` · ${selection.translation.sourcePath}` : ""}
-                  </p>
-                </details>
-              </div>
-            ) : null}
-            <p className="text-xs text-accent-strong mt-3">
-              {segment.sourceRef}
-              {segment.verseNumber ? ` · ${ui.reader.verse} ${segment.verseNumber}` : ""}
-            </p>
-          </section>
-        ))}
+        {selected.map(({ segment, selection }) => {
+          const translationEdition = selection.translation
+            ? manifestEdition(text.id, selection.translation.language)
+            : undefined;
+          const rootEdition = manifestEdition(text.id, "pli");
+          return (
+            <section key={segment.id} id={segment.segmentUid} className="card-dhamma prose-dhamma scroll-mt-6">
+              {segment.sectionTitle ? (
+                <h2 className="font-serif text-xl mb-2">{segment.sectionTitle}</h2>
+              ) : null}
+              {(requestedEdition === "pli" || parallel) && segment.rootText ? (
+                <EditionBlock
+                  label={ui.reader.paliText}
+                  text={segment.rootText}
+                  language="pli"
+                  edition={rootEdition}
+                  sourceLabel={ui.reader.sourceAndLicense}
+                />
+              ) : null}
+              {requestedEdition !== "pli" && selection.translation ? (
+                <EditionBlock
+                  label={ui.reader.translation}
+                  text={selection.translation.text}
+                  language={selection.isFallback ? ui.reader.fallbackBadge : selection.translation.language.toUpperCase()}
+                  edition={translationEdition}
+                  fallback={selection.isFallback}
+                  sourceLabel={ui.reader.sourceAndLicense}
+                />
+              ) : null}
+              <p className="text-xs text-accent-strong mt-3">
+                <Link
+                  href={buildEditionHref({
+                    slug: text.slug,
+                    edition: requestedEdition,
+                    parallel,
+                    segmentUid: segment.segmentUid,
+                  })}
+                  className="link-dhamma"
+                >
+                  {segment.sourceRef} · {segment.segmentUid}
+                </Link>
+                {segment.verseNumber ? ` · ${ui.reader.verse} ${segment.verseNumber}` : ""}
+              </p>
+            </section>
+          );
+        })}
       </article>
+    </div>
+  );
+}
+
+function EditionBlock({
+  label,
+  text,
+  language,
+  edition,
+  fallback = false,
+  sourceLabel,
+}: {
+  label: string;
+  text: string;
+  language: string;
+  edition?: ReturnType<typeof manifestEdition>;
+  fallback?: boolean;
+  sourceLabel: string;
+}) {
+  return (
+    <div className="mb-4" data-edition-language={language.toLowerCase()}>
+      <div className="flex flex-wrap items-center gap-2 mb-1">
+        <p className="text-xs uppercase tracking-wide text-ink-faint">{label}</p>
+        <Badge muted={fallback}>{language}</Badge>
+      </div>
+      <p className={language === "pli" ? "pali" : undefined}>{text}</p>
+      {edition ? (
+        <details className="mt-3 text-xs text-ink-faint">
+          <summary className="cursor-pointer text-accent-strong">{sourceLabel}</summary>
+          <p className="mt-1 break-words">
+            {edition.translator} · {edition.publisher} · {edition.licenseName} · revision {edition.sourceRevision}
+          </p>
+          <a href={edition.sourceUrl} className="link-dhamma break-all">
+            {edition.sourceFile} ↗
+          </a>
+          <p className="mt-1 font-mono">sha256:{edition.sha256.slice(0, 16)}…</p>
+        </details>
+      ) : null}
     </div>
   );
 }
