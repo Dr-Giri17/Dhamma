@@ -10,6 +10,7 @@ export interface UiStrings {
     read: string;
     search: string;
     ask: string;
+    voice: string;
     wisdom: string;
     terms: string;
   };
@@ -25,6 +26,8 @@ export interface UiStrings {
     cardSearchDesc: string;
     cardAsk: string;
     cardAskDesc: string;
+    cardVoice: string;
+    cardVoiceDesc: string;
     cardDhammapada: string;
     cardDhammapadaDesc: string;
     cardTerms: string;
@@ -115,6 +118,7 @@ const en: UiStrings = {
     read: "Reader",
     search: "Search",
     ask: "Ask",
+    voice: "Dhamma Voice",
     wisdom: "Wisdom",
     terms: "Terms",
   },
@@ -135,6 +139,9 @@ const en: UiStrings = {
     cardAsk: "Ask about Dhamma",
     cardAskDesc:
       "Ask a question and get a cited answer. If the corpus does not support an answer, the app says so directly.",
+    cardVoice: "Learn with Dhamma Voice",
+    cardVoiceDesc:
+      "Explore Buddhist doctrine through a calm teacher mode that stays grounded in mapped source texts.",
     cardDhammapada: "Dhammapada",
     cardDhammapadaDesc:
       "Read the verses with Pali roots where available and the checked-in English translation.",
@@ -234,6 +241,7 @@ const ru: UiStrings = {
     read: "Чтение",
     search: "Поиск",
     ask: "Спросить",
+    voice: "Голос Дхаммы",
     wisdom: "Мудрость",
     terms: "Термины",
   },
@@ -254,6 +262,9 @@ const ru: UiStrings = {
     cardAsk: "Спросить о Дхамме",
     cardAskDesc:
       "Задайте вопрос и получите ответ с цитируемыми источниками. Если корпус не дает опоры, приложение скажет об этом прямо.",
+    cardVoice: "Учиться с Голосом Дхаммы",
+    cardVoiceDesc:
+      "Исследуйте буддийское учение в спокойном режиме наставления с опорой на сопоставленные источники.",
     cardDhammapada: "Дхаммапада",
     cardDhammapadaDesc:
       "Читайте строфы с корнем на пали, где он доступен, и проверенным английским переводом из корпуса.",
@@ -353,6 +364,7 @@ const id: UiStrings = {
     read: "Pembaca",
     search: "Cari",
     ask: "Tanya",
+    voice: "Suara Dhamma",
     wisdom: "Kebijaksanaan",
     terms: "Istilah",
   },
@@ -373,6 +385,9 @@ const id: UiStrings = {
     cardAsk: "Tanya tentang Dhamma",
     cardAskDesc:
       "Ajukan pertanyaan dan dapatkan jawaban bersumber. Jika korpus tidak mendukung jawaban, aplikasi menyatakannya langsung.",
+    cardVoice: "Belajar dengan Suara Dhamma",
+    cardVoiceDesc:
+      "Jelajahi ajaran Buddha melalui mode guru yang tenang dan tetap berpijak pada sumber yang dipetakan.",
     cardDhammapada: "Dhammapada",
     cardDhammapadaDesc:
       "Baca syair dengan akar Pali jika tersedia dan terjemahan Inggris yang ada dalam korpus.",

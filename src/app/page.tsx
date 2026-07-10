@@ -101,6 +101,16 @@ export default async function HomePage() {
           <h2 className="font-serif text-xl mb-1">{ui.home.cardAsk}</h2>
           <p className="text-sm text-ink-soft">{ui.home.cardAskDesc}</p>
         </Link>
+        <Link href="/voice" className="card-dhamma hover:border-accent transition-colors block">
+          <h2 className="font-serif text-xl mb-1">{ui.home.cardVoice}</h2>
+          <p className="text-sm text-ink-soft mb-3">{ui.home.cardVoiceDesc}</p>
+          <ul className="text-xs text-ink-soft space-y-1">
+            <li>{ui.nav.read}</li>
+            <li>{ui.nav.search}</li>
+            <li>{ui.nav.ask}</li>
+            <li>{ui.nav.voice}</li>
+          </ul>
+        </Link>
         <Link href="/reader/dhammapada" className="card-dhamma hover:border-accent transition-colors block">
           <h2 className="font-serif text-xl mb-1">{ui.home.cardDhammapada}</h2>
           <p className="text-sm text-ink-soft">{ui.home.cardDhammapadaDesc}</p>
