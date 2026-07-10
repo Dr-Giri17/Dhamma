@@ -22,6 +22,8 @@ import {
   verseToSegment,
 } from "../src/lib/corpus/dhammapada";
 import type { DhammaSegment, DhammaText, SourceWork } from "../src/lib/corpus/types";
+import { manifestEdition } from "../src/lib/corpus/manifest";
+import { validateEditionForIngestion } from "../src/lib/corpus/integrity";
 
 const CORPUS_DIR = path.resolve(process.cwd(), "data", "corpus");
 const FILES = {
@@ -33,7 +35,11 @@ const FILES = {
 async function fetchText(url: string): Promise<string> {
   const res = await fetch(url, { redirect: "follow" });
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
-  return res.text();
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  const edition = manifestEdition("text-dhp", "en");
+  if (!edition) throw new Error("No manifest edition for text-dhp:en");
+  validateEditionForIngestion(edition, bytes);
+  return new TextDecoder().decode(bytes);
 }
 
 async function readJson<T>(file: string): Promise<T> {

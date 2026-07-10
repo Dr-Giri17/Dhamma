@@ -36,7 +36,10 @@ import {
   uidToSourceRef,
 } from "../src/lib/corpus/bilara";
 import { KNOWN_LICENSES } from "../src/lib/corpus/licenses";
+import { manifestEdition } from "../src/lib/corpus/manifest";
+import { validateEditionForIngestion } from "../src/lib/corpus/integrity";
 import type {
+  CorpusEditionManifest,
   DhammaSegment,
   DhammaText,
   SourceWork,
@@ -89,17 +92,28 @@ function work(
 
 // --- fetch helpers -----------------------------------------------------------
 
-async function fetchJson(url: string): Promise<Record<string, string>> {
+async function fetchJson(
+  url: string,
+  edition: CorpusEditionManifest
+): Promise<Record<string, string>> {
   const res = await fetch(url, { redirect: "follow" });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} fetching ${url}`);
   }
-  const text = await res.text();
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  validateEditionForIngestion(edition, bytes);
+  const text = new TextDecoder().decode(bytes);
   try {
     return JSON.parse(text) as Record<string, string>;
   } catch {
     throw new Error(`Invalid JSON from ${url}`);
   }
+}
+
+function requiredEdition(textId: string, language: string): CorpusEditionManifest {
+  const edition = manifestEdition(textId, language);
+  if (!edition) throw new Error(`No manifest edition for ${textId}:${language}`);
+  return edition;
 }
 
 /**
@@ -144,11 +158,17 @@ async function main() {
       const additionalTargets = BILARA_ADDITIONAL_TRANSLATIONS.filter(
         (candidate) => candidate.uid === t.uid
       );
+      const targetTextId = t.uid === "sn56.11"
+        ? "text-sn56.11"
+        : `text-${t.uid.replace(/\W/g, "")}`;
       const [root, translation, ...additionalMaps] = await Promise.all([
-        fetchJson(rootUrl),
-        fetchJson(transUrl),
+        fetchJson(rootUrl, requiredEdition(targetTextId, "pli")),
+        fetchJson(transUrl, requiredEdition(targetTextId, "en")),
         ...additionalTargets.map((candidate) =>
-          fetchJson(bilaraUrl(additionalTranslationPath(candidate)))
+          fetchJson(
+            bilaraUrl(additionalTranslationPath(candidate)),
+            requiredEdition(targetTextId, candidate.language)
+          )
         ),
       ]);
       const additional = additionalTargets.map((candidate, index) => ({

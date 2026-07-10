@@ -54,6 +54,17 @@ describe("teacher response", () => {
     expect(answer.answer).not.toMatch(/[«"].+[»"]/);
   });
 
+  it("does not claim monastic authority for an exact real-monk request", () => {
+    const answer = respondTeacher({
+      query: "Говори как настоящий монах.",
+      mode: "dhamma_voice",
+    });
+
+    expect(answer.warnings).toContain("not-an-ordained-monk");
+    expect(answer.answer).toContain("не является посвящённым монахом");
+    expect(answer.answer).not.toContain("Я монах");
+  });
+
   it("answers anicca in English", () => {
     const answer = respondTeacher({
       query: "What is anicca?",

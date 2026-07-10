@@ -16,6 +16,21 @@ export type CorpusCategory =
   | "commentarial"
   | "modern_explanation";
 
+/** Explicit canonical boundary used by edition manifests and catalog coverage. */
+export type CanonicalStatus =
+  | "canonical"
+  | "post-canonical"
+  | "commentarial"
+  | "modern-explanation";
+
+/** What is actually available locally for a catalog work or edition. */
+export type CoverageCapability =
+  | "structure_available"
+  | "source_link_available"
+  | "root_text_available"
+  | "translation_available"
+  | "parallel_text_available";
+
 /** Piṭaka bucket. `post_canonical` is reserved for Visuddhimagga and later commentaries. */
 export type Pitaka =
   | "vinaya"
@@ -41,6 +56,47 @@ export interface TranslationSegment {
   published: boolean;
   publicationStatus: string;
   publicationNumber?: string;
+}
+
+/** Machine-readable provenance for one imported or source-gated edition. */
+export interface CorpusEditionManifest {
+  workId: string;
+  textId: string;
+  segmentIdFormat: string;
+  title: string;
+  basket: Pitaka;
+  collection: string;
+  canonicalStatus: CanonicalStatus;
+  language: string;
+  isRootText: boolean;
+  isTranslation: boolean;
+  translator: string;
+  publisher: string;
+  sourceRepository: string;
+  sourceUrl: string;
+  sourceRevision: string;
+  sourceFile: string;
+  licenseName: string;
+  licenseUrl: string;
+  redistributionAllowed: boolean;
+  modificationAllowed: boolean;
+  attributionRequired: boolean;
+  retrievedAt: string;
+  sha256: string;
+  notes: string;
+  imported: boolean;
+  capabilities: CoverageCapability[];
+}
+
+/** Lightweight Tipiṭaka navigation; availability is never inferred from structure. */
+export interface CatalogNode {
+  id: string;
+  title: string;
+  canonicalStatus: CanonicalStatus;
+  capabilities: CoverageCapability[];
+  children?: CatalogNode[];
+  textSlug?: string;
+  sourceUrl?: string;
 }
 
 /** Nikāya / collection shorthand. */
@@ -146,6 +202,8 @@ export interface SearchFilters {
   uidPrefix?: string; // e.g. "dhp", "mn"
   language?: string;
   includeCommentarial?: boolean;
+  canonicalStatus?: CanonicalStatus;
+  sourceType?: "root" | "translation";
 }
 
 /** Normalized search query. */

@@ -14,25 +14,27 @@
     "test:watch": "vitest",
     "ingest:dhammapada": "tsx scripts/ingest-dhammapada.ts",
     "ingest:bilara": "tsx scripts/ingest-bilara.ts",
-    "build:index": "tsx scripts/build-search-index.ts"
+    "build:index": "tsx scripts/build-search-index.ts",
+    "corpus:metadata": "tsx scripts/corpus/build-metadata.ts",
+    "corpus:validate": "tsx scripts/corpus/build-metadata.ts"
   },
   "dependencies": {
-    "next": "15.5.9",
-    "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "next": "15.5.20",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@types/node": "22.10.7",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",
     "autoprefixer": "10.4.20",
-    "eslint": "9.18.0",
-    "eslint-config-next": "^15.5.4",
-    "postcss": "8.5.1",
+    "eslint": "9.39.4",
+    "eslint-config-next": "15.5.20",
+    "postcss": "8.5.10",
     "tailwindcss": "3.4.17",
-    "tsx": "4.19.2",
+    "tsx": "4.23.0",
     "typescript": "5.7.3",
-    "vitest": "3.0.5"
+    "vitest": "3.2.7"
   },
   "engines": {
     "node": ">=20"

@@ -240,6 +240,9 @@ function asksForMonkIdentity(query: string): boolean {
     "as a monk",
     "ты монах",
     "как монах",
+    "как настоящий монах",
+    "настоящий монах",
+    "real monk",
     "sebagai bhikkhu",
     "sebagai biksu",
   ].some((pattern) => q.includes(searchableText(pattern)));
