@@ -106,4 +106,3 @@ function preferredText(
   if (segment.rootText) return { text: segment.rootText, language: "pli", fallback: true };
   return { language, fallback: false };
 }
-

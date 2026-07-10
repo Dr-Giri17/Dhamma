@@ -143,4 +143,3 @@ describe("source-grounded Dhamma Guide", () => {
     expect(answer.answer).toContain("validated app explanation");
   });
 });
-

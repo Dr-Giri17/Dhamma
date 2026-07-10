@@ -42,4 +42,3 @@ describe("corpus edition manifest", () => {
     expect(info.sourceRevision).toMatch(/^[a-f0-9]{40}$/);
   });
 });
-

@@ -50,4 +50,3 @@ export function manifestEdition(
     (edition) => edition.textId === textId && edition.language === language
   );
 }
-

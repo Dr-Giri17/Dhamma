@@ -24,4 +24,3 @@ export function validateSynthesis(
  * injected into answerGuide for server-only adapters and is disabled by default.
  */
 export const NO_SYNTHESIS_ADAPTER: GuideSynthesisAdapter | null = null;
-

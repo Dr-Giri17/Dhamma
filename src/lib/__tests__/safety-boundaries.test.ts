@@ -52,4 +52,3 @@ describe("cross-cutting safety boundaries", () => {
     expect(CORPUS_EDITIONS.every((edition) => !/all rights reserved/i.test(edition.licenseName))).toBe(true);
   });
 });
-

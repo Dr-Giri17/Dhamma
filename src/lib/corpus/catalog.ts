@@ -54,4 +54,3 @@ export const POST_CANONICAL_CATALOG: readonly CatalogNode[] = [
     sourceUrl: "https://bps.lk/library-search-select.php?id=bp207h",
   },
 ];
-

@@ -73,4 +73,3 @@ export function mapRecognitionError(error: string): VoiceErrorCode {
   if (error === "network") return "network";
   return "unknown";
 }
-

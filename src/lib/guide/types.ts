@@ -68,4 +68,3 @@ export interface GuideSynthesisAdapter {
   readonly id: string;
   synthesize(input: SynthesisInput): Promise<SynthesisOutput>;
 }
-

@@ -33,4 +33,3 @@ export function searchIndexInfo() {
     documentCount: index.documentCount,
   };
 }
-

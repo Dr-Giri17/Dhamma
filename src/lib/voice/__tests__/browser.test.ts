@@ -37,4 +37,3 @@ describe("browser voice helpers", () => {
     expect(voiceSessionReducer(playing, { type: "stop-playback" }).playing).toBe(false);
   });
 });
-

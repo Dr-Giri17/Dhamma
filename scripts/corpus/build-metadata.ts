@@ -58,4 +58,3 @@ main().catch((error) => {
   console.error("[corpus-metadata] FAILED", error);
   process.exit(1);
 });
-

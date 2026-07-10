@@ -64,4 +64,3 @@ const copy = {
     monk: "Aplikasi ini bukan bhikkhu tertahbis dan tidak mengklaim otoritas monastik.",
   },
 } as const;
-

@@ -190,4 +190,3 @@ export function editionFor(
     (edition) => edition.textId === textIdValue && edition.language === language
   );
 }
-

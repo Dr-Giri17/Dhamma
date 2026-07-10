@@ -164,4 +164,3 @@ const copy = {
     sources: (refs: string) => `Berpijak pada sumber yang ditemukan: ${refs}.`,
   },
 } as const;
-
