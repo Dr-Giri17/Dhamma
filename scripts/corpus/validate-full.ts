@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { gunzipSync } from "node:zlib";
+import { EXPECTED_VRI_MULA_SOURCES } from "./vri-expected";
+import { validateCoverageRecords, type CoverageMapping, type CoverageManifestEdition, type CoverageInventoryRow } from "../../src/lib/corpus/coverage-validation";
 
 const ROOT = resolve(import.meta.dirname, "../..");
 const REQUIRED_SEGMENT_FIELDS = [
@@ -41,13 +43,20 @@ function allFiles(root: string): string[] {
   return found;
 }
 
-function validatePagedEdition(edition: { asset: string; sha256: string; segmentCount: number }, expectedLanguage: string, expectedStatus?: string): number {
+const referencedAssets = new Set<string>();
+const globalSegmentIds = new Set<string>();
+
+function validatePagedEdition(edition: { asset: string; sha256: string; contentSha256?: string; segmentCount: number }, expectedLanguage: string, expectedStatus?: string): number {
   const indexFile = assetPath(edition.asset);
+  referencedAssets.add(indexFile);
   assert(existsSync(indexFile), `Missing edition index ${edition.asset}`);
   const indexBytes = readFileSync(indexFile);
   assert(sha256(indexBytes) === edition.sha256, `Index checksum mismatch ${edition.asset}`);
-  const index = decodedJson<{ pages: Array<{ asset: string; sha256: string }>; segmentCount: number; segments?: Array<Record<string, unknown>> }>(edition.asset, indexBytes);
+  const indexContent = gunzipSync(indexBytes);
+  if (edition.contentSha256) assert(sha256(indexContent) === edition.contentSha256, `Index content checksum mismatch ${edition.asset}`);
+  const index = decodedJson<{ pages: Array<{ asset: string; sha256: string; contentSha256?: string }>; pageCount: number; segmentCount: number; segments?: Array<Record<string, unknown>> }>(edition.asset, indexBytes);
   assert(index.segmentCount === edition.segmentCount, `Segment count mismatch ${edition.asset}`);
+  assert(index.pageCount === index.pages.length, `Page count mismatch ${edition.asset}`);
   let count = 0;
   const validateSegments = (segments: Array<Record<string, unknown>>, source: string) => {
     for (const segment of segments) {
@@ -55,15 +64,21 @@ function validatePagedEdition(edition: { asset: string; sha256: string; segmentC
       assert(segment.language === expectedLanguage, `${source} language mismatch`);
       if (expectedStatus) assert(segment.canonicalStatus === expectedStatus, `${source} canonical status mismatch`);
       assert(sha256(String(segment.text)) === segment.sha256, `${source} text checksum mismatch`);
+      const segmentId = String(segment.id);
+      assert(!globalSegmentIds.has(segmentId), `Duplicated segment ID ${segmentId}`);
+      globalSegmentIds.add(segmentId);
+      if (expectedLanguage === "en") assert(!/<\/?[a-z][^>]*>/i.test(String(segment.text)), `${source} contains literal HTML`);
     }
     count += segments.length;
   };
   if (index.segments) validateSegments(index.segments, edition.asset);
   for (const page of index.pages) {
     const pageFile = assetPath(page.asset);
+    referencedAssets.add(pageFile);
     assert(existsSync(pageFile), `Missing page ${page.asset}`);
     const bytes = readFileSync(pageFile);
     assert(sha256(bytes) === page.sha256, `Page checksum mismatch ${page.asset}`);
+    if (page.contentSha256) assert(sha256(gunzipSync(bytes)) === page.contentSha256, `Page content checksum mismatch ${page.asset}`);
     const payload = decodedJson<{ segments: Array<Record<string, unknown>> }>(page.asset, bytes);
     validateSegments(payload.segments, page.asset);
   }
@@ -80,30 +95,46 @@ const coverage = json<{
   unknownFiles: string[];
   canonicalSegmentCount: number;
   pitakaSegmentCounts: Record<string, number>;
-  fullTipitakaImported: boolean;
   visuddhimagga: { importedVolumes: number; segmentCount: number; canonicalStatus: string };
+  universallyCanonicalWorks: number;
+  traditionDependentWorks: number;
+  traditionDependentSegmentCount: number;
+  fullVriMulaNavigationImported: boolean;
+  universalTipitakaCompletenessClaim: boolean;
 }>("data/corpus/full-canon-coverage.json");
-assert(coverage.expectedWorks === 59, "Expected canonical boundary changed without review");
+assert(coverage.expectedWorks === EXPECTED_VRI_MULA_SOURCES.length, "Expected VRI Mūla boundary changed without review");
 assert(coverage.mappedWorks === coverage.expectedWorks && coverage.importedWorks === coverage.expectedWorks, "Not all canonical volumes are mapped/imported");
 assert(coverage.missingWorks.length === 0, "Canonical volumes are missing");
 assert(coverage.duplicateMappings.length === 0, "Duplicate canonical mappings exist");
 assert(coverage.unknownFiles.length === 0, "Unknown .mul files block coverage");
 assert(Object.values(coverage.pitakaSegmentCounts).every((count) => count > 0), "Every Piṭaka must contain text");
-assert(coverage.fullTipitakaImported, "fullTipitakaImported may only be true after the full gate passes");
+assert(coverage.fullVriMulaNavigationImported, "fullVriMulaNavigationImported may only be true after the full gate passes");
+assert(coverage.universalTipitakaCompletenessClaim === false, "Universal Tipiṭaka completeness must not be claimed");
 
-const vriManifest = json<{ editions: Array<{ asset: string; sha256: string; segmentCount: number; canonicalStatus: string; language: string }> }>("data/corpus/full-corpus-manifest.json");
+const vriInventory = json<{ rows: CoverageInventoryRow[] }>("data/corpus/upstream/vri-inventory.json");
+const vriMappings = json<CoverageMapping[]>("data/corpus/full-canon-map.json");
+const vriManifest = json<{ editions: Array<CoverageManifestEdition & { asset: string; contentSha256?: string; language: string }> }>("data/corpus/full-corpus-manifest.json");
+validateCoverageRecords({
+  expected: EXPECTED_VRI_MULA_SOURCES,
+  inventory: vriInventory.rows,
+  mappings: vriMappings.filter((row) => row.canonicalStatus !== "post-canonical"),
+  manifest: vriManifest.editions,
+});
 let canonicalSegments = 0;
+let traditionDependentSegments = 0;
 let vismSegments = 0;
 for (const edition of vriManifest.editions) {
   assert(edition.language === "pli", "VRI assets must contain Pāli only");
   const count = validatePagedEdition(edition, "pli", edition.canonicalStatus);
   if (edition.canonicalStatus === "canonical") canonicalSegments += count;
+  else if (edition.canonicalStatus === "tradition-dependent") traditionDependentSegments += count;
   else {
     assert(edition.canonicalStatus === "post-canonical", "Visuddhimagga must be post-canonical");
     vismSegments += count;
   }
 }
 assert(canonicalSegments === coverage.canonicalSegmentCount, "Canonical segment count does not match coverage");
+assert(traditionDependentSegments === coverage.traditionDependentSegmentCount, "Tradition-dependent segment count does not match coverage");
 assert(vismSegments === coverage.visuddhimagga.segmentCount && vismSegments > 0, "Visuddhimagga Pāli import is incomplete");
 
 const bilara = json<{ licenseName: string; editions: Array<{ asset: string; sha256: string; segmentCount: number; licenseName: string }> }>("data/corpus/bilara-en-manifest.json");
@@ -113,30 +144,29 @@ for (const edition of bilara.editions) {
   validatePagedEdition(edition, "en", "canonical");
 }
 
-const russianCoveragePath = join(ROOT, "data/corpus/theravada-ru-coverage.json");
-if (existsSync(russianCoveragePath)) {
-  const russianCoverage = json<{ importedEditions: number; importedSegments: number; directAttributionLinks: number }>("data/corpus/theravada-ru-coverage.json");
-  const inventory = json<{ rows: Array<{ importDecision: string; sourceUrl: string; translator: string; translationBasisLanguage: string; asset?: string }> }>("data/corpus/upstream/theravada-ru-inventory.json");
-  const russianIndex = json<Record<string, Array<{ asset: string; sha256: string; segmentCount: number }>>>("data/corpus/theravada-ru-index.json");
-  const imported = inventory.rows.filter((row) => row.importDecision === "allowed-with-direct-link");
-  assert(imported.length === russianCoverage.importedEditions, "Russian edition count mismatch");
-  assert(imported.every((row) => /^https:\/\/www\.theravada\.ru\//.test(row.sourceUrl)), "Every Russian edition needs a direct Theravada.ru URL");
-  assert(imported.every((row) => Boolean(row.translator)), "Every Russian edition needs translator or explicit unknown");
-  assert(imported.every((row) => ["pli", "en", "unknown"].includes(row.translationBasisLanguage)), "Fabricated Russian translation basis");
-  assert(russianCoverage.directAttributionLinks === imported.length, "Russian attribution links are incomplete");
-  for (const edition of Object.values(russianIndex).flat()) validatePagedEdition(edition, "ru", "canonical");
-  assert(inventory.rows.filter((row) => row.importDecision === "conflicting-notice" || row.importDecision === "excluded-robots").every((row) => !row.asset), "Blocked Russian page was imported");
-}
-
 const corpusFiles = allFiles(join(ROOT, "public", "corpus"));
 const readerPayloads = corpusFiles.filter((path) => !/[\\/]indexes[\\/]/i.test(path));
 const searchPayloads = corpusFiles.filter((path) => /[\\/]indexes[\\/]/i.test(path));
 const largestPayload = Math.max(...readerPayloads.map((path) => statSync(path).size));
 assert(largestPayload <= 500_000, `Corpus asset exceeds 500 KB bound: ${largestPayload}`);
+const orphanReaderAssets = readerPayloads.filter((path) => !referencedAssets.has(path));
+assert(orphanReaderAssets.length === 0, `Generated page without manifest entry: ${orphanReaderAssets[0] ?? "unknown"}`);
+assert(!existsSync(join(ROOT, "public", "corpus", "ru")), "Theravada.ru generated corpus remains");
+assert(!existsSync(join(ROOT, "data", "corpus", "theravada-ru-index.json")), "Theravada.ru index remains");
 const sourceFiles = allFiles(join(ROOT, "src")).filter((path) => /\.[tj]sx?$/.test(path));
 for (const path of sourceFiles) {
   const source = readFileSync(path, "utf8");
   assert(!/import\s+.*public[\\/]corpus/i.test(source), `Client/server source statically imports a full corpus asset: ${path}`);
+}
+
+for (const relativePath of [
+  "data/corpus/upstream/bilara-en-inventory.json",
+  "data/corpus/upstream/vri-inventory.json",
+  "data/corpus/bilara-en-manifest.json",
+  "data/corpus/full-corpus-manifest.json",
+]) {
+  const content = readFileSync(join(ROOT, relativePath), "utf8");
+  assert(!/[A-Za-z]:\\|\/Users\/|\/home\/|\/workspace\//.test(content), `Absolute local path in generated provenance: ${relativePath}`);
 }
 
 const storageReport = {
@@ -154,9 +184,10 @@ const storageReport = {
 writeFileSync(join(ROOT, "data/corpus/storage-report.json"), `${JSON.stringify(storageReport, null, 2)}\n`, "utf8");
 
 console.log(JSON.stringify({
-  fullTipitakaImported: coverage.fullTipitakaImported,
-  canonicalVolumes: coverage.importedWorks,
+  fullVriMulaNavigationImported: coverage.fullVriMulaNavigationImported,
+  importedMulaSources: coverage.importedWorks,
   canonicalSegments,
+  traditionDependentSegments,
   visuddhimaggaSegments: vismSegments,
   englishEditions: bilara.editions.length,
   ...storageReport,

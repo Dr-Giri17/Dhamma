@@ -1,11 +1,11 @@
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
-import { gzipSync } from "node:zlib";
+import { canonicalJson, deterministicGzip, sha256 } from "./deterministic";
+import { normalizeBilaraText } from "./text-normalization";
 
 const REPOSITORY_ROOT = resolve(import.meta.dirname, "../..");
-const DEFAULT_SOURCE = "D:/Work/Dhamma-corpus-inbox/upstream/bilara-data";
+const DEFAULT_SOURCE = "../Dhamma-corpus-inbox/upstream/bilara-data";
 const SOURCE_REPOSITORY = "https://github.com/suttacentral/bilara-data";
 const LICENSE_NAME = "CC0 1.0 Universal (CC0 1.0)";
 const PAGE_SIZE = 200;
@@ -24,10 +24,6 @@ interface InventoryRow {
   rootSha256: string;
   importDecision: "imported-cc0-aligned" | "excluded-missing-root" | "excluded-segment-mismatch";
   asset?: string;
-}
-
-function sha256(value: Buffer | string): string {
-  return createHash("sha256").update(value).digest("hex");
 }
 
 function git(source: string, args: string[]): string {
@@ -63,8 +59,9 @@ function jsonObject(path: string): Record<string, string> {
 
 function writeJson(path: string, value: unknown, compact = false): void {
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(value, null, compact ? undefined : 2)}\n`, "utf8");
+  writeFileSync(path, canonicalJson(value, !compact), "utf8");
 }
+
 
 function candidateMetadata(path: string, source: string): { canonicalId: string; translatorId: string; sourceFile: string; rootFile: string; rootPath: string } | undefined {
   const translationRoot = join(source, "translation", "en");
@@ -100,9 +97,10 @@ function buildInventory(source: string): { rows: InventoryRow[]; revision: strin
     const metadata = candidateMetadata(path, source);
     if (!metadata) continue;
     const translationBytes = readFileSync(path);
-    if (!existsSync(metadata.rootPath)) {
+    const { rootPath, ...portableMetadata } = metadata;
+    if (!existsSync(rootPath)) {
       rows.push({
-        ...metadata,
+        ...portableMetadata,
         sourceRevision: revision,
         translationSegments: 0,
         rootSegments: 0,
@@ -115,18 +113,18 @@ function buildInventory(source: string): { rows: InventoryRow[]; revision: strin
       continue;
     }
     const translation = jsonObject(path);
-    const root = jsonObject(metadata.rootPath);
+    const root = jsonObject(rootPath);
     const ids = Object.keys(translation);
     const unmatchedSegmentIds = ids.filter((id) => !(id in root));
     rows.push({
-      ...metadata,
+      ...portableMetadata,
       sourceRevision: revision,
       translationSegments: ids.length,
       rootSegments: Object.keys(root).length,
       alignedSegments: ids.length - unmatchedSegmentIds.length,
       unmatchedSegmentIds,
       sha256: sha256(translationBytes),
-      rootSha256: sha256(readFileSync(metadata.rootPath)),
+      rootSha256: sha256(readFileSync(rootPath)),
       importDecision: unmatchedSegmentIds.length ? "excluded-segment-mismatch" : "imported-cc0-aligned",
     });
   }
@@ -140,14 +138,17 @@ function importEnglish(source: string): void {
   const canonicalIndex: Record<string, Array<Record<string, unknown>>> = {};
   for (const row of imported) {
     const translation = jsonObject(join(source, row.sourceFile));
-    const segments = Object.entries(translation).filter(([, text]) => text.trim().length > 0).map(([segmentUid, text], index) => ({
+    const segments = Object.entries(translation)
+      .map(([segmentUid, text]) => [segmentUid, normalizeBilaraText(text)] as const)
+      .filter(([, text]) => text.trim().length > 0)
+      .map(([segmentUid, text], index) => ({
       id: `seg-${sha256(`en:${row.translatorId}:${segmentUid}`).slice(0, 20)}`,
       workId: `work-bilara-${row.canonicalId}`,
       textId: `text-bilara-${row.canonicalId}-${row.translatorId}`,
       segmentUid,
       sourceRef: `${row.sourceFile}#${segmentUid}`,
       language: "en",
-      text: text.normalize("NFC").trimEnd(),
+      text,
       canonicalStatus: "canonical",
       translator: row.translatorId,
       translationBasisLanguage: "pli",
@@ -156,7 +157,7 @@ function importEnglish(source: string): void {
       sourceUrl: `${SOURCE_REPOSITORY}/blob/${revision}/${row.sourceFile}`,
       licenseName: LICENSE_NAME,
       attribution: "SuttaCentral Bilara",
-      sha256: sha256(text.normalize("NFC").trimEnd()),
+      sha256: sha256(text),
       segmentOrder: index + 1,
     }));
     const directoryRelative = `public/corpus/en/${row.translatorId}/${row.canonicalId}`;
@@ -171,9 +172,10 @@ function importEnglish(source: string): void {
         const filename = `page-${String(page).padStart(4, "0")}.json.gz`;
         const relativeAsset = `${directoryRelative}/${filename}`;
         const payload = `${JSON.stringify({ schemaVersion: 1, canonicalId: row.canonicalId, translator: row.translatorId, language: "en", page, segments: pageSegments })}\n`;
-        const bytes = gzipSync(Buffer.from(payload), { level: 9 });
+        const contentBytes = Buffer.from(payload, "utf8");
+        const bytes = deterministicGzip(contentBytes);
         writeFileSync(join(directory, filename), bytes);
-        pages.push({ page, start: offset + 1, end: offset + pageSegments.length, segmentCount: pageSegments.length, asset: `/${relativeAsset.replace(/^public\//, "")}`, sha256: sha256(bytes) });
+        pages.push({ page, start: offset + 1, end: offset + pageSegments.length, segmentCount: pageSegments.length, asset: `/${relativeAsset.replace(/^public\//, "")}`, sha256: sha256(bytes), compressedSha256: sha256(bytes), contentSha256: sha256(contentBytes) });
       }
     }
     const indexRelative = `${directoryRelative}/index.json.gz`;
@@ -196,7 +198,8 @@ function importEnglish(source: string): void {
       pages,
       segments: inlineSegments,
     })}\n`;
-    const indexBytes = gzipSync(Buffer.from(indexPayload), { level: 9 });
+    const indexContentBytes = Buffer.from(indexPayload, "utf8");
+    const indexBytes = deterministicGzip(indexContentBytes);
     writeFileSync(join(directory, "index.json.gz"), indexBytes);
     row.asset = `/${indexRelative.replace(/^public\//, "")}`;
     const edition = {
@@ -211,6 +214,8 @@ function importEnglish(source: string): void {
       segmentCount: segments.length,
       asset: row.asset,
       sha256: sha256(indexBytes),
+      compressedSha256: sha256(indexBytes),
+      contentSha256: sha256(indexContentBytes),
     };
     editions.push(edition);
     (canonicalIndex[row.canonicalId] ??= []).push(edition);

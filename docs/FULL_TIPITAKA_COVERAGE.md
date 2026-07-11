@@ -1,25 +1,31 @@
-# Full Tipiṭaka coverage
+# VRI Mūla navigation coverage
 
-Edition boundary: **Complete Chaṭṭha Saṅgāyana Pāli Tipiṭaka edition**
+Edition boundary: **Reviewed VRI Mūla navigation scope**
 
 Pinned VRI revision: `77b57a6daca231b3ca265400fb8a411822f025f4`
 
 | Gate | Value |
 | --- | ---: |
-| Expected canonical root volumes | 59 |
-| Mapped volumes | 59 |
-| Imported volumes | 59 |
-| Canonical segments | 155918 |
+| Expected VRI Mūla sources | 61 |
+| Mapped volumes | 61 |
+| Imported volumes | 61 |
+| Universally canonical roots | 59 |
+| Tradition-dependent roots | 2 |
+| Universally canonical segments | 155918 |
+| Tradition-dependent segments | 3090 |
 | Missing volumes | 0 |
-| Unknown .mul files | 0 |
+| Unexpected root files | 0 |
 | Duplicate mappings | 0 |
-| fullTipitakaImported | true |
+| fullVriMulaNavigationImported | true |
+| Universal Tipiṭaka completeness claimed | false |
 
 ## Piṭaka content
 
 - vinaya: 12957 segments
 - sutta: 102589 segments
 - abhidhamma: 40372 segments
+
+Milindapañha and Peṭakopadesa are imported because they occur in the pinned VRI Mūla navigation. Their canonical classification is tradition-dependent and they are excluded from canonical-only filtering.
 
 ## Visuddhimagga
 

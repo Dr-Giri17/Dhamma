@@ -1,11 +1,11 @@
 {
   "generatedFrom": "src/lib/corpus/registry.ts",
-  "importedEditionCount": 7974,
-  "importedTextCount": 7750,
+  "importedEditionCount": 4493,
+  "importedTextCount": 4388,
   "languages": [
     {
       "language": "pli",
-      "importedEditions": 61,
+      "importedEditions": 63,
       "sourceGated": []
     },
     {
@@ -15,7 +15,7 @@
     },
     {
       "language": "ru",
-      "importedEditions": 3488,
+      "importedEditions": 5,
       "sourceGated": []
     },
     {
@@ -93,12 +93,30 @@
       "title": "Visuddhimagga",
       "canonicalStatus": "post-canonical",
       "reason": "VRI Pāli is imported as post-canonical; the BPS Ñāṇamoli English edition remains excluded as all rights reserved."
+    },
+    {
+      "workId": "work-vri-s0518m",
+      "title": "Milindapañhapāḷi",
+      "canonicalStatus": "tradition-dependent",
+      "reason": "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems."
+    },
+    {
+      "workId": "work-vri-s0520m",
+      "title": "Peṭakopadesapāḷi",
+      "canonicalStatus": "tradition-dependent",
+      "reason": "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems."
     }
   ],
   "claims": {
-    "fullTipitakaImported": true,
+    "fullVriMulaNavigationImported": true,
+    "universalTipitakaCompletenessClaim": false,
     "structureAvailable": true,
     "canonicalSegmentCount": 155918,
-    "visuddhimaggaPaliImported": true
+    "traditionDependentSegmentCount": 3090,
+    "visuddhimaggaPaliImported": true,
+    "russianCoverage": "partial-seed-only",
+    "russianSeedEditions": 5,
+    "russianSeedSegments": 725,
+    "russianBulkImport": "excluded-unresolved-rights-and-mutable-provenance"
   }
 }

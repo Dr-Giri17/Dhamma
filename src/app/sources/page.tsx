@@ -13,7 +13,8 @@ export default function SourcesPage() {
       <SourceCard title="Chaṭṭha Saṅgāyana Pāli texts">
         <p>Source: Vipassana Research Institute / Tipitaka.org, obtained from VipassanaTech/tipitaka-xml.</p>
         <p>Use: non-commercial with attribution to Vipassana Research Institute.</p>
-        <p>Coverage: {corpus.importedWorks} canonical volumes and {corpus.canonicalSegmentCount.toLocaleString()} canonical segments.</p>
+        <p>Coverage: {corpus.universallyCanonicalWorks} universally canonical roots, {corpus.traditionDependentWorks} tradition-dependent roots, and {corpus.canonicalSegmentCount.toLocaleString()} universally canonical segments within the reviewed VRI Mūla scope.</p>
+        <p>Milindapañha and Peṭakopadesa occur in VRI Mūla navigation but are not presented as universally canonical.</p>
         <a className="link-dhamma" href="https://github.com/VipassanaTech/tipitaka-xml/tree/77b57a6daca231b3ca265400fb8a411822f025f4">Pinned source revision ↗</a>
       </SourceCard>
 
@@ -24,9 +25,9 @@ export default function SourcesPage() {
       </SourceCard>
 
       <SourceCard title="Russian translations">
-        <p>Source: Theravada.ru.</p>
-        <p>Condition: every imported edition retains its translator metadata and a direct source-page link; copying requires a direct link to the site.</p>
-        <a className="link-dhamma" href="https://theravada.ru/">Theravada.ru ↗</a>
+        <p>Local coverage is partial: five previously verified Bilara seed editions (MN 10, MN 118, DN 31, SN 56.11, and Snp 1.8).</p>
+        <p>The bulk Theravada.ru corpus is excluded because a direct-link request is not proof of redistribution permission and mutable pages are not immutable provenance.</p>
+        <p>Reintroduction requires a separate rights-and-provenance review.</p>
       </SourceCard>
 
       <div className="card-dhamma border-dashed space-y-2">
@@ -46,4 +47,3 @@ function SourceCard({ title, children }: { title: string; children: React.ReactN
     </section>
   );
 }
-

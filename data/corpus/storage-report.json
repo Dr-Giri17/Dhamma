@@ -1,12 +1,12 @@
 {
-  "corpusAssetFiles": 10088,
-  "corpusAssetBytes": 78103051,
-  "readerAssetFiles": 10037,
-  "readerAssetBytes": 52040747,
-  "searchShardFiles": 51,
-  "searchShardBytes": 26062304,
+  "corpusAssetFiles": 5621,
+  "corpusAssetBytes": 53898075,
+  "readerAssetFiles": 5573,
+  "readerAssetBytes": 34630174,
+  "searchShardFiles": 48,
+  "searchShardBytes": 19267901,
   "largestReaderAssetBytes": 50584,
-  "largestSearchShardBytes": 2851624,
+  "largestSearchShardBytes": 2012094,
   "decodedReaderPageSegmentLimit": 200,
   "renderedReaderPageSegmentLimit": 80
 }

@@ -54,7 +54,7 @@ export default async function HomePage() {
           <h2 className="font-serif text-2xl text-ink">{ui.tipitaka.title}</h2>
           <Link href="/library" className="link-dhamma text-sm">{ui.nav.library} →</Link>
         </div>
-        <p className="text-sm text-ink-soft">Complete Chaṭṭha Saṅgāyana Pāli Tipiṭaka edition.</p>
+        <p className="text-sm text-ink-soft">Reviewed VRI Mūla navigation scope with tradition-dependent classifications labelled separately.</p>
         <p className="text-sm font-medium text-accent-strong">{full.paliCanonicalWorks} canonical volumes · {full.canonicalSegmentCount.toLocaleString()} canonical segments</p>
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="card-dhamma">

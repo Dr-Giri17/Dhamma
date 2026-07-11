@@ -1,22 +1,23 @@
-import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
-import { gzipSync } from "node:zlib";
 import {
-  EXPECTED_CANONICAL_FILES,
+  EXPECTED_TRADITION_DEPENDENT_FILES,
+  EXPECTED_VRI_MULA_SOURCES,
   EXPECTED_VISUDDHIMAGGA_FILES,
+  type VriCanonicalScope,
 } from "./vri-expected";
+import { canonicalJson, deterministicGzip, sha256 } from "./deterministic";
 
 const REPOSITORY_ROOT = resolve(import.meta.dirname, "../..");
-const DEFAULT_SOURCE = "D:/Work/Dhamma-corpus-inbox/upstream/tipitaka-xml";
+const DEFAULT_SOURCE = "../Dhamma-corpus-inbox/upstream/tipitaka-xml";
 const SOURCE_URL = "https://github.com/VipassanaTech/tipitaka-xml";
 const TEXT_SOURCE_URL = "https://tipitaka.org/romn/";
 const LICENSE_NAME = "VRI non-commercial use with attribution";
 const ATTRIBUTION = "Vipassana Research Institute";
 const SEGMENTS_PER_PAGE = 200;
 
-type Classification = "canonical-root" | "atthakatha" | "tika" | "post-canonical" | "other" | "unknown";
+type Classification = "canonical-root" | "tradition-dependent-root" | "atthakatha" | "tika" | "post-canonical" | "other" | "unknown";
 type Pitaka = "vinaya" | "sutta" | "abhidhamma" | "post-canonical" | "unknown";
 
 interface InventoryRow {
@@ -26,7 +27,9 @@ interface InventoryRow {
   internalBookHeading: string;
   pitaka: Pitaka;
   collection: string;
-  canonicalStatus: "canonical" | "post-canonical" | "commentarial" | "unknown";
+  canonicalStatus: "canonical" | "tradition-dependent" | "post-canonical" | "commentarial" | "unknown";
+  canonicalScope?: VriCanonicalScope;
+  includedInVriMulaNavigation: boolean;
   workType: Classification;
   language: "pli";
   script: "Latn";
@@ -43,6 +46,12 @@ interface NormalizedNote {
   kind: "variant-reading-or-source-note";
 }
 
+interface NavigationNode {
+  text?: string;
+  children?: NavigationNode[];
+  a_attr?: { href?: string };
+}
+
 export interface NormalizedCorpusSegment {
   id: string;
   workId: string;
@@ -51,7 +60,7 @@ export interface NormalizedCorpusSegment {
   sourceRef: string;
   language: "pli";
   text: string;
-  canonicalStatus: "canonical" | "post-canonical";
+  canonicalStatus: "canonical" | "tradition-dependent" | "post-canonical";
   pitaka: Pitaka;
   collection: string;
   book: string;
@@ -74,7 +83,7 @@ interface Asset {
   textId: string;
   title: string;
   language: "pli";
-  canonicalStatus: "canonical" | "post-canonical";
+  canonicalStatus: "canonical" | "tradition-dependent" | "post-canonical";
   pitaka: Pitaka;
   collection: string;
   sourceRevision: string;
@@ -89,10 +98,6 @@ interface Asset {
 function argument(name: string): string | undefined {
   const index = process.argv.indexOf(name);
   return index >= 0 ? process.argv[index + 1] : undefined;
-}
-
-function sha256(value: Buffer | string): string {
-  return createHash("sha256").update(value).digest("hex");
 }
 
 function git(source: string, args: string[]): string {
@@ -137,11 +142,38 @@ function readXml(path: string): string {
   return bytes.toString("utf16le").replace(/^\uFEFF/, "");
 }
 
+function vriMulaNavigationFiles(source: string): Set<string> {
+  const treePath = join(source, "tipitaka.org", "romn", "tree.json");
+  if (!existsSync(treePath)) throw new Error(`VRI Roman navigation not found: ${treePath}`);
+  const bytes = readFileSync(treePath);
+  const text = bytes[0] === 0xff && bytes[1] === 0xfe
+    ? bytes.subarray(2).toString("utf16le")
+    : bytes.toString("utf8").replace(/^\uFEFF/, "");
+  const roots = JSON.parse(text) as NavigationNode[];
+  const tipitaka = roots.find((node) => node.text === "Tipiṭaka");
+  const mula = tipitaka?.children?.find((node) => node.text === "Tipiṭaka (Mūla)");
+  if (!mula) throw new Error("VRI Tipiṭaka (Mūla) navigation section not found");
+  const files = new Set<string>();
+  const visit = (node: NavigationNode) => {
+    const href = node.a_attr?.href;
+    if (href) {
+      const filename = basename(href).replace(/\.(mul|nrf)\d+\.xml$/i, ".$1.xml");
+      if (/\.(?:mul|nrf)\.xml$/i.test(filename)) files.add(filename);
+    }
+    for (const child of node.children ?? []) visit(child);
+  };
+  visit(mula);
+  if (!files.size) throw new Error("VRI Mūla navigation produced no source files");
+  return files;
+}
+
 function suffixOf(filename: string): string {
   return /\.([^.]+)\.xml$/i.exec(filename)?.[1]?.toLowerCase() ?? "unknown";
 }
 
 function pitakaOf(filename: string): Pitaka {
+  const expected = EXPECTED_VRI_MULA_SOURCES.find((row) => row.sourceFile === filename);
+  if (expected) return expected.pitaka;
   if (/^vin/i.test(filename)) return "vinaya";
   if (/^s\d/i.test(filename)) return "sutta";
   if (/^abh/i.test(filename)) return "abhidhamma";
@@ -150,6 +182,8 @@ function pitakaOf(filename: string): Pitaka {
 }
 
 function collectionOf(filename: string, pitaka: Pitaka): string {
+  const expected = EXPECTED_VRI_MULA_SOURCES.find((row) => row.sourceFile === filename);
+  if (expected) return expected.collection;
   if (pitaka === "vinaya") return "vinaya";
   if (pitaka === "abhidhamma") return "abhidhamma";
   if (pitaka === "post-canonical") return "visuddhimagga";
@@ -158,12 +192,11 @@ function collectionOf(filename: string, pitaka: Pitaka): string {
 }
 
 function classificationOf(filename: string): Classification {
+  const expected = EXPECTED_VRI_MULA_SOURCES.find((row) => row.sourceFile === filename);
+  if (expected?.canonicalScope === "universally-canonical") return "canonical-root";
+  if (expected?.canonicalScope === "tradition-dependent") return "tradition-dependent-root";
+  if ((EXPECTED_VISUDDHIMAGGA_FILES as readonly string[]).includes(filename)) return "post-canonical";
   const suffix = suffixOf(filename);
-  if (suffix === "mul") {
-    return (EXPECTED_VISUDDHIMAGGA_FILES as readonly string[]).includes(filename)
-      ? "post-canonical"
-      : "canonical-root";
-  }
   if (suffix === "att") return "atthakatha";
   if (suffix === "tik") return "tika";
   if (suffix === "nrf") return "other";
@@ -179,6 +212,7 @@ function inventory(source: string): { rows: InventoryRow[]; revision: string; so
   const revision = git(source, ["rev-parse", "HEAD"]);
   const sourceDate = git(source, ["show", "-s", "--format=%cI", "HEAD"]);
   const romn = join(source, "romn");
+  const navigationFiles = vriMulaNavigationFiles(source);
   const rows = readdirSync(romn)
     .filter((filename) => filename.endsWith(".xml"))
     .sort((a, b) => a.localeCompare(b))
@@ -187,6 +221,7 @@ function inventory(source: string): { rows: InventoryRow[]; revision: string; so
       const bytes = readFileSync(path);
       const xml = readXml(path);
       const workType = classificationOf(filename);
+      const expected = EXPECTED_VRI_MULA_SOURCES.find((row) => row.sourceFile === filename);
       const pitaka = pitakaOf(filename);
       const nikaya = /<p\b[^>]*rend="nikaya"[^>]*>([\s\S]*?)<\/p>/i.exec(xml)?.[1];
       return {
@@ -198,9 +233,12 @@ function inventory(source: string): { rows: InventoryRow[]; revision: string; so
         collection: collectionOf(filename, pitaka),
         canonicalStatus:
           workType === "canonical-root" ? "canonical" :
+          workType === "tradition-dependent-root" ? "tradition-dependent" :
           workType === "post-canonical" ? "post-canonical" :
           workType === "atthakatha" || workType === "tika" ? "commentarial" : "unknown",
         workType,
+        canonicalScope: expected?.canonicalScope,
+        includedInVriMulaNavigation: navigationFiles.has(filename),
         language: "pli",
         script: "Latn",
         chapterStructure: {
@@ -218,7 +256,7 @@ function inventory(source: string): { rows: InventoryRow[]; revision: string; so
 
 function writeJson(path: string, value: unknown, compact = false): void {
   mkdirSync(resolve(path, ".."), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(value, null, compact ? undefined : 2)}\n`, "utf8");
+  writeFileSync(path, canonicalJson(value, !compact), "utf8");
 }
 
 function inventoryMarkdown(rows: InventoryRow[], revision: string): string {
@@ -243,7 +281,7 @@ function inventoryMarkdown(rows: InventoryRow[], revision: string): string {
     "| File | Classification | Piṭaka | Collection | Internal book heading | Paragraphs | SHA-256 |",
     "| --- | --- | --- | --- | --- | ---: | --- |",
     ...rows
-      .filter((row) => row.workType === "canonical-root" || row.workType === "post-canonical")
+      .filter((row) => row.workType === "canonical-root" || row.workType === "tradition-dependent-root" || row.workType === "post-canonical")
       .map((row) => `| ${row.filename} | ${row.workType} | ${row.pitaka} | ${row.collection} | ${row.internalBookHeading || "—"} | ${row.paragraphCount} | \`${row.sha256}\` |`),
     "",
     "The filename suffix is only the first classification signal. The generated inventory also records internal headings, structure, hashes, and the pinned source revision.",
@@ -255,10 +293,14 @@ function inventoryMarkdown(rows: InventoryRow[], revision: string): string {
 function extractSegments(row: InventoryRow, source: string, revision: string): { asset: Asset; routes: Record<string, { start: number; end: number; title?: string }> } {
   const path = join(source, "romn", row.filename);
   const xml = readXml(path);
-  const base = row.filename.replace(/\.mul\.xml$/i, "");
+  const base = row.filename.replace(/\.(?:mul|nrf)\.xml$/i, "");
   const workId = row.workType === "post-canonical" ? "work-vism" : `work-vri-${base}`;
   const textId = row.workType === "post-canonical" ? `text-vism-${base}` : `text-vri-${base}`;
-  const canonicalStatus = row.workType === "post-canonical" ? "post-canonical" : "canonical";
+  const canonicalStatus = row.workType === "post-canonical"
+    ? "post-canonical"
+    : row.workType === "tradition-dependent-root"
+      ? "tradition-dependent"
+      : "canonical";
   const sourceFile = `romn/${row.filename}`;
   const sourceUrl = `${SOURCE_URL}/blob/${revision}/${sourceFile}`;
   const title = row.internalBookHeading || (row.workType === "post-canonical" ? "Visuddhimaggo" : base);
@@ -392,13 +434,17 @@ function extractSegments(row: InventoryRow, source: string, revision: string): {
   };
 }
 
-function expectedCoverage(rows: InventoryRow[]): { missing: string[]; unknownMul: string[]; canonical: InventoryRow[]; vism: InventoryRow[] } {
+function expectedCoverage(rows: InventoryRow[]): { missing: string[]; unexpectedRoots: string[]; mula: InventoryRow[]; vism: InventoryRow[] } {
   const names = new Set(rows.map((row) => row.filename));
-  const expected = new Set<string>([...EXPECTED_CANONICAL_FILES, ...EXPECTED_VISUDDHIMAGGA_FILES]);
+  const expectedMula = new Set<string>(EXPECTED_VRI_MULA_SOURCES.map((row) => row.sourceFile));
+  const expected = new Set<string>([...expectedMula, ...EXPECTED_VISUDDHIMAGGA_FILES]);
   return {
     missing: [...expected].filter((name) => !names.has(name)).sort(),
-    unknownMul: rows.filter((row) => row.suffix === "mul" && !expected.has(row.filename)).map((row) => row.filename).sort(),
-    canonical: rows.filter((row) => (EXPECTED_CANONICAL_FILES as readonly string[]).includes(row.filename)),
+    unexpectedRoots: rows
+      .filter((row) => row.includedInVriMulaNavigation && !expectedMula.has(row.filename))
+      .map((row) => row.filename)
+      .sort(),
+    mula: rows.filter((row) => expectedMula.has(row.filename)),
     vism: rows.filter((row) => (EXPECTED_VISUDDHIMAGGA_FILES as readonly string[]).includes(row.filename)),
   };
 }
@@ -406,22 +452,22 @@ function expectedCoverage(rows: InventoryRow[]): { missing: string[]; unknownMul
 function ingest(source: string): void {
   const { rows, revision, sourceDate } = inventory(source);
   const gate = expectedCoverage(rows);
-  if (gate.missing.length || gate.unknownMul.length) {
-    throw new Error(`VRI coverage boundary failed. Missing: ${gate.missing.join(", ") || "none"}; unknown .mul: ${gate.unknownMul.join(", ") || "none"}`);
+  if (gate.missing.length || gate.unexpectedRoots.length) {
+    throw new Error(`VRI coverage boundary failed. Missing: ${gate.missing.join(", ") || "none"}; unexpected roots: ${gate.unexpectedRoots.join(", ") || "none"}`);
   }
   const manifest: Array<Record<string, unknown>> = [];
   const canonMap: Array<Record<string, unknown>> = [];
   const routeIndex: Record<string, Record<string, unknown>> = {};
-  const importedRows = [...gate.canonical, ...gate.vism];
+  const importedRows = [...gate.mula, ...gate.vism];
   for (const row of importedRows) {
     const { asset, routes } = extractSegments(row, source, revision);
     if (asset.segmentCount === 0) throw new Error(`${row.filename} produced no segments`);
-    const base = row.filename.replace(/\.mul\.xml$/i, "");
+    const base = row.filename.replace(/\.(?:mul|nrf)\.xml$/i, "");
     const folder = asset.canonicalStatus === "post-canonical" ? "post-canonical" : asset.pitaka;
     const outputDirectoryRelative = `public/corpus/pli/${folder}/${base}`;
     const outputDirectory = join(REPOSITORY_ROOT, outputDirectoryRelative);
     mkdirSync(outputDirectory, { recursive: true });
-    const pages: Array<{ page: number; start: number; end: number; segmentCount: number; asset: string; sha256: string }> = [];
+    const pages: Array<{ page: number; start: number; end: number; segmentCount: number; asset: string; sha256: string; compressedSha256: string; contentSha256: string }> = [];
     for (let offset = 0; offset < asset.segments.length; offset += SEGMENTS_PER_PAGE) {
       const page = pages.length + 1;
       const pageSegments = asset.segments.slice(offset, offset + SEGMENTS_PER_PAGE);
@@ -439,7 +485,8 @@ function ingest(source: string): void {
         segmentCount: pageSegments.length,
         segments: pageSegments,
       })}\n`;
-      const pageBytes = gzipSync(Buffer.from(pagePayload), { level: 9 });
+      const pageContentBytes = Buffer.from(pagePayload, "utf8");
+      const pageBytes = deterministicGzip(pageContentBytes);
       writeFileSync(join(outputDirectory, pageName), pageBytes);
       pages.push({
         page,
@@ -448,6 +495,8 @@ function ingest(source: string): void {
         segmentCount: pageSegments.length,
         asset: `/${pageRelative.replace(/^public\//, "")}`,
         sha256: sha256(pageBytes),
+        compressedSha256: sha256(pageBytes),
+        contentSha256: sha256(pageContentBytes),
       });
     }
     const indexRelative = `${outputDirectoryRelative}/index.json.gz`;
@@ -459,7 +508,8 @@ function ingest(source: string): void {
       pageCount: pages.length,
       pages,
     })}\n`;
-    const indexBytes = gzipSync(Buffer.from(indexPayload), { level: 9 });
+    const indexContentBytes = Buffer.from(indexPayload, "utf8");
+    const indexBytes = deterministicGzip(indexContentBytes);
     writeFileSync(indexPath, indexBytes);
     const assetHash = sha256(indexBytes);
     manifest.push({
@@ -475,6 +525,8 @@ function ingest(source: string): void {
       pageCount: pages.length,
       pages,
       sha256: assetHash,
+      compressedSha256: assetHash,
+      contentSha256: sha256(indexContentBytes),
       sourceRevision: revision,
       sourceFile: asset.sourceFile,
       sourceUrl: asset.sourceUrl,
@@ -484,6 +536,7 @@ function ingest(source: string): void {
     canonMap.push({
       upstreamFile: row.filename,
       canonicalWorkId: asset.workId,
+      pitaka: asset.pitaka,
       collection: asset.collection,
       volume: base,
       internalTitle: asset.title,
@@ -491,6 +544,8 @@ function ingest(source: string): void {
       checksum: assetHash,
       importStatus: "imported",
       canonicalStatus: asset.canonicalStatus,
+      canonicalScope: row.canonicalScope,
+      navigationSection: EXPECTED_VRI_MULA_SOURCES.find((entry) => entry.sourceFile === row.filename)?.navigationSection,
     });
     for (const [anchor, range] of Object.entries(routes)) {
       const normalized = anchor.toLowerCase().replace(/_/g, ".");
@@ -523,22 +578,42 @@ function ingest(source: string): void {
     canonicalStatus: "post-canonical",
   };
   const canonicalManifest = manifest.filter((entry) => entry.canonicalStatus === "canonical");
+  const traditionDependentManifest = manifest.filter((entry) => entry.canonicalStatus === "tradition-dependent");
+  const mulaManifest = [...canonicalManifest, ...traditionDependentManifest];
   const pitakaCounts = Object.fromEntries(["vinaya", "sutta", "abhidhamma"].map((pitaka) => [pitaka, canonicalManifest.filter((entry) => entry.pitaka === pitaka).reduce((sum, entry) => sum + Number(entry.segmentCount), 0)]));
+  const sourceCounts = new Map<string, number>();
+  const targetCounts = new Map<string, number>();
+  for (const mapping of canonMap.filter((entry) => entry.canonicalStatus !== "post-canonical")) {
+    const source = String(mapping.upstreamFile);
+    const target = String(mapping.canonicalWorkId);
+    sourceCounts.set(source, (sourceCounts.get(source) ?? 0) + 1);
+    targetCounts.set(target, (targetCounts.get(target) ?? 0) + 1);
+  }
+  const duplicateMappings = [
+    ...[...sourceCounts].filter(([, count]) => count > 1).map(([source]) => `source:${source}`),
+    ...[...targetCounts].filter(([, count]) => count > 1).map(([target]) => `target:${target}`),
+  ].sort();
   const blockers = [
     ...(gate.missing.length ? [`Missing expected files: ${gate.missing.join(", ")}`] : []),
-    ...(gate.unknownMul.length ? [`Unknown .mul files: ${gate.unknownMul.join(", ")}`] : []),
+    ...(gate.unexpectedRoots.length ? [`Unexpected root files: ${gate.unexpectedRoots.join(", ")}`] : []),
+    ...(duplicateMappings.length ? [`Duplicate mappings: ${duplicateMappings.join(", ")}`] : []),
+    ...mulaManifest.filter((entry) => Number(entry.segmentCount) === 0).map((entry) => `Zero-segment import: ${entry.sourceFile}`),
     ...Object.entries(pitakaCounts).filter(([, count]) => count === 0).map(([pitaka]) => `${pitaka} has no imported content`),
   ];
   const coverage = {
-    edition: "Complete Chaṭṭha Saṅgāyana Pāli Tipiṭaka edition",
+    edition: "Reviewed VRI Mūla navigation scope",
     sourceRevision: revision,
-    expectedWorks: EXPECTED_CANONICAL_FILES.length,
-    mappedWorks: canonicalManifest.length,
-    importedWorks: canonicalManifest.length,
-    missingWorks: gate.missing.filter((name) => (EXPECTED_CANONICAL_FILES as readonly string[]).includes(name)),
-    duplicateMappings: [],
-    unknownFiles: gate.unknownMul,
+    expectedWorks: EXPECTED_VRI_MULA_SOURCES.length,
+    mappedWorks: mulaManifest.length,
+    importedWorks: mulaManifest.length,
+    universallyCanonicalWorks: canonicalManifest.length,
+    traditionDependentWorks: traditionDependentManifest.length,
+    traditionDependentSources: EXPECTED_TRADITION_DEPENDENT_FILES,
+    missingWorks: gate.missing.filter((name) => EXPECTED_VRI_MULA_SOURCES.some((row) => row.sourceFile === name)),
+    duplicateMappings,
+    unknownFiles: gate.unexpectedRoots,
     canonicalSegmentCount: canonicalManifest.reduce((sum, entry) => sum + Number(entry.segmentCount), 0),
+    traditionDependentSegmentCount: traditionDependentManifest.reduce((sum, entry) => sum + Number(entry.segmentCount), 0),
     pitakaSegmentCounts: pitakaCounts,
     visuddhimagga: {
       expectedVolumes: EXPECTED_VISUDDHIMAGGA_FILES.length,
@@ -547,7 +622,8 @@ function ingest(source: string): void {
       canonicalStatus: "post-canonical",
     },
     blockers,
-    fullTipitakaImported: blockers.length === 0 && canonicalManifest.length === EXPECTED_CANONICAL_FILES.length,
+    fullVriMulaNavigationImported: blockers.length === 0 && mulaManifest.length === EXPECTED_VRI_MULA_SOURCES.length,
+    universalTipitakaCompletenessClaim: false,
   };
   writeJson(join(REPOSITORY_ROOT, "data/corpus/upstream/vri-inventory.json"), { sourceRepository: SOURCE_URL, sourceRevision: revision, sourceDate, rows });
   writeFileSync(join(REPOSITORY_ROOT, "docs/VRI_CORPUS_INVENTORY.md"), inventoryMarkdown(rows, revision), "utf8");
@@ -556,7 +632,7 @@ function ingest(source: string): void {
   writeJson(join(REPOSITORY_ROOT, "data/corpus/full-corpus-manifest.json"), { schemaVersion: 1, generatedFromRevision: revision, generatedAt: sourceDate, editions: manifest });
   writeJson(join(REPOSITORY_ROOT, "data/corpus/vri-reader-index.json"), routeIndex);
   const coverageDoc = [
-    "# Full Tipiṭaka coverage",
+    "# VRI Mūla navigation coverage",
     "",
     `Edition boundary: **${coverage.edition}**`,
     "",
@@ -564,18 +640,24 @@ function ingest(source: string): void {
     "",
     "| Gate | Value |",
     "| --- | ---: |",
-    `| Expected canonical root volumes | ${coverage.expectedWorks} |`,
+    `| Expected VRI Mūla sources | ${coverage.expectedWorks} |`,
     `| Mapped volumes | ${coverage.mappedWorks} |`,
     `| Imported volumes | ${coverage.importedWorks} |`,
-    `| Canonical segments | ${coverage.canonicalSegmentCount} |`,
+    `| Universally canonical roots | ${coverage.universallyCanonicalWorks} |`,
+    `| Tradition-dependent roots | ${coverage.traditionDependentWorks} |`,
+    `| Universally canonical segments | ${coverage.canonicalSegmentCount} |`,
+    `| Tradition-dependent segments | ${coverage.traditionDependentSegmentCount} |`,
     `| Missing volumes | ${coverage.missingWorks.length} |`,
-    `| Unknown .mul files | ${coverage.unknownFiles.length} |`,
+    `| Unexpected root files | ${coverage.unknownFiles.length} |`,
     `| Duplicate mappings | ${coverage.duplicateMappings.length} |`,
-    `| fullTipitakaImported | ${coverage.fullTipitakaImported} |`,
+    `| fullVriMulaNavigationImported | ${coverage.fullVriMulaNavigationImported} |`,
+    `| Universal Tipiṭaka completeness claimed | ${coverage.universalTipitakaCompletenessClaim} |`,
     "",
     "## Piṭaka content",
     "",
     ...Object.entries(pitakaCounts).map(([key, value]) => `- ${key}: ${value} segments`),
+    "",
+    "Milindapañha and Peṭakopadesa are imported because they occur in the pinned VRI Mūla navigation. Their canonical classification is tradition-dependent and they are excluded from canonical-only filtering.",
     "",
     "## Visuddhimagga",
     "",

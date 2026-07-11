@@ -11,9 +11,10 @@ Use condition: non-commercial with attribution. These corpus files are not MIT-l
 | --- | ---: |
 | atthakatha | 49 |
 | canonical-root | 59 |
-| other | 85 |
+| other | 83 |
 | post-canonical | 2 |
 | tika | 22 |
+| tradition-dependent-root | 2 |
 
 ## Canonical and post-canonical root volumes
 
@@ -74,7 +75,9 @@ Use condition: non-commercial with attribution. These corpus files are not MIT-l
 | s0515m.mul.xml | canonical-root | sutta | kn | Mahāniddesapāḷi | 2893 | `48a4a77593c73593b8c4d4361bd7b7146194b695d5bc4c6e8729c468e07016c7` |
 | s0516m.mul.xml | canonical-root | sutta | kn | Cūḷaniddesapāḷi | 2765 | `e7ac11f11dff5ce618d36da8ca5f2da6faee016a3efd2807e7bb88b1e1878563` |
 | s0517m.mul.xml | canonical-root | sutta | kn | Paṭisambhidāmaggapāḷi | 2036 | `8a270ae437979da2cfe139cee5f208578869e01cb6840ece31775f0b8d2de85e` |
+| s0518m.nrf.xml | tradition-dependent-root | sutta | kn | — | 2484 | `06bbd414bd8570e63f280ab34d945f72eee5382a79cda583a852027c4f078570` |
 | s0519m.mul.xml | canonical-root | sutta | kn | Nettippakaraṇapāḷi | 1611 | `f6faf22ff2942511b6b70c954f4dff844e24aff45870e40204fb5f656564a9bc` |
+| s0520m.nrf.xml | tradition-dependent-root | sutta | kn | Peṭakopadesapāḷi | 1200 | `7f1e456b94adae946c8e05e66f6b3600dc882175285223e9669d82aee2f04f4d` |
 | vin01m.mul.xml | canonical-root | vinaya | vinaya | Pārājikapāḷi | 2465 | `4998460f1bb0e76a5e88bcfd89a3de11951d8ed461b09a3b8912e281604a670e` |
 | vin02m1.mul.xml | canonical-root | vinaya | vinaya | Pācittiyapāḷi | 3664 | `2cbb3463fcefc0165103790a07fec20020b4420a30df624ef92c9141841ccd20` |
 | vin02m2.mul.xml | canonical-root | vinaya | vinaya | Mahāvaggapāḷi | 2737 | `807ff2a2f726d8c7925d2ea93cea21eae9932c8581e96c4bec51b4c117d42587` |

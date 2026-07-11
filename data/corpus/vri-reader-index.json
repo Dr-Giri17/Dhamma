@@ -7370,6 +7370,69 @@
     "start": 1,
     "end": 1760
   },
+  "kn18": {
+    "asset": "/corpus/pli/sutta/s0518m/index.json.gz",
+    "textId": "text-vri-s0518m",
+    "workId": "work-vri-s0518m",
+    "title": "s0518m",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1,
+    "end": 1923
+  },
+  "kn18.1": {
+    "asset": "/corpus/pli/sutta/s0518m/index.json.gz",
+    "textId": "text-vri-s0518m",
+    "workId": "work-vri-s0518m",
+    "title": "s0518m",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1,
+    "end": 102
+  },
+  "kn18.2": {
+    "asset": "/corpus/pli/sutta/s0518m/index.json.gz",
+    "textId": "text-vri-s0518m",
+    "workId": "work-vri-s0518m",
+    "title": "s0518m",
+    "canonicalStatus": "tradition-dependent",
+    "start": 103,
+    "end": 468
+  },
+  "kn18.3": {
+    "asset": "/corpus/pli/sutta/s0518m/index.json.gz",
+    "textId": "text-vri-s0518m",
+    "workId": "work-vri-s0518m",
+    "title": "s0518m",
+    "canonicalStatus": "tradition-dependent",
+    "start": 469,
+    "end": 930
+  },
+  "kn18.4": {
+    "asset": "/corpus/pli/sutta/s0518m/index.json.gz",
+    "textId": "text-vri-s0518m",
+    "workId": "work-vri-s0518m",
+    "title": "s0518m",
+    "canonicalStatus": "tradition-dependent",
+    "start": 931,
+    "end": 1406
+  },
+  "kn18.5": {
+    "asset": "/corpus/pli/sutta/s0518m/index.json.gz",
+    "textId": "text-vri-s0518m",
+    "workId": "work-vri-s0518m",
+    "title": "s0518m",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1407,
+    "end": 1907
+  },
+  "s0518m": {
+    "asset": "/corpus/pli/sutta/s0518m/index.json.gz",
+    "textId": "text-vri-s0518m",
+    "workId": "work-vri-s0518m",
+    "title": "s0518m",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1,
+    "end": 1923
+  },
   "kn19": {
     "asset": "/corpus/pli/sutta/s0519m/index.json.gz",
     "textId": "text-vri-s0519m",
@@ -7441,6 +7504,96 @@
     "canonicalStatus": "canonical",
     "start": 1,
     "end": 1435
+  },
+  "kn20": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1,
+    "end": 1167
+  },
+  "kn20.1": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1,
+    "end": 199
+  },
+  "kn20.2": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 200,
+    "end": 485
+  },
+  "kn20.3": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 486,
+    "end": 602
+  },
+  "kn20.4": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 603,
+    "end": 615
+  },
+  "kn20.5": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 616,
+    "end": 706
+  },
+  "kn20.6": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 707,
+    "end": 786
+  },
+  "kn20.7": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 787,
+    "end": 1095
+  },
+  "kn20.8": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1096,
+    "end": 1164
+  },
+  "s0520m": {
+    "asset": "/corpus/pli/sutta/s0520m/index.json.gz",
+    "textId": "text-vri-s0520m",
+    "workId": "work-vri-s0520m",
+    "title": "Peṭakopadesapāḷi",
+    "canonicalStatus": "tradition-dependent",
+    "start": 1,
+    "end": 1167
   },
   "vin1": {
     "asset": "/corpus/pli/vinaya/vin01m/index.json.gz",

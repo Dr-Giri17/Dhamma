@@ -81,6 +81,12 @@ describe("askDhamma — fail-closed RAG (ТЗ §9 Phase G #6, #7)", () => {
     expect(answer.answer).toMatch(/Sources|Опора/);
   });
 
+  it("recalls the supported dukkha concept from the English alias suffering", async () => {
+    const answer = await askDhamma(corpusWith([seg({})]), "What did the Buddha teach about suffering?");
+    expect(answer.sources.length).toBeGreaterThan(0);
+    expect(answer.warnings).not.toContain("no-retrieved-sources");
+  });
+
   it("answer mentions the matched Pāli term in canonical form", async () => {
     const corpus = corpusWith([
       seg({ translationText: "taṇhā is the origin of dukkha." }),

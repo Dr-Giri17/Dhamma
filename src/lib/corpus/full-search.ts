@@ -1,8 +1,21 @@
 import "server-only";
 
-import { headers } from "next/headers";
 import manifestJson from "../../../data/corpus/full-search-manifest.json";
 import type { RetrievedSegment } from "./types";
+import { fetchTrustedJson } from "./trusted-assets";
+import {
+  FETCH_TIMEOUT,
+  MAX_DECOMPRESSED_BYTES_PER_SHARD,
+  MAX_RESULTS,
+  MAX_SHARDS_PER_QUERY,
+  prepareFullSearchQuery,
+  searchDocumentAllowed,
+  type SearchCanonicalStatus as CanonicalStatus,
+  type SearchLanguage,
+} from "./search-policy";
+
+export { MAX_QUERY_CHARS } from "./search-policy";
+const SHARD_CONCURRENCY = 4;
 
 interface SearchDocument {
   id: string;
@@ -11,8 +24,8 @@ interface SearchDocument {
   sourceRef: string;
   sourceUrl: string;
   excerpt: string;
-  language: "pli" | "en" | "ru";
-  canonicalStatus: "canonical" | "post-canonical";
+  language: SearchLanguage;
+  canonicalStatus: CanonicalStatus;
   collection: string;
   translator?: string;
   attribution: string;
@@ -23,66 +36,75 @@ interface SearchShard {
   postings: Record<string, number[]>;
 }
 
-const searchManifest = manifestJson as { shards: Array<{ language: string; collection: string; asset: string }> };
+const manifest = manifestJson as { shards: Array<{ language: SearchLanguage; collection: string; asset: string }> };
 
-function normalize(value: string): string {
-  return value.normalize("NFD").replace(/\p{M}+/gu, "").toLowerCase().replace(/[’']/g, "").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+async function mapBounded<T, R>(values: T[], limit: number, fn: (value: T) => Promise<R>): Promise<R[]> {
+  const output = new Array<R>(values.length);
+  let cursor = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, values.length) }, async () => {
+    while (cursor < values.length) {
+      const index = cursor++;
+      output[index] = await fn(values[index]);
+    }
+  }));
+  return output;
 }
 
-function queryLanguage(query: string, explicit?: string): "pli" | "en" | "ru" {
-  if (explicit === "pli" || explicit === "en" || explicit === "ru") return explicit;
-  if (/\p{Script=Cyrillic}/u.test(query)) return "ru";
-  if (/[āīūṃṁṅñṇṭḍḷ]/i.test(query)) return "pli";
-  return "en";
+async function loadShard(asset: string): Promise<SearchShard> {
+  return fetchTrustedJson<SearchShard>(asset, {
+    maxBytes: MAX_DECOMPRESSED_BYTES_PER_SHARD,
+    timeoutMs: FETCH_TIMEOUT,
+  });
 }
 
-async function shard(asset: string): Promise<SearchShard> {
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
-  if (!host) throw new Error("Cannot resolve search shard origin");
-  const protocol = requestHeaders.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  const response = await fetch(`${protocol}://${host}${asset}`, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Search shard request failed (${response.status}): ${asset}`);
-  return response.json() as Promise<SearchShard>;
+export interface FullSearchOptions {
+  language?: string;
+  collection?: string;
+  canonicalOnly?: boolean;
+  canonicalStatus?: CanonicalStatus;
+  limit?: number;
 }
 
-export async function searchFullCorpus(query: string, options: { language?: string; collection?: string; canonicalOnly?: boolean; limit?: number } = {}): Promise<RetrievedSegment[]> {
-  const language = queryLanguage(query, options.language);
-  const terms = [...new Set(normalize(query).split(/\s+/).filter((term) => term.length >= 3))];
-  if (!terms.length) return [];
-  const selected = searchManifest.shards.filter((entry) => entry.language === language && (!options.collection || entry.collection === options.collection));
+export async function searchFullCorpus(query: string, options: FullSearchOptions = {}): Promise<RetrievedSegment[]> {
+  const prepared = prepareFullSearchQuery(query, options.language);
+  if (!prepared.supported) return [];
+  const { language, terms: groundedTerms } = prepared;
+
+  const selected = manifest.shards
+    .filter((entry) => entry.language === language && (!options.collection || entry.collection === options.collection))
+    .slice(0, MAX_SHARDS_PER_QUERY);
+  const shards = await mapBounded(selected, SHARD_CONCURRENCY, (entry) => loadShard(entry.asset));
   const scored: Array<{ document: SearchDocument; score: number }> = [];
-  for (const entry of selected) {
-    const value = await shard(entry.asset);
+
+  for (const shard of shards) {
     const scores = new Map<number, number>();
-    for (const term of terms) {
-      for (const documentId of value.postings[term] ?? []) scores.set(documentId, (scores.get(documentId) ?? 0) + 1);
+    for (const term of groundedTerms) {
+      for (const documentId of shard.postings[term] ?? []) scores.set(documentId, (scores.get(documentId) ?? 0) + 1);
     }
     for (const [documentId, hits] of scores) {
-      const document = value.documents[documentId];
-      if (!document || (options.canonicalOnly && document.canonicalStatus !== "canonical")) continue;
+      const document = shard.documents[documentId];
+      if (!document) continue;
+      if (!searchDocumentAllowed(document, { language, collection: options.collection, canonicalOnly: options.canonicalOnly, canonicalStatus: options.canonicalStatus })) continue;
       scored.push({ document, score: hits * 5 + (document.canonicalStatus === "canonical" ? 2 : 0) });
     }
   }
+
   scored.sort((a, b) => b.score - a.score || a.document.segmentUid.localeCompare(b.document.segmentUid));
-  return scored.slice(0, Math.min(options.limit ?? 20, 50)).map(({ document, score }, index) => ({
+  const limit = Math.min(Math.max(1, Math.trunc(options.limit ?? MAX_RESULTS)), MAX_RESULTS);
+  return scored.slice(0, limit).map(({ document, score }) => ({
     id: document.id,
     textId: document.textId,
     segmentUid: document.segmentUid,
-    segmentOrder: index + 1,
+    segmentOrder: 0,
     language: document.language,
     rootText: document.language === "pli" ? document.excerpt : undefined,
     translationText: document.language !== "pli" ? document.excerpt : undefined,
     sourceRef: document.sourceRef,
     license: document.attribution,
     translator: document.translator,
-    provider: document.language === "en" ? "bilara" : "manual",
+    provider: document.language === "en" || document.language === "ru" ? "bilara" : "manual",
     metadata: { sourceUrl: document.sourceUrl, collection: document.collection, canonicalStatus: document.canonicalStatus },
     score,
-    reason: hitsReason(score, terms.length),
+    reason: score >= groundedTerms.length * 5 + 2 ? "exact" : "lexical",
   }));
-}
-
-function hitsReason(score: number, termCount: number): RetrievedSegment["reason"] {
-  return score >= termCount * 5 + 2 ? "exact" : "lexical";
 }

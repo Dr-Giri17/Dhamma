@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
-  "postingLimit": 40,
+  "postingLimit": 128,
+  "postingSelection": "evenly-distributed-across-document-order",
   "shards": [
     {
       "language": "en",
@@ -8,7 +9,9 @@
       "documentCount": 37397,
       "termCount": 7688,
       "asset": "/corpus/indexes/en/an.json.gz",
-      "byteSize": 1745569
+      "byteSize": 1889663,
+      "contentSha256": "3ac7ec878761cf032eba9c23459260e122e73a103d2808bbd74dd79d5f0008f4",
+      "compressedSha256": "bbfab9136c4f117d662f5605ed692e4bb99851643efe85b6f8aec9690e999798"
     },
     {
       "language": "en",
@@ -16,7 +19,9 @@
       "documentCount": 1617,
       "termCount": 1679,
       "asset": "/corpus/indexes/en/cp.json.gz",
-      "byteSize": 79683
+      "byteSize": 80631,
+      "contentSha256": "fbcda65571de486342ff829a4a0693fc0cfed811a65123ce0cbe330fa9045d35",
+      "compressedSha256": "ef8c95c6aee5eb7e6e246161c84767d564b037c7e535b3d1708f26d2aa1463cc"
     },
     {
       "language": "en",
@@ -24,15 +29,19 @@
       "documentCount": 3704,
       "termCount": 2733,
       "asset": "/corpus/indexes/en/dhp.json.gz",
-      "byteSize": 177416
+      "byteSize": 181380,
+      "contentSha256": "fddd63a63b3e051e51b3178b63db148ed1d1e7b5a4f2f42bffc82430aae453de",
+      "compressedSha256": "1894a5ca96b5b9a382ef6cab54af4254a540c698ace9c90fd44fdf62a82920a2"
     },
     {
       "language": "en",
       "collection": "dn",
       "documentCount": 14418,
-      "termCount": 6407,
+      "termCount": 6405,
       "asset": "/corpus/indexes/en/dn.json.gz",
-      "byteSize": 799467
+      "byteSize": 858881,
+      "contentSha256": "b359ee6d8139af97cf305053bd9ab7efa9246fd502c81461be99c7cf7b324ad3",
+      "compressedSha256": "a03b02557ab6673e9404c5bb1d74f1bff9929d3d99a72dc012a9f25398483b2d"
     },
     {
       "language": "en",
@@ -40,7 +49,9 @@
       "documentCount": 2733,
       "termCount": 1805,
       "asset": "/corpus/indexes/en/iti.json.gz",
-      "byteSize": 125085
+      "byteSize": 129284,
+      "contentSha256": "0e8b4bb4d264f6e9da57d80546e9d1d0a56a9f3852604fac290c6fbfb87beaf8",
+      "compressedSha256": "cfa5f6e72874bf5f03bfe6e9f762c1b6d4186e44b978bdd845cafd20edc5265e"
     },
     {
       "language": "en",
@@ -48,7 +59,9 @@
       "documentCount": 735,
       "termCount": 925,
       "asset": "/corpus/indexes/en/ja.json.gz",
-      "byteSize": 35361
+      "byteSize": 35871,
+      "contentSha256": "34cdf1f22dab24115f5d867a8b1e430c5fe5e262bb323277830f473fe18bb4e7",
+      "compressedSha256": "191270746022c84acdc1bea0b34e009b744b7546d870026353185a896d0017b0"
     },
     {
       "language": "en",
@@ -56,7 +69,9 @@
       "documentCount": 357,
       "termCount": 686,
       "asset": "/corpus/indexes/en/kp.json.gz",
-      "byteSize": 19598
+      "byteSize": 19768,
+      "contentSha256": "53783288a59e132090cf4bd33c2e4fa53973d85eea46ab90d2c80134ad1c7767",
+      "compressedSha256": "c24b96f0a81adb1dad6bf033bd461d931d6f2545369b7d34154f08e6f443db18"
     },
     {
       "language": "en",
@@ -64,23 +79,29 @@
       "documentCount": 2652,
       "termCount": 3321,
       "asset": "/corpus/indexes/en/mil.json.gz",
-      "byteSize": 168905
+      "byteSize": 177362,
+      "contentSha256": "4e9560073531354766585c2a965bfa931630cc3a00f30af1fccddf20602217ec",
+      "compressedSha256": "2684e92ed310220d065774700602842a0c4a5cebc6c293d86a42ad997f7a021d"
     },
     {
       "language": "en",
       "collection": "mn",
       "documentCount": 23228,
-      "termCount": 7079,
+      "termCount": 7077,
       "asset": "/corpus/indexes/en/mn.json.gz",
-      "byteSize": 1234222
+      "byteSize": 1338955,
+      "contentSha256": "445cacfb32293682e826c0e3bed119ba8eb61c259d73d20b35329419ff01003a",
+      "compressedSha256": "3494562fd35b0b7a1f45cff435c9231bbf620a300e91180ea790d95151372e6b"
     },
     {
       "language": "en",
       "collection": "pli",
       "documentCount": 12822,
-      "termCount": 3335,
+      "termCount": 3328,
       "asset": "/corpus/indexes/en/pli.json.gz",
-      "byteSize": 531690
+      "byteSize": 569709,
+      "contentSha256": "fa96f22370e1f96e20dcb7bc0d151cee2fa42d06fa3e7b23a7d8c7b29d479e95",
+      "compressedSha256": "2b0a9ed7c225cb7c187d63b5dc8f2a03e7fa8bc47ea00ef0cda72ea750720e0c"
     },
     {
       "language": "en",
@@ -88,15 +109,19 @@
       "documentCount": 17,
       "termCount": 49,
       "asset": "/corpus/indexes/en/pv.json.gz",
-      "byteSize": 1366
+      "byteSize": 1366,
+      "contentSha256": "f5ce8c7f613b5425bf8afec9c9cf05aec0abe6a7fb4e60fa9141532f64ef27e3",
+      "compressedSha256": "595170e619766c4d266fec2317ceeb324cf1df738ca97b9864195c1f0a632d5a"
     },
     {
       "language": "en",
       "collection": "sn",
       "documentCount": 36788,
-      "termCount": 6980,
+      "termCount": 6974,
       "asset": "/corpus/indexes/en/sn.json.gz",
-      "byteSize": 1626276
+      "byteSize": 1750939,
+      "contentSha256": "88b81f717f84dcb6b228944a30abc24d8b7903b2938ade002b9b2f690b959199",
+      "compressedSha256": "bf2de769d9caaf612183a8785154313b45aa3de739d564ab39d015edfc472697"
     },
     {
       "language": "en",
@@ -104,7 +129,9 @@
       "documentCount": 5703,
       "termCount": 3988,
       "asset": "/corpus/indexes/en/snp.json.gz",
-      "byteSize": 291706
+      "byteSize": 299902,
+      "contentSha256": "6115b4c527f95f02d64c02ebd079f3b5d45d9808d05b49bdf4ac02cd1d46fe2c",
+      "compressedSha256": "0e7fa8291212d4da323fe484df514405961ade85a6ffb5a0f6de7d8bf2bec7d3"
     },
     {
       "language": "en",
@@ -112,7 +139,9 @@
       "documentCount": 6368,
       "termCount": 3797,
       "asset": "/corpus/indexes/en/thag.json.gz",
-      "byteSize": 301723
+      "byteSize": 308652,
+      "contentSha256": "075f20a050b2950a8ec341c9866a7e6ae02074bdfb895e6b0d66042a8c0b76ab",
+      "compressedSha256": "d30467d189f8cabae9efdff238dc5f09aabfe01eaf2b21bbf6151451f456d7c8"
     },
     {
       "language": "en",
@@ -120,15 +149,19 @@
       "documentCount": 4842,
       "termCount": 3118,
       "asset": "/corpus/indexes/en/thig.json.gz",
-      "byteSize": 234179
+      "byteSize": 239890,
+      "contentSha256": "82431114b166d6cdb13737429db40ac72fd04d90c6fb31c8e8978bac391d79fc",
+      "compressedSha256": "dc81972ef36da14525cb02d83a8d4a0ea77e403229dc46e77f08b812920b90be"
     },
     {
       "language": "en",
       "collection": "ud",
       "documentCount": 2268,
-      "termCount": 2442,
+      "termCount": 2440,
       "asset": "/corpus/indexes/en/ud.json.gz",
-      "byteSize": 137963
+      "byteSize": 142739,
+      "contentSha256": "b37794a3a37f2bfb86ea35492611b3395dd2f5b36eb1af96d4fbcea4b72dcbe9",
+      "compressedSha256": "d79c6e624831d1c8ca77dea60546207c45a4fc2db2769442a018044dc692cff2"
     },
     {
       "language": "pli",
@@ -136,7 +169,9 @@
       "documentCount": 40372,
       "termCount": 17563,
       "asset": "/corpus/indexes/pli/abhidhamma.json.gz",
-      "byteSize": 1823776
+      "byteSize": 2012094,
+      "contentSha256": "5c6cb82763cabca0a11bc704f8e3755b2b094b72105bee05135540d084e684b4",
+      "compressedSha256": "9c220caeb446d54bb742f29eff35d934e909a7b57909794cd77ae5bd78b9bd9d"
     },
     {
       "language": "pli",
@@ -144,7 +179,9 @@
       "documentCount": 8866,
       "termCount": 24506,
       "asset": "/corpus/indexes/pli/an.json.gz",
-      "byteSize": 812937
+      "byteSize": 864239,
+      "contentSha256": "ffa03557cd53784dc9672552ff7ad8393740a2d75d1f5a04ac4aa57d10a34964",
+      "compressedSha256": "ea3f19fb5dcd3df1d7db71578aa23864471a50fe3c3af851dabe485e63a00bf5"
     },
     {
       "language": "pli",
@@ -152,7 +189,9 @@
       "documentCount": 4003,
       "termCount": 17340,
       "asset": "/corpus/indexes/pli/dn.json.gz",
-      "byteSize": 404251
+      "byteSize": 421002,
+      "contentSha256": "c3523691a85d58d81ad3667bcfcfaa4d040941dcea7510502bdba81d94151dd6",
+      "compressedSha256": "1af094d5858335acf3fcd2afb01be000652353510026df649e10e013040c7968"
     },
     {
       "language": "pli",
@@ -160,7 +199,9 @@
       "documentCount": 254,
       "termCount": 660,
       "asset": "/corpus/indexes/pli/kn-s0501m.json.gz",
-      "byteSize": 15571
+      "byteSize": 15571,
+      "contentSha256": "f7f23ceb8c2b561678f5f86bcf08da398786aa3b9eff19d84ad7a54ff8c67585",
+      "compressedSha256": "d095f0778e246c2501720f211405f2fe10a1f77a7c224f541b2cc4a079613670"
     },
     {
       "language": "pli",
@@ -168,7 +209,9 @@
       "documentCount": 1337,
       "termCount": 2978,
       "asset": "/corpus/indexes/pli/kn-s0502m.json.gz",
-      "byteSize": 74932
+      "byteSize": 74932,
+      "contentSha256": "2ceb68808e349d319dd2527a399b86f2903f2cc83f4a9772ed8b40487f7f7aa3",
+      "compressedSha256": "1f461eb9fda752968d789416d6648a036fa47c5907e92aa941ba5513abfba460"
     },
     {
       "language": "pli",
@@ -176,7 +219,9 @@
       "documentCount": 865,
       "termCount": 4176,
       "asset": "/corpus/indexes/pli/kn-s0503m.json.gz",
-      "byteSize": 79661
+      "byteSize": 81010,
+      "contentSha256": "39672e4a1a2fa815d3413e6aeee9baa9131f7635e74da4f3745359a6f4991b2b",
+      "compressedSha256": "f6ff627b9b87aab1ee25cb5d1497b71fbbabd85ed9de2bc7555ef7403ebf0e45"
     },
     {
       "language": "pli",
@@ -184,7 +229,9 @@
       "documentCount": 1050,
       "termCount": 3207,
       "asset": "/corpus/indexes/pli/kn-s0504m.json.gz",
-      "byteSize": 72568
+      "byteSize": 73267,
+      "contentSha256": "a94a2e1f9bbe2ed45ed526f993b95635c101d258ce47671bb5d7bd62a429d7c6",
+      "compressedSha256": "8b657c9e6bcf587b89702513b86280e86446ca73190bacdf1205693de81b2c9f"
     },
     {
       "language": "pli",
@@ -192,7 +239,9 @@
       "documentCount": 3892,
       "termCount": 8617,
       "asset": "/corpus/indexes/pli/kn-s0505m.json.gz",
-      "byteSize": 234358
+      "byteSize": 235511,
+      "contentSha256": "1232c7390a5158780d6b0551184e93ade8cafd438256c61b3c4d6df4b1e52670",
+      "compressedSha256": "76b4c16e4da483376911b823729ef89d2782c0998af714fd91ad419e2fbd0eab"
     },
     {
       "language": "pli",
@@ -200,7 +249,9 @@
       "documentCount": 3047,
       "termCount": 4722,
       "asset": "/corpus/indexes/pli/kn-s0506m.json.gz",
-      "byteSize": 154296
+      "byteSize": 155067,
+      "contentSha256": "6afbe561d514973d6318532e4378f01ec56d3a8c0b5f4bbd228549cbd0f6fa4d",
+      "compressedSha256": "faef463ac09ed1c59a80d87fbd33a5e6330698002f561c13dc0e59301589130c"
     },
     {
       "language": "pli",
@@ -208,7 +259,9 @@
       "documentCount": 2537,
       "termCount": 4913,
       "asset": "/corpus/indexes/pli/kn-s0507m.json.gz",
-      "byteSize": 142065
+      "byteSize": 142262,
+      "contentSha256": "4fa04ec25d29cd3d8d9b9977912babec4300bd2cf94204cb1f55b3cb2389fbb1",
+      "compressedSha256": "6aa5adec9178612f9c8e8142a35aedd24574b99377873495b816a2879a3b13a8"
     },
     {
       "language": "pli",
@@ -216,7 +269,9 @@
       "documentCount": 4072,
       "termCount": 8075,
       "asset": "/corpus/indexes/pli/kn-s0508m.json.gz",
-      "byteSize": 231377
+      "byteSize": 231712,
+      "contentSha256": "0f945ba4741e32c567e557592eae93e0981b8ea6c9ccc376c8b3a9bd5cd092c5",
+      "compressedSha256": "535b940b09807b3075633b35cd1671b1ae52b55bb53fbb9f66a755eef71df635"
     },
     {
       "language": "pli",
@@ -224,7 +279,9 @@
       "documentCount": 1609,
       "termCount": 3538,
       "asset": "/corpus/indexes/pli/kn-s0509m.json.gz",
-      "byteSize": 92255
+      "byteSize": 92255,
+      "contentSha256": "8aae0aa110f766d72261e14937ad787863a792d585b4f1c493e0abc9bf3eba5e",
+      "compressedSha256": "e481b539d4b71d4a688c92b190bfc01e72159e4c0db65196320f6d559d4adfc5"
     },
     {
       "language": "pli",
@@ -232,7 +289,9 @@
       "documentCount": 13618,
       "termCount": 11961,
       "asset": "/corpus/indexes/pli/kn-s0510m1.json.gz",
-      "byteSize": 638368
+      "byteSize": 649525,
+      "contentSha256": "2e5883f1e66d282606e95e93e8045e6e05d679095c04cc0abf13b800c5782e32",
+      "compressedSha256": "07cfce0c8700a2b683d1f133db6284725c56936119646a65da8d294eb53e7f98"
     },
     {
       "language": "pli",
@@ -240,7 +299,9 @@
       "documentCount": 10112,
       "termCount": 9686,
       "asset": "/corpus/indexes/pli/kn-s0510m2.json.gz",
-      "byteSize": 490047
+      "byteSize": 496247,
+      "contentSha256": "bdd681299f6c23e2fd0b9e52f15331679363f1ac43179ed94a8007711c01901d",
+      "compressedSha256": "2b6484ee6e9969facd9bd4aac9972f758e4fac577fbf97df4452b7fe4ed15d97"
     },
     {
       "language": "pli",
@@ -248,7 +309,9 @@
       "documentCount": 3220,
       "termCount": 3522,
       "asset": "/corpus/indexes/pli/kn-s0511m.json.gz",
-      "byteSize": 157932
+      "byteSize": 158825,
+      "contentSha256": "10363eb38a2facd0d30365eec2addf83ae1a6956e3ea6c6d16518175877e6187",
+      "compressedSha256": "5299b0daad51b9fdca3529aac3519730d2dd89aae31ce80374fd5f3d905d7dd4"
     },
     {
       "language": "pli",
@@ -256,7 +319,9 @@
       "documentCount": 1117,
       "termCount": 2292,
       "asset": "/corpus/indexes/pli/kn-s0512m.json.gz",
-      "byteSize": 63157
+      "byteSize": 63170,
+      "contentSha256": "a2bd7e50bf73243b934fe29d20b213308710cfc5b736fdedb63d359df79e917b",
+      "compressedSha256": "0d4af82951fa0d0ccd5884f685c682a489d945d0ae0e21debd89d8de9db6a406"
     },
     {
       "language": "pli",
@@ -264,7 +329,9 @@
       "documentCount": 9347,
       "termCount": 14710,
       "asset": "/corpus/indexes/pli/kn-s0513m.json.gz",
-      "byteSize": 529077
+      "byteSize": 532591,
+      "contentSha256": "df77adf66a1165ad8ddcd118a7c7a022a3211ff1f9adfda20eab1761d902f114",
+      "compressedSha256": "2aceadd064831c0c5aeb4237fe63db431cf7d97b4c6f381af1d485262e1bb228"
     },
     {
       "language": "pli",
@@ -272,7 +339,9 @@
       "documentCount": 11414,
       "termCount": 16886,
       "asset": "/corpus/indexes/pli/kn-s0514m.json.gz",
-      "byteSize": 609756
+      "byteSize": 614589,
+      "contentSha256": "8dc6f4723a9846bb0da49b42c668f9ff53ae614e970361d108e1c2b5a19e77b8",
+      "compressedSha256": "1e301e041261addeb71f61e73963109db9a2b22e24ea46359fa7965f70151640"
     },
     {
       "language": "pli",
@@ -280,7 +349,9 @@
       "documentCount": 2888,
       "termCount": 13305,
       "asset": "/corpus/indexes/pli/kn-s0515m.json.gz",
-      "byteSize": 272010
+      "byteSize": 276186,
+      "contentSha256": "7ba640914aa8dfece4469f8a884cd55f244f80c299a10ad0ebc6ce1f1411de78",
+      "compressedSha256": "744e28abf8c50345e71842e9c8b71806699440e114854e027dc8e791f2b92054"
     },
     {
       "language": "pli",
@@ -288,7 +359,9 @@
       "documentCount": 2680,
       "termCount": 10520,
       "asset": "/corpus/indexes/pli/kn-s0516m.json.gz",
-      "byteSize": 222910
+      "byteSize": 225751,
+      "contentSha256": "ea8b91755517fbe98332e583499cc9d4883c5dc4d7ed2da2f4ddbaaeab44c7ec",
+      "compressedSha256": "5fa1306e07428340c42a922652fa2b2287cb3725ff449c46c0195ae025d6cdbf"
     },
     {
       "language": "pli",
@@ -296,7 +369,19 @@
       "documentCount": 1760,
       "termCount": 8316,
       "asset": "/corpus/indexes/pli/kn-s0517m.json.gz",
-      "byteSize": 173748
+      "byteSize": 177557,
+      "contentSha256": "8105ebe6bf905edaa84ac185f8fe051d606326c0490702df93052ba2617b86cc",
+      "compressedSha256": "fbb193b97603ef6f12569a5359d099d00c60f9c7a4fe7b7049f463811d5ddfb6"
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0518m",
+      "documentCount": 1923,
+      "termCount": 16738,
+      "asset": "/corpus/indexes/pli/kn-s0518m.json.gz",
+      "byteSize": 270488,
+      "contentSha256": "87b3faf7cf20720cd07e40d3711d804e3b072604f0c60fa84854c46d2c359b42",
+      "compressedSha256": "f39cf533e23276e928f752751983de23abf231f6818ba5dc6ef9f0c12e507c3a"
     },
     {
       "language": "pli",
@@ -304,7 +389,19 @@
       "documentCount": 1435,
       "termCount": 7551,
       "asset": "/corpus/indexes/pli/kn-s0519m.json.gz",
-      "byteSize": 141121
+      "byteSize": 142223,
+      "contentSha256": "be55b1cc2030f06e7a61dca470b2e3685585a163e56a7bfc0af49ae67f1edeb6",
+      "compressedSha256": "2ed27601c0047314ed12651da570a602d1b864f767a9e329c28e3b8631821712"
+    },
+    {
+      "language": "pli",
+      "collection": "kn-s0520m",
+      "documentCount": 1167,
+      "termCount": 8913,
+      "asset": "/corpus/indexes/pli/kn-s0520m.json.gz",
+      "byteSize": 147605,
+      "contentSha256": "f0b1300e4151eb50a9622525e3c696fecbb710d54d6630ad9df2e4ab417aec55",
+      "compressedSha256": "7196576d9499e556f70dcc5e1741bfa12a195a3f45376889b0e589258f11eb76"
     },
     {
       "language": "pli",
@@ -312,7 +409,9 @@
       "documentCount": 4550,
       "termCount": 21775,
       "asset": "/corpus/indexes/pli/mn.json.gz",
-      "byteSize": 509256
+      "byteSize": 540050,
+      "contentSha256": "807b4da25cf1e817d0b2c2423e21f6608813f324133691f32ed67426090efdae",
+      "compressedSha256": "a8a4aec9db1f80d342853a67702e94d92cd600043f9c8102913faa54dd2b0711"
     },
     {
       "language": "pli",
@@ -320,7 +419,9 @@
       "documentCount": 8916,
       "termCount": 22065,
       "asset": "/corpus/indexes/pli/sn.json.gz",
-      "byteSize": 722321
+      "byteSize": 770805,
+      "contentSha256": "5c428f491c8adb897fc8f8990c6e9f7af6e3742e0d61471d7500413c2b219bcf",
+      "compressedSha256": "e89d277af0183686fe51365e100bf831eefcf16eec5ee0aafe63a8fa3f4dd9db"
     },
     {
       "language": "pli",
@@ -328,7 +429,9 @@
       "documentCount": 12957,
       "termCount": 31131,
       "asset": "/corpus/indexes/pli/vinaya.json.gz",
-      "byteSize": 1027993
+      "byteSize": 1106050,
+      "contentSha256": "3a3b384ded842e59e92ecaa47a4a46de0a2b09d985edb6db95c988a7d8ae5aca",
+      "compressedSha256": "00895ab1a39dfb20daf1130ba862b90c27cd88f4938bb4ec1997cdc8e6adb263"
     },
     {
       "language": "pli",
@@ -336,79 +439,49 @@
       "documentCount": 4068,
       "termCount": 35511,
       "asset": "/corpus/indexes/pli/visuddhimagga.json.gz",
-      "byteSize": 611715
-    },
-    {
-      "language": "ru",
-      "collection": "an",
-      "documentCount": 56020,
-      "termCount": 17951,
-      "asset": "/corpus/indexes/ru/an.json.gz",
-      "byteSize": 2851624
+      "byteSize": 626484,
+      "contentSha256": "61068a454e4550c303eef121d53b83514648dad8120a83b7c3c865e59ffb8b37",
+      "compressedSha256": "b5b435a54dad7cc2ab555debcbd60c5ec80f6c8e95197d250fe5c753535fa12a"
     },
     {
       "language": "ru",
       "collection": "dn",
-      "documentCount": 4288,
-      "termCount": 3612,
+      "documentCount": 267,
+      "termCount": 867,
       "asset": "/corpus/indexes/ru/dn.json.gz",
-      "byteSize": 230734
-    },
-    {
-      "language": "ru",
-      "collection": "iti",
-      "documentCount": 2978,
-      "termCount": 3122,
-      "asset": "/corpus/indexes/ru/iti.json.gz",
-      "byteSize": 163400
+      "byteSize": 17592,
+      "contentSha256": "9c3b30dd0f0bc7133d5978b5f9d9b7ab62a9a2f6d5af3b528d07245f6dd73bc3",
+      "compressedSha256": "ab8746455bc21f81d7a4e8d04c93848e4a8883b69103416b0e1100e2612a4304"
     },
     {
       "language": "ru",
       "collection": "mn",
-      "documentCount": 39660,
-      "termCount": 16611,
+      "documentCount": 357,
+      "termCount": 827,
       "asset": "/corpus/indexes/ru/mn.json.gz",
-      "byteSize": 2127886
+      "byteSize": 20087,
+      "contentSha256": "72529cee4160c9d458e1dc81d41aa50be779f2c8e26c92bd25720d0e1c30f590",
+      "compressedSha256": "ecf45b73d3446d99d738394bf50c2b2f9d2ac4a414475da06fa811a3acc8c219"
     },
     {
       "language": "ru",
       "collection": "sn",
-      "documentCount": 51387,
-      "termCount": 16486,
+      "documentCount": 59,
+      "termCount": 282,
       "asset": "/corpus/indexes/ru/sn.json.gz",
-      "byteSize": 2563501
+      "byteSize": 5171,
+      "contentSha256": "94abefb5f52e9e36f205bee51e03200f229157ebd28abda4375d534419edb6e0",
+      "compressedSha256": "a8a12bbaeade1f39d5c4d9c7c93ee42cd30c636b13a66718a299e1a62f2480db"
     },
     {
       "language": "ru",
       "collection": "snp",
-      "documentCount": 4224,
-      "termCount": 5141,
+      "documentCount": 42,
+      "termCount": 151,
       "asset": "/corpus/indexes/ru/snp.json.gz",
-      "byteSize": 240622
-    },
-    {
-      "language": "ru",
-      "collection": "thag",
-      "documentCount": 340,
-      "termCount": 663,
-      "asset": "/corpus/indexes/ru/thag.json.gz",
-      "byteSize": 21162
-    },
-    {
-      "language": "ru",
-      "collection": "thig",
-      "documentCount": 283,
-      "termCount": 646,
-      "asset": "/corpus/indexes/ru/thig.json.gz",
-      "byteSize": 18772
-    },
-    {
-      "language": "ru",
-      "collection": "ud",
-      "documentCount": 397,
-      "termCount": 774,
-      "asset": "/corpus/indexes/ru/ud.json.gz",
-      "byteSize": 26936
+      "byteSize": 2991,
+      "contentSha256": "a2b16d7ddec83efe9ce93184c7ce75a20946655536a292bf995c8aa283cf9855",
+      "compressedSha256": "a6c2789c077ddcc661f9de578e696716bdc5cae478f32879c6ccb675a892ca8a"
     }
   ]
 }

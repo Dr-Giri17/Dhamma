@@ -17,17 +17,23 @@ describe("full Chaṭṭha Saṅgāyana corpus gates", () => {
     unknownFiles: string[];
     canonicalSegmentCount: number;
     pitakaSegmentCounts: Record<string, number>;
-    fullTipitakaImported: boolean;
+    fullVriMulaNavigationImported: boolean;
+    universalTipitakaCompletenessClaim: boolean;
+    universallyCanonicalWorks: number;
+    traditionDependentWorks: number;
     visuddhimagga: { importedVolumes: number; segmentCount: number; canonicalStatus: string };
   }>("data/corpus/full-canon-coverage.json");
 
-  it("proves every expected canonical root volume before setting the full flag", () => {
-    expect(coverage.expectedWorks).toBe(59);
+  it("proves every expected VRI Mūla source without claiming universal completeness", () => {
+    expect(coverage.expectedWorks).toBe(61);
     expect(coverage.importedWorks).toBe(coverage.expectedWorks);
     expect(coverage.missingWorks).toEqual([]);
     expect(coverage.duplicateMappings).toEqual([]);
     expect(coverage.unknownFiles).toEqual([]);
-    expect(coverage.fullTipitakaImported).toBe(true);
+    expect(coverage.universallyCanonicalWorks).toBe(59);
+    expect(coverage.traditionDependentWorks).toBe(2);
+    expect(coverage.fullVriMulaNavigationImported).toBe(true);
+    expect(coverage.universalTipitakaCompletenessClaim).toBe(false);
   });
 
   it("contains substantial text in Vinaya, Sutta, and Abhidhamma", () => {
@@ -52,15 +58,12 @@ describe("multilingual corpus provenance", () => {
     expect(coverage.licenseName).toContain("CC0");
   });
 
-  it("requires direct attribution for every imported Russian edition", () => {
-    const coverage = json<{ importedEditions: number; directAttributionLinks: number }>("data/corpus/theravada-ru-coverage.json");
-    const inventory = json<{ rows: Array<{ importDecision: string; sourceUrl: string; translator: string; translationBasisLanguage: string }> }>("data/corpus/upstream/theravada-ru-inventory.json");
-    const imported = inventory.rows.filter((row) => row.importDecision === "allowed-with-direct-link");
-    expect(imported).toHaveLength(coverage.importedEditions);
-    expect(coverage.directAttributionLinks).toBe(coverage.importedEditions);
-    expect(imported.every((row) => row.sourceUrl.startsWith("https://www.theravada.ru/"))).toBe(true);
-    expect(imported.every((row) => row.translator.length > 0)).toBe(true);
-    expect(imported.every((row) => ["pli", "en", "unknown"].includes(row.translationBasisLanguage))).toBe(true);
+  it("retains only the five verified Russian seed editions", () => {
+    const metadata = json<{ claims: { russianSeedEditions: number; russianSeedSegments: number; russianBulkImport: string } }>("data/corpus/coverage.json");
+    expect(metadata.claims.russianSeedEditions).toBe(5);
+    expect(metadata.claims.russianSeedSegments).toBeGreaterThan(0);
+    expect(metadata.claims.russianBulkImport).toContain("excluded");
+    expect(() => readFileSync(join(ROOT, "data/corpus/theravada-ru-coverage.json"), "utf8")).toThrow();
   });
 });
 
@@ -70,6 +73,8 @@ describe("reader and search boundaries", () => {
     for (const route of ["mn1", "mn10", "mn152", "dn1", "dn34", "visuddhimagga"]) expect(routes[route]).toBeDefined();
     expect(routes.visuddhimagga.canonicalStatus).toBe("post-canonical");
     expect(routes.visuddhimagga.assets).toHaveLength(2);
+    expect(routes.s0518m.canonicalStatus).toBe("tradition-dependent");
+    expect(routes.s0520m.canonicalStatus).toBe("tradition-dependent");
   });
 
   it("keeps the protected BPS English Visuddhimagga out of corpus manifests", () => {
@@ -85,4 +90,3 @@ describe("reader and search boundaries", () => {
     expect(manifest.shards.some((shard) => shard.language === "ru")).toBe(true);
   });
 });
-

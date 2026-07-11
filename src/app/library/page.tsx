@@ -39,16 +39,18 @@ export default async function LibraryPage() {
   const full = fullCorpusSummary();
   const fullEditions = fullCorpusEditions();
   const canonicalVolumes = fullEditions.filter((edition) => edition.canonicalStatus === "canonical");
+  const traditionDependentVolumes = fullEditions.filter((edition) => edition.canonicalStatus === "tradition-dependent");
 
   return (
     <div className="space-y-8">
       <header className="space-y-2">
         <h1 className="font-serif text-3xl">{ui.tipitaka.title}</h1>
-        <p className="text-ink-soft">Complete Chaṭṭha Saṅgāyana Pāli Tipiṭaka edition, with machine-verified coverage.</p>
-        <p className="font-medium text-accent-strong">All three Piṭakas contain imported local text.</p>
+        <p className="text-ink-soft">Machine-verified coverage of the pinned VRI Mūla navigation. This is not a universal claim about every traditional definition of the Tipiṭaka.</p>
+        <p className="font-medium text-accent-strong">All expected VRI Mūla sources are adjudicated; tradition-dependent works are labelled separately.</p>
         <div className="flex flex-wrap gap-2 text-xs">
           <Badge active>{t.structure}</Badge>
           <Badge active>Pāli canonical volumes: {full.paliCanonicalWorks}</Badge>
+          <Badge active>Pāli tradition-dependent volumes: {full.paliTraditionDependentWorks}</Badge>
           <Badge active>Pāli post-canonical volumes: {full.paliPostCanonicalWorks}</Badge>
           <Badge active>English translated works: {full.englishTranslatedWorks.toLocaleString()}</Badge>
           <Badge active>Russian translated works: {full.russianTranslatedWorks.toLocaleString()}</Badge>
@@ -59,13 +61,13 @@ export default async function LibraryPage() {
 
       <div className="grid lg:grid-cols-3 gap-4">
         {TIPITAKA_CATALOG.map((basket) => (
-          <Basket key={basket.id} node={basket} corpus={corpus} structureOnly={t.structureOnly} exactCoverage={t.exactCoverage} fullPali={full.fullTipitakaImported} />
+          <Basket key={basket.id} node={basket} corpus={corpus} structureOnly={t.structureOnly} exactCoverage={t.exactCoverage} fullPali={full.fullVriMulaNavigationImported} />
         ))}
       </div>
 
       <section className="space-y-4">
         <div>
-          <h2 className="font-serif text-2xl">Full Pāli canon</h2>
+          <h2 className="font-serif text-2xl">VRI Pāli Mūla scope</h2>
           <p className="text-sm text-ink-soft">Volumes are loaded in bounded pages; corpus text is not included in the client JavaScript bundle.</p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -74,7 +76,7 @@ export default async function LibraryPage() {
               <h3 className="font-serif text-xl capitalize">{pitaka} Piṭaka</h3>
               <ul className="space-y-2 text-sm">
                 {canonicalVolumes.filter((edition) => edition.pitaka === pitaka).map((edition) => {
-                  const slug = edition.sourceFile.split("/").pop()?.replace(/\.mul\.xml$/i, "") ?? edition.textId;
+                  const slug = edition.sourceFile.split("/").pop()?.replace(/\.(?:mul|nrf)\.xml$/i, "") ?? edition.textId;
                   return (
                     <li key={edition.textId}>
                       <Link href={`/reader/${slug}`} className="link-dhamma font-medium">{edition.title}</Link>
@@ -89,6 +91,22 @@ export default async function LibraryPage() {
       </section>
 
       <section className="space-y-3">
+        <h2 className="font-serif text-2xl">Tradition-dependent classification</h2>
+        <p className="text-sm text-ink-soft">These works occur in the pinned VRI Mūla navigation, but their canonical status differs between traditional editions and classification systems. They are excluded from canonical-only search.</p>
+        <div className="grid md:grid-cols-2 gap-4">
+          {traditionDependentVolumes.map((edition) => {
+            const slug = edition.sourceFile.split("/").pop()?.replace(/\.(?:mul|nrf)\.xml$/i, "") ?? edition.textId;
+            return (
+              <div key={edition.textId} className="card-dhamma space-y-2">
+                <Link href={`/reader/${slug}`} className="link-dhamma font-serif text-xl">{edition.title}</Link>
+                <p className="text-xs text-ink-faint">{edition.segmentCount.toLocaleString()} Pāli segments · VRI Mūla navigation · tradition-dependent</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="font-serif text-2xl">Post-canonical Theravāda literature</h2>
         {POST_CANONICAL_CATALOG.map((work) => (
           <div key={work.id} className="card-dhamma border-dashed border-accent/60 space-y-2">
@@ -98,7 +116,7 @@ export default async function LibraryPage() {
                 {ui.visuddhimagga.classification}
               </span>
             </div>
-            <p className="text-sm text-ink-soft">The complete VRI Pāli edition is imported locally in paginated form.</p>
+            <p className="text-sm text-ink-soft">The complete two-volume VRI Pāli Visuddhimagga source is imported locally in paginated form.</p>
             <p className="text-sm text-ink-faint">{ui.visuddhimagga.notBuddhaQuote}</p>
             <Badge active>{full.visuddhimagga.segmentCount.toLocaleString()} Pāli segments</Badge>
             <div className="flex flex-wrap gap-4 text-sm">

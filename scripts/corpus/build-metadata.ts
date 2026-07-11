@@ -14,7 +14,10 @@ async function main() {
   validateManifest();
   const fullCoverage = JSON.parse(await fs.readFile(path.join(OUT, "full-canon-coverage.json"), "utf8")) as {
     importedWorks: number;
-    fullTipitakaImported: boolean;
+    fullVriMulaNavigationImported: boolean;
+    universallyCanonicalWorks: number;
+    traditionDependentWorks: number;
+    traditionDependentSegmentCount: number;
     canonicalSegmentCount: number;
     visuddhimagga: { importedVolumes: number; segmentCount: number };
   };
@@ -27,12 +30,16 @@ async function main() {
     canonicalWorkId: string;
     canonicalStatus: string;
   }>;
-  let russianCoverage = { importedEditions: 0, importedWorks: 0, importedSegments: 0 };
-  try {
-    russianCoverage = JSON.parse(await fs.readFile(path.join(OUT, "theravada-ru-coverage.json"), "utf8")) as typeof russianCoverage;
-  } catch {
-    // The Russian crawl is an independent reproducible ingestion step.
-  }
+  const seedSegments = JSON.parse(await fs.readFile(path.join(OUT, "segments.json"), "utf8")) as Array<{
+    textId: string;
+    translations?: { ru?: { text?: string } };
+  }>;
+  const russianSeed = seedSegments.filter((segment) => Boolean(segment.translations?.ru?.text?.trim()));
+  const russianCoverage = {
+    importedEditions: new Set(russianSeed.map((segment) => segment.textId)).size,
+    importedWorks: new Set(russianSeed.map((segment) => segment.textId)).size,
+    importedSegments: russianSeed.length,
+  };
   const languages = ["pli", "en", "ru", "id"].map((language) => ({
     language,
     importedEditions:
@@ -57,12 +64,30 @@ async function main() {
         canonicalStatus: "post-canonical",
         reason: "VRI Pāli is imported as post-canonical; the BPS Ñāṇamoli English edition remains excluded as all rights reserved.",
       },
+      {
+        workId: "work-vri-s0518m",
+        title: "Milindapañhapāḷi",
+        canonicalStatus: "tradition-dependent",
+        reason: "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems.",
+      },
+      {
+        workId: "work-vri-s0520m",
+        title: "Peṭakopadesapāḷi",
+        canonicalStatus: "tradition-dependent",
+        reason: "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems.",
+      },
     ],
     claims: {
-      fullTipitakaImported: fullCoverage.fullTipitakaImported,
+      fullVriMulaNavigationImported: fullCoverage.fullVriMulaNavigationImported,
+      universalTipitakaCompletenessClaim: false,
       structureAvailable: true,
       canonicalSegmentCount: fullCoverage.canonicalSegmentCount,
+      traditionDependentSegmentCount: fullCoverage.traditionDependentSegmentCount,
       visuddhimaggaPaliImported: fullCoverage.visuddhimagga.segmentCount > 0,
+      russianCoverage: "partial-seed-only",
+      russianSeedEditions: russianCoverage.importedEditions,
+      russianSeedSegments: russianCoverage.importedSegments,
+      russianBulkImport: "excluded-unresolved-rights-and-mutable-provenance",
     },
   };
 

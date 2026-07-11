@@ -36,6 +36,8 @@ import { indexedDocument } from "./search-index";
 /** Known Pāli / Dhamma terms — match these with elevated weight. */
 export const DHAMMA_TERMS: Record<string, string> = {
   dukkha: "dukkha",
+  suffering: "dukkha",
+  stress: "dukkha",
   anicca: "anicca",
   anatta: "anattā",
   tanha: "taṇhā",
@@ -54,6 +56,8 @@ export const DHAMMA_TERMS: Record<string, string> = {
   khandha: "khandha",
   ayatana: "āyatana",
   paticcasamuppada: "paṭiccasamuppāda",
+  dependent: "paṭiccasamuppāda",
+  origination: "paṭiccasamuppāda",
 };
 
 const TERM_KEYS = new Set(Object.keys(DHAMMA_TERMS));

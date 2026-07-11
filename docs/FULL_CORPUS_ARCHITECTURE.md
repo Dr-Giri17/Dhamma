@@ -2,46 +2,27 @@
 
 ## Boundaries
 
-- Pāli canonical boundary: the 59 explicitly enumerated Chaṭṭha Saṅgāyana
-  `.mul.xml` root volumes at the pinned VipassanaTech revision.
-- Pāli Visuddhimagga: two separately enumerated volumes, always
-  `post-canonical`.
-- English: Bilara published-branch editions with an exact local Pāli root and
-  complete segment-key alignment.
-- Russian: HTML text pages discovered from Theravada.ru's canonical navigation,
-  fetched only when robots permits, mapped to an existing Pāli root, and free
-  of a conflicting page-level notice.
+- Pāli: 61 reviewed sources from the pinned VRI Mūla navigation inventory.
+- 59 roots are represented as canonical within the reviewed VRI scope.
+- Milindapañha and Peṭakopadesa are imported as `tradition-dependent` and are excluded from canonical-only filtering.
+- Pāli Visuddhimagga is two separately enumerated `post-canonical` volumes.
+- English: published Bilara CC0 translations with a matching local Pāli root and complete segment-key alignment.
+- Russian: five verified Bilara seed editions only. The Theravada.ru bulk crawl is excluded because redistribution permission and immutable provenance are unresolved.
+- Indonesian: no local text coverage.
 
-The ingestion does not use machine translation, a database, embeddings, a
-vector store, or an LLM.
+The ingestion uses no machine translation, database, embeddings, vector store, external LLM, or external speech service.
 
-## Storage
+## Storage and runtime
 
-Generated corpus text lives under `public/corpus/<language>/`. Assets are
-gzip-compressed JSON and are split at no more than 200 decoded segments. Small
-English and Russian editions store metadata and segments in one compressed
-index file; larger works use an index plus numbered pages.
+Generated corpus text lives under `public/corpus/<language>/` as deterministic gzip JSON. Pages contain no more than 200 decoded segments. Metadata, coverage, route maps, and search manifests live under `data/corpus/`.
 
-Metadata, coverage, route maps, and lightweight indexes live under
-`data/corpus/`. Source clones and the Theravada.ru byte cache live outside the
-application repository in `D:\Work\Dhamma-corpus-inbox`.
-
-The reader returns no more than 80 segments at a time. Server components fetch
-compressed corpus pages from the deployment's static origin, so the full
-corpus is not traced into a Vercel Function and is not included in client
-JavaScript.
+Server components fetch static assets only from the trusted `VERCEL_URL` deployment origin. Local production smoke uses fixed `127.0.0.1`. Request `Host`, `X-Forwarded-Host`, and `X-Forwarded-Proto` values never select the destination. Same-origin preview-authentication credentials may be forwarded without being logged; redirects, oversized bodies, timeouts, HTML responses, and invalid JSON are rejected.
 
 ## Search
 
-`npm run build:index` generates gzip-compressed, language/collection shards.
-Each shard contains bounded postings and short excerpts rather than a second
-copy of the full text. Query language is explicit when provided, otherwise
-Cyrillic selects Russian, Pāli diacritics select Pāli, and Latin text defaults
-to English. Canonical-only search filters out Visuddhimagga.
+`npm run build:index` produces immutable language/collection shards. Explicit language and classification filters are preserved. There is no unfiltered seed fallback. Unsupported and unrelated queries return an empty result, Pāli diacritics are normalized, and shard loading uses bounded concurrency and decoded-size limits.
 
-Ask and Guide continue to use the existing small, validated retrieval corpus.
-Their fail-closed behavior is unchanged; full-corpus search is not silently
-wired into answer generation.
+The five retained Russian seed editions are indexed directly from the checked-in seed corpus. Ask and Guide retain their separate fail-closed retrieval contract.
 
 ## Deterministic commands
 
@@ -50,33 +31,17 @@ npm run corpus:inventory:vri
 npm run corpus:ingest:pali
 npm run corpus:inventory:bilara
 npm run corpus:ingest:en
-npm run corpus:inventory:theravada
-npm run corpus:ingest:ru
 npm run corpus:coverage
 npm run corpus:validate:full
 npm run build:index
 ```
 
-VRI and Bilara output dates derive from pinned revisions rather than wall-clock
-time. Theravada.ru has no repository revision, so the inventory records the
-retrieval time and SHA-256 of each cached HTML response.
+JSON uses UTF-8, stable ordering and one final LF. Gzip uses level 9, `mtime=0`, no filename/comment, and OS byte 255. Manifests store hashes of both canonical uncompressed content and compressed bytes. Generated provenance contains only upstream-relative paths.
 
-## Vercel constraints
+## License boundary
 
-The packaging is designed around Vercel's documented limits as checked on
-2026-07-10:
+The software MIT license does not relicense corpus material. VRI content retains its non-commercial attribution boundary. Bilara imports are limited to verified CC0 translation editions. BPS/Ñāṇamoli Visuddhimagga is not stored.
 
-- CLI deployment source uploads: 100 MB on Hobby and 1 GB on Pro.
-- Source files per CLI deployment: 15,000.
-- Build duration: 45 minutes.
-- Standard uncompressed Vercel Function bundle: 250 MB.
-- Function request/response body: 4.5 MB.
+## Deployment constraints
 
-References: [Vercel limits](https://vercel.com/docs/limits),
-[250 MB Function troubleshooting](https://vercel.com/kb/guide/troubleshooting-function-250mb-limit),
-and [Function body-size guidance](https://vercel.com/kb/guide/how-to-bypass-vercel-body-size-limit-serverless-functions).
-
-The validation report records total corpus bytes, file count, largest decoded
-reader response input, and search-shard sizes. No production deployment is
-performed by the ingestion workflow.
-
+Validation records tracked bytes/files, corpus bytes/files, largest reader asset and largest search shard. A green build is not runtime proof: the exact protected preview must pass full reader and search smoke before re-audit.

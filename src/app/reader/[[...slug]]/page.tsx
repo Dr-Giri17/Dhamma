@@ -8,7 +8,6 @@ import { manifestEdition } from "@/lib/corpus/manifest";
 import {
   getBilaraEnglishReaderPage,
   getFullCorpusReaderPage,
-  getTheravadaRussianReaderPage,
   type FullCorpusReaderPage,
   type TranslationReaderPage,
 } from "@/lib/corpus/full-corpus";
@@ -119,15 +118,14 @@ export default async function ReaderPage({
   const text = corpus.texts.find((candidate) => candidate.slug === requestedSlug);
   if (!text || requestedSlug === "visuddhimagga") {
     const pageNumber = Number(query.page ?? 1);
-    const [fullPage, englishPage, russianPage] = await Promise.all([
+    const [fullPage, englishPage] = await Promise.all([
       getFullCorpusReaderPage(requestedSlug, pageNumber),
       getBilaraEnglishReaderPage(requestedSlug, pageNumber),
-      getTheravadaRussianReaderPage(requestedSlug, pageNumber),
     ]);
     if (!fullPage) notFound();
     const edition = query.edition === "en" || query.edition === "ru" ? query.edition : "pli";
     const parallel = query.parallel === "1" && edition !== "pli";
-    return <FullPaliReader page={fullPage} englishPage={englishPage} russianPage={russianPage} edition={edition} parallel={parallel} backLabel={ui.reader.backToLibrary} />;
+    return <FullPaliReader page={fullPage} englishPage={englishPage} edition={edition} parallel={parallel} backLabel={ui.reader.backToLibrary} />;
   }
   const work = corpus.works.find((candidate) => candidate.id === text.workId);
   const segments = corpus.segments
@@ -241,19 +239,17 @@ export default async function ReaderPage({
 function FullPaliReader({
   page,
   englishPage,
-  russianPage,
   edition,
   parallel,
   backLabel,
 }: {
   page: FullCorpusReaderPage;
   englishPage?: TranslationReaderPage;
-  russianPage?: TranslationReaderPage;
   edition: "pli" | "en" | "ru";
   parallel: boolean;
   backLabel: string;
 }) {
-  const selectedTranslation = edition === "en" ? englishPage : edition === "ru" ? russianPage : undefined;
+  const selectedTranslation = edition === "en" ? englishPage : undefined;
   const selectedPage = selectedTranslation?.page ?? page.page;
   const selectedPageCount = selectedTranslation?.pageCount ?? page.pageCount;
   const pageHref = (value: number) => `/reader/${encodeURIComponent(page.slug)}?page=${value}&edition=${edition}${parallel ? "&parallel=1" : ""}`;
@@ -263,7 +259,11 @@ function FullPaliReader({
         <Link href="/library" className="link-dhamma text-sm">← {backLabel}</Link>
         <h1 className="font-serif text-3xl">{page.title}</h1>
         <p className="text-sm uppercase tracking-wide text-accent-strong">
-          {page.canonicalStatus === "post-canonical" ? "Post-canonical Pāli text" : `${page.pitaka} · ${page.collection}`}
+          {page.canonicalStatus === "post-canonical"
+            ? "Post-canonical Pāli text"
+            : page.canonicalStatus === "tradition-dependent"
+              ? `${page.pitaka} · ${page.collection} · canonical classification varies by tradition`
+              : `${page.pitaka} · ${page.collection}`}
         </p>
         <div className="card-dhamma bg-accent-soft/35 text-sm space-y-1">
           <p>{page.totalSegments.toLocaleString()} Pāli segments · page {page.page} of {page.pageCount}</p>
@@ -282,16 +282,11 @@ function FullPaliReader({
             <Link href={`/reader/${encodeURIComponent(page.slug)}?edition=en&parallel=1&page=1`} className={`rounded-full border px-3 py-1 ${edition === "en" && parallel ? "border-accent text-accent-strong" : "border-line"}`}>Pāli + EN</Link>
           </>
         ) : <span className="rounded-full border border-line px-3 py-1 text-ink-faint">English unavailable</span>}
-        {russianPage ? (
-          <>
-            <Link href={`/reader/${encodeURIComponent(page.slug)}?edition=ru&page=1`} className={`rounded-full border px-3 py-1 ${edition === "ru" && !parallel ? "border-accent text-accent-strong" : "border-line"}`}>Русский</Link>
-            <Link href={`/reader/${encodeURIComponent(page.slug)}?edition=ru&parallel=1&page=1`} className={`rounded-full border px-3 py-1 ${edition === "ru" && parallel ? "border-accent text-accent-strong" : "border-line"}`}>Pāli + RU</Link>
-          </>
-        ) : <span className="rounded-full border border-line px-3 py-1 text-ink-faint">Russian unavailable</span>}
+        <span className="rounded-full border border-line px-3 py-1 text-ink-faint">Russian unavailable outside five verified seed texts</span>
       </nav>
 
       {edition === "en" && !englishPage ? <div className="card-dhamma">No verified English edition is available. No fallback has been substituted.</div> : null}
-      {edition === "ru" && !russianPage ? <div className="card-dhamma">Русский перевод отсутствует. Другой язык не подставлен.</div> : null}
+      {edition === "ru" ? <div className="card-dhamma">Русский перевод отсутствует. Другой язык не подставлен.</div> : null}
       {parallel ? <p className="text-xs text-ink-faint">The editions use independent segment systems; both retain their source segment IDs and are paginated independently.</p> : null}
       <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
       <div className={parallel ? "grid lg:grid-cols-2 gap-5 items-start" : ""}>
