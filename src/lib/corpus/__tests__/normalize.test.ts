@@ -32,6 +32,15 @@ describe("Pāli normalization", () => {
     expect(tokenize("the metta and dukkha")).toEqual(["metta", "dukkha"]);
   });
 
+  it("normalizes common Cyrillic spellings of Pāli terms", () => {
+    expect(tokenize("Что такое дуккха?")).toEqual(["dukkha"]);
+    expect(tokenize("Аничча, анатта и ниббана")).toEqual([
+      "anicca",
+      "anatta",
+      "nibbana",
+    ]);
+  });
+
   it("detectLanguage recognizes Cyrillic as ru", () => {
     expect(detectLanguage("Что такое taṇhā?")).toBe("ru");
     expect(detectLanguage("What is suffering?")).toBe("en");

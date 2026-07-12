@@ -56,6 +56,9 @@ export async function askDhamma(
   const limit = options.limit ?? 6;
   const t = stringsFor(language);
 
+  const safetyRefusal = refusalForUnsafeRoleRequest(question, language);
+  if (safetyRefusal) return safetyRefusal;
+
   const retrieved = search(corpus, question, {
     limit,
     filters: { includeCommentarial: false },
@@ -103,6 +106,63 @@ export async function askDhamma(
     confidence: confidenceFor(retrieved),
     warnings,
   };
+}
+
+const IMPERSONATION_PATTERNS = [
+  /\b(?:speak|talk|answer|respond)\b.{0,40}\bas\s+(?:the\s+)?buddha\b/i,
+  /\bpretend\s+to\s+be\s+(?:the\s+)?buddha\b/i,
+  /(?:говори|ответь|обращайся).{0,40}как\s+(?:сам\s+)?будд[аы]/iu,
+  /(?:berbicara|jawab).{0,40}sebagai\s+(?:sang\s+)?buddha/i,
+];
+
+const MONASTIC_AUTHORITY_PATTERNS = [
+  /\b(?:answer|respond|speak|talk)\b.{0,40}\b(?:with\s+the\s+authority\s+of|as)\s+(?:an?\s+)?(?:ordained\s+)?(?:monk|bhikkhu)\b/i,
+  /(?:ответь|говори|обращайся).{0,40}(?:как|с\s+авторитетом)\s+(?:монах(?:а|ом)?|бхиккху)/iu,
+  /(?:jawab|berbicara).{0,40}(?:sebagai|dengan\s+otoritas)\s+(?:seorang\s+)?(?:biksu|bhikkhu)/i,
+];
+
+function refusalForUnsafeRoleRequest(
+  question: string,
+  language: string
+): DhammaAnswer | null {
+  if (IMPERSONATION_PATTERNS.some((pattern) => pattern.test(question))) {
+    return {
+      answer: roleSafetyMessage(language, "impersonation"),
+      sources: [],
+      retrievedSegments: [],
+      confidence: "low",
+      warnings: ["refused-to-impersonate"],
+    };
+  }
+  if (MONASTIC_AUTHORITY_PATTERNS.some((pattern) => pattern.test(question))) {
+    return {
+      answer: roleSafetyMessage(language, "monastic-authority"),
+      sources: [],
+      retrievedSegments: [],
+      confidence: "low",
+      warnings: ["not-an-ordained-monk"],
+    };
+  }
+  return null;
+}
+
+function roleSafetyMessage(
+  language: string,
+  kind: "impersonation" | "monastic-authority"
+): string {
+  if (language === "ru") {
+    return kind === "impersonation"
+      ? "Я могу помочь с объяснением Дхаммы, опираясь на источники, но не могу говорить от имени Будды или изображать его."
+      : "Я не являюсь посвящённым монахом и не могу приписывать себе монашеский авторитет. Я могу только дать объяснение с явной опорой на источники.";
+  }
+  if (language === "id") {
+    return kind === "impersonation"
+      ? "Saya dapat membantu menjelaskan Dhamma berdasarkan sumber, tetapi tidak dapat berbicara sebagai atau meniru Buddha."
+      : "Saya bukan bhikkhu yang ditahbiskan dan tidak dapat mengklaim otoritas monastik. Saya hanya dapat memberi penjelasan dengan rujukan yang jelas.";
+  }
+  return kind === "impersonation"
+    ? "I can help explain the Dhamma from sources, but I cannot speak as or impersonate the Buddha."
+    : "I am not an ordained monk and cannot claim monastic authority. I can only provide an explanation with explicit source support.";
 }
 
 /** Decide a confidence label from the retrieval quality. */
