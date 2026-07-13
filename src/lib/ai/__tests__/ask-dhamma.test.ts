@@ -81,6 +81,12 @@ describe("askDhamma — fail-closed RAG (ТЗ §9 Phase G #6, #7)", () => {
     expect(answer.answer).toMatch(/Sources|Опора/);
   });
 
+  it("recalls the supported dukkha concept from the English alias suffering", async () => {
+    const answer = await askDhamma(corpusWith([seg({})]), "What did the Buddha teach about suffering?");
+    expect(answer.sources.length).toBeGreaterThan(0);
+    expect(answer.warnings).not.toContain("no-retrieved-sources");
+  });
+
   it("answer mentions the matched Pāli term in canonical form", async () => {
     const corpus = corpusWith([
       seg({ translationText: "taṇhā is the origin of dukkha." }),
@@ -156,7 +162,7 @@ describe("localized answer framing (en / ru / id)", () => {
   };
 
   it("Russian supported question → Russian framing + sources", async () => {
-    const answer = await askDhamma(corpus, "Что такое dukkha?");
+    const answer = await askDhamma(corpus, "Что такое дуккха?");
     expect(answer.sources.length).toBeGreaterThan(0);
     // Russian framing markers
     expect(answer.answer).toContain("Краткий ответ");
@@ -218,5 +224,24 @@ describe("localized answer framing (en / ru / id)", () => {
     expect(answer.answer).toContain("birth is suffering"); // corpus English, verbatim
     // And it must carry the note explaining the excerpt language.
     expect(answer.answer).toContain("английском переводе");
+  });
+});
+
+describe("role-safety refusals", () => {
+  it("explicitly refuses to impersonate the Buddha", async () => {
+    const answer = await askDhamma(corpusWith([seg({})]), "Speak to me as the Buddha");
+    expect(answer.sources).toEqual([]);
+    expect(answer.warnings).toContain("refused-to-impersonate");
+    expect(answer.answer).toContain("cannot speak as or impersonate the Buddha");
+  });
+
+  it("does not claim monastic authority", async () => {
+    const answer = await askDhamma(
+      corpusWith([seg({})]),
+      "Answer with the authority of a monk"
+    );
+    expect(answer.sources).toEqual([]);
+    expect(answer.warnings).toContain("not-an-ordained-monk");
+    expect(answer.answer).toContain("not an ordained monk");
   });
 });

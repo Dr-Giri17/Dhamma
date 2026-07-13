@@ -13,7 +13,7 @@ export function guideSafety(question: string, language: SupportedLanguage): Safe
   const prefixes: string[] = [];
 
   if (includesAny(q, [
-    "are you the buddha", "you are buddha", "speak as the buddha", "speak like buddha",
+    "are you the buddha", "you are buddha", "speak as the buddha", "speak to me as the buddha", "speak like buddha",
     "ты будда", "говори как будда", "как сам будда",
     "apakah kamu buddha", "berbicara sebagai buddha",
   ])) {
@@ -28,7 +28,7 @@ export function guideSafety(question: string, language: SupportedLanguage): Safe
     prefixes.push(copy[language].fabrication);
   }
   if (includesAny(q, [
-    "as a monk", "real monk", "you are a monk",
+    "as a monk", "real monk", "you are a monk", "authority of a monk", "monastic authority",
     "как монах", "как настоящий монах", "ты монах",
     "sebagai bhikkhu", "sebagai biksu", "biksu sejati",
   ])) {

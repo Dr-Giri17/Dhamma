@@ -6,6 +6,7 @@ import { tokenize } from "../corpus/normalize";
 import type { SupportedLanguage } from "../i18n/language";
 import { buildEditionHref } from "../reader/navigation";
 import type { GuideCitation, GuideRetrievedSegment } from "./types";
+import { findConcepts } from "../teacher/respond";
 
 const MAX_CONTEXT = 5;
 
@@ -30,7 +31,9 @@ export function retrieveGuide(
 
   const textById = new Map(corpus.texts.map((text) => [text.id, text]));
   const workById = new Map(corpus.works.map((work) => [work.id, work]));
-  const hits = search(corpus, question, {
+  const directConceptKeys = findConcepts(question).map((concept) => concept.key.replace(/_/g, " "));
+  const groundedQuery = directConceptKeys.length ? `${question} ${directConceptKeys.join(" ")}` : question;
+  const hits = search(corpus, groundedQuery, {
     limit: MAX_CONTEXT,
     filters: {
       includeCommentarial: options.canonicalStatus !== "canonical",

@@ -1,16 +1,16 @@
 {
   "generatedFrom": "src/lib/corpus/registry.ts",
-  "importedEditionCount": 22,
-  "importedTextCount": 9,
+  "importedEditionCount": 4493,
+  "importedTextCount": 4388,
   "languages": [
     {
       "language": "pli",
-      "importedEditions": 8,
+      "importedEditions": 63,
       "sourceGated": []
     },
     {
       "language": "en",
-      "importedEditions": 9,
+      "importedEditions": 4425,
       "sourceGated": []
     },
     {
@@ -27,23 +27,96 @@
     }
   ],
   "canonicalWorksImported": [
-    "work-dhp",
-    "work-mn",
-    "work-dn",
-    "work-an",
-    "work-sn",
-    "work-snp"
+    "work-vri-abh01m",
+    "work-vri-abh02m",
+    "work-vri-abh03m1",
+    "work-vri-abh03m10",
+    "work-vri-abh03m11",
+    "work-vri-abh03m2",
+    "work-vri-abh03m3",
+    "work-vri-abh03m4",
+    "work-vri-abh03m5",
+    "work-vri-abh03m6",
+    "work-vri-abh03m7",
+    "work-vri-abh03m8",
+    "work-vri-abh03m9",
+    "work-vri-s0101m",
+    "work-vri-s0102m",
+    "work-vri-s0103m",
+    "work-vri-s0201m",
+    "work-vri-s0202m",
+    "work-vri-s0203m",
+    "work-vri-s0301m",
+    "work-vri-s0302m",
+    "work-vri-s0303m",
+    "work-vri-s0304m",
+    "work-vri-s0305m",
+    "work-vri-s0401m",
+    "work-vri-s0402m1",
+    "work-vri-s0402m2",
+    "work-vri-s0402m3",
+    "work-vri-s0403m1",
+    "work-vri-s0403m2",
+    "work-vri-s0403m3",
+    "work-vri-s0404m1",
+    "work-vri-s0404m2",
+    "work-vri-s0404m3",
+    "work-vri-s0404m4",
+    "work-vri-s0501m",
+    "work-vri-s0502m",
+    "work-vri-s0503m",
+    "work-vri-s0504m",
+    "work-vri-s0505m",
+    "work-vri-s0506m",
+    "work-vri-s0507m",
+    "work-vri-s0508m",
+    "work-vri-s0509m",
+    "work-vri-s0510m1",
+    "work-vri-s0510m2",
+    "work-vri-s0511m",
+    "work-vri-s0512m",
+    "work-vri-s0513m",
+    "work-vri-s0514m",
+    "work-vri-s0515m",
+    "work-vri-s0516m",
+    "work-vri-s0517m",
+    "work-vri-s0519m",
+    "work-vri-vin01m",
+    "work-vri-vin02m1",
+    "work-vri-vin02m2",
+    "work-vri-vin02m3",
+    "work-vri-vin02m4"
   ],
   "sourceGatedWorks": [
     {
       "workId": "work-vism",
       "title": "Visuddhimagga",
       "canonicalStatus": "post-canonical",
-      "reason": "BPS Ñāṇamoli edition is all rights reserved; metadata link only."
+      "reason": "VRI Pāli is imported as post-canonical; the BPS Ñāṇamoli English edition remains excluded as all rights reserved."
+    },
+    {
+      "workId": "work-vri-s0518m",
+      "title": "Milindapañhapāḷi",
+      "canonicalStatus": "tradition-dependent",
+      "reason": "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems."
+    },
+    {
+      "workId": "work-vri-s0520m",
+      "title": "Peṭakopadesapāḷi",
+      "canonicalStatus": "tradition-dependent",
+      "reason": "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems."
     }
   ],
   "claims": {
-    "fullTipitakaImported": false,
-    "structureAvailable": true
+    "fullVriMulaNavigationImported": true,
+    "universalTipitakaCompletenessClaim": false,
+    "structureAvailable": true,
+    "canonicalSegmentCount": 155918,
+    "traditionDependentSegmentCount": 3090,
+    "visuddhimaggaPaliImported": true,
+    "russianCoverage": "partial-seed-only",
+    "russianSeedEditions": 5,
+    "russianSeedSegments": 725,
+    "russianBulkImport": "excluded-unresolved-rights-and-mutable-provenance"
   }
 }

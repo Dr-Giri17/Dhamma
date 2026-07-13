@@ -162,23 +162,23 @@ const en: UiStrings = {
   tipitaka: {
     title: "Canon / Tipitaka",
     partialNote:
-      "The app currently contains a starter corpus. More texts can be added only after source and license review.",
+      "The reviewed VRI Mūla navigation scope is available in paginated form; tradition-dependent classifications are labelled separately.",
     vinaya: "Vinaya Pitaka",
-    vinayaDesc: "Monastic discipline, not yet represented in the corpus.",
+    vinayaDesc: "Monastic discipline, available in the full Pāli corpus.",
     sutta: "Sutta Pitaka",
     suttaDesc: "Discourses available in the checked-in corpus.",
     abhidhamma: "Abhidhamma Pitaka",
-    abhidhammaDesc: "Systematic teachings, not yet represented in the corpus.",
+    abhidhammaDesc: "Systematic teachings, available in the full Pāli corpus.",
     available: "available",
     unavailable: "not yet available",
-    fullCanonMissing: "Full canon is not yet included.",
+    fullCanonMissing: "The reviewed VRI Mūla source scope is imported without claiming universal Tipiṭaka completeness.",
     currentCoverage: "Current verified coverage",
     fallbackEnglish: "fallback EN",
   },
   visuddhimagga: {
     title: "Visuddhimagga",
     status:
-      "Visuddhimagga is not yet included in the corpus. The section is prepared, but the text will be added only after source and license verification.",
+      "The VRI Pāli Visuddhimagga is imported as post-canonical text. The protected BPS English translation is not included.",
     classification: "Commentarial / post-canonical",
     notBuddhaQuote: "Not presented as words of the Buddha.",
   },
@@ -197,12 +197,12 @@ const en: UiStrings = {
   search: {
     title: "Search",
     description:
-      "Search the Pali and English corpus. Canonical texts rank above commentary; exact Pali terms rank above approximate matches.",
+      "Search the Pāli, English, and Russian corpus. Canonical texts rank above post-canonical works; exact normalized terms use bounded language shards.",
     placeholder: "dukkha, anatta, suffering, mindfulness...",
     button: "Search",
     pending: "Searching...",
     diacriticNote: "Search ignores diacritics: anatta finds anatta with diacritics.",
-    noResults: "No results yet. Try a Pali term or an English keyword.",
+    noResults: "No results yet. Try a Pāli, English, or Russian keyword.",
   },
   reader: {
     title: "Reader",
@@ -258,7 +258,7 @@ const ru: UiStrings = {
       "Читайте, ищите и размышляйте над текстами Тхеравады с пояснениями, которые всегда указывают источники.",
     cardSearch: "Поиск по корпусу",
     cardSearchDesc:
-      "Ищите фрагменты по терминам пали, например dukkha и anatta, или по английским словам.",
+      "Ищите фрагменты по терминам пали, английским или русским словам.",
     cardAsk: "Спросить о Дхамме",
     cardAskDesc:
       "Задайте вопрос и получите ответ с цитируемыми источниками. Если корпус не дает опоры, приложение скажет об этом прямо.",
@@ -285,23 +285,23 @@ const ru: UiStrings = {
   tipitaka: {
     title: "Канон / Tipitaka",
     partialNote:
-      "Сейчас в приложении есть начальный корпус. Новые тексты добавляются только после проверки источника и лицензии.",
+      "Проверенный охват навигации VRI Mūla доступен постранично; тексты со статусом, зависящим от традиции, отмечены отдельно.",
     vinaya: "Виная-питака",
-    vinayaDesc: "Монашеская дисциплина пока не представлена в корпусе.",
+    vinayaDesc: "Монашеская дисциплина доступна в проверенном палийском охвате VRI.",
     sutta: "Сутта-питака",
     suttaDesc: "Доступные в корпусе беседы.",
     abhidhamma: "Абхидхамма-питака",
-    abhidhammaDesc: "Систематическое учение пока не представлено в корпусе.",
+    abhidhammaDesc: "Систематическое учение доступно в проверенном палийском охвате VRI.",
     available: "доступно",
     unavailable: "пока недоступно",
-    fullCanonMissing: "Полный канон ещё не включён.",
+    fullCanonMissing: "Проверенный исходный охват VRI Mūla импортирован без заявления об универсальной полноте Типитаки.",
     currentCoverage: "Текущее проверенное покрытие",
     fallbackEnglish: "резервный EN",
   },
   visuddhimagga: {
     title: "Висуддхимагга",
     status:
-      "Висуддхимагга пока не включена в корпус. Раздел подготовлен, но текст будет добавлен только после проверки источника и лицензии.",
+      "Палийская Висуддхимагга VRI импортирована как постканонический текст. Защищённый английский перевод BPS не включён.",
     classification: "Комментарий / post-canonical",
     notBuddhaQuote: "Не представлено как слова Будды.",
   },
@@ -320,12 +320,12 @@ const ru: UiStrings = {
   search: {
     title: "Поиск",
     description:
-      "Поиск по корпусу на пали и английском. Канонические тексты ранжируются выше комментариев; точные термины пали выше приблизительных совпадений.",
+      "Поиск по корпусу на пали, английском и русском. Канонические тексты ранжируются выше постканонических; используются ограниченные языковые шарды.",
     placeholder: "dukkha, anatta, suffering, mindfulness...",
     button: "Искать",
     pending: "Ищу...",
     diacriticNote: "Поиск игнорирует диакритику: anatta находит anatta с диакритикой.",
-    noResults: "Результатов пока нет. Попробуйте термин пали или английское ключевое слово.",
+    noResults: "Результатов пока нет. Попробуйте ключевое слово на пали, английском или русском.",
   },
   reader: {
     title: "Чтение",
@@ -408,23 +408,23 @@ const id: UiStrings = {
   tipitaka: {
     title: "Kanon / Tipitaka",
     partialNote:
-      "Aplikasi saat ini berisi korpus awal. Teks lain hanya ditambahkan setelah pemeriksaan sumber dan lisensi.",
+      "Cakupan navigasi VRI Mūla yang telah diverifikasi tersedia per halaman; klasifikasi yang bergantung pada tradisi diberi label terpisah.",
     vinaya: "Vinaya Pitaka",
-    vinayaDesc: "Disiplin monastik belum ada dalam korpus.",
+    vinayaDesc: "Disiplin monastik tersedia dalam cakupan Pāli VRI yang diverifikasi.",
     sutta: "Sutta Pitaka",
     suttaDesc: "Khotbah yang tersedia dalam korpus.",
     abhidhamma: "Abhidhamma Pitaka",
-    abhidhammaDesc: "Ajaran sistematis belum ada dalam korpus.",
+    abhidhammaDesc: "Ajaran sistematis tersedia dalam cakupan Pāli VRI yang diverifikasi.",
     available: "tersedia",
     unavailable: "belum tersedia",
-    fullCanonMissing: "Kanon lengkap belum tersedia.",
+    fullCanonMissing: "Cakupan sumber VRI Mūla yang diverifikasi telah diimpor tanpa klaim kelengkapan Tipiṭaka universal.",
     currentCoverage: "Cakupan terverifikasi saat ini",
     fallbackEnglish: "cadangan EN",
   },
   visuddhimagga: {
     title: "Visuddhimagga",
     status:
-      "Visuddhimagga belum termasuk dalam korpus. Bagian ini sudah disiapkan, tetapi teks hanya akan ditambahkan setelah sumber dan lisensinya diverifikasi.",
+      "Visuddhimagga Pāli VRI diimpor sebagai teks pascakanonis. Terjemahan Inggris BPS yang dilindungi tidak disertakan.",
     classification: "Komentar / pascakanonis",
     notBuddhaQuote: "Tidak disajikan sebagai sabda Buddha.",
   },
@@ -443,12 +443,12 @@ const id: UiStrings = {
   search: {
     title: "Cari",
     description:
-      "Cari dalam korpus Pali dan Inggris. Teks kanonis diberi peringkat di atas komentar; istilah Pali tepat di atas kecocokan perkiraan.",
+      "Cari dalam korpus Pāli, Inggris, dan Rusia. Teks kanonis diberi peringkat di atas teks pascakanonis dengan shard bahasa yang terbatas.",
     placeholder: "dukkha, anatta, suffering, mindfulness...",
     button: "Cari",
     pending: "Mencari...",
     diacriticNote: "Pencarian mengabaikan diakritik: anatta menemukan anatta dengan diakritik.",
-    noResults: "Belum ada hasil. Coba istilah Pali atau kata kunci Inggris.",
+    noResults: "Belum ada hasil. Coba kata kunci Pāli, Inggris, atau Rusia.",
   },
   reader: {
     title: "Pembaca",

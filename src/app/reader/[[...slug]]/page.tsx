@@ -6,6 +6,12 @@ import { getRequestLanguage } from "@/lib/i18n/server";
 import { getUi } from "@/lib/ui";
 import { manifestEdition } from "@/lib/corpus/manifest";
 import {
+  getBilaraEnglishReaderPage,
+  getFullCorpusReaderPage,
+  type FullCorpusReaderPage,
+  type TranslationReaderPage,
+} from "@/lib/corpus/full-corpus";
+import {
   selectTranslation,
   translationLanguages,
   type SelectedTranslation,
@@ -22,7 +28,7 @@ export default async function ReaderPage({
   searchParams,
 }: {
   params: Promise<{ slug?: string[] }>;
-  searchParams: Promise<{ edition?: string; parallel?: string }>;
+  searchParams: Promise<{ edition?: string; parallel?: string; page?: string }>;
 }) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const language = await getRequestLanguage();
@@ -82,7 +88,7 @@ export default async function ReaderPage({
   }
 
   const requestedSlug = slug[0];
-  if (requestedSlug === "visuddhimagga") {
+  if (requestedSlug === "__metadata-only-visuddhimagga") {
     return (
       <div className="space-y-4">
         <Link href="/library" className="link-dhamma text-sm">
@@ -110,7 +116,17 @@ export default async function ReaderPage({
   }
 
   const text = corpus.texts.find((candidate) => candidate.slug === requestedSlug);
-  if (!text) notFound();
+  if (!text || requestedSlug === "visuddhimagga") {
+    const pageNumber = Number(query.page ?? 1);
+    const [fullPage, englishPage] = await Promise.all([
+      getFullCorpusReaderPage(requestedSlug, pageNumber),
+      getBilaraEnglishReaderPage(requestedSlug, pageNumber),
+    ]);
+    if (!fullPage) notFound();
+    const edition = query.edition === "en" || query.edition === "ru" ? query.edition : "pli";
+    const parallel = query.parallel === "1" && edition !== "pli";
+    return <FullPaliReader page={fullPage} englishPage={englishPage} edition={edition} parallel={parallel} backLabel={ui.reader.backToLibrary} />;
+  }
   const work = corpus.works.find((candidate) => candidate.id === text.workId);
   const segments = corpus.segments
     .filter((segment) => segment.textId === text.id)
@@ -217,6 +233,120 @@ export default async function ReaderPage({
         })}
       </article>
     </div>
+  );
+}
+
+function FullPaliReader({
+  page,
+  englishPage,
+  edition,
+  parallel,
+  backLabel,
+}: {
+  page: FullCorpusReaderPage;
+  englishPage?: TranslationReaderPage;
+  edition: "pli" | "en" | "ru";
+  parallel: boolean;
+  backLabel: string;
+}) {
+  const selectedTranslation = edition === "en" ? englishPage : undefined;
+  const selectedPage = selectedTranslation?.page ?? page.page;
+  const selectedPageCount = selectedTranslation?.pageCount ?? page.pageCount;
+  const pageHref = (value: number) => `/reader/${encodeURIComponent(page.slug)}?page=${value}&edition=${edition}${parallel ? "&parallel=1" : ""}`;
+  return (
+    <div className="space-y-6">
+      <header className="space-y-2">
+        <Link href="/library" className="link-dhamma text-sm">← {backLabel}</Link>
+        <h1 className="font-serif text-3xl">{page.title}</h1>
+        <p className="text-sm uppercase tracking-wide text-accent-strong">
+          {page.canonicalStatus === "post-canonical"
+            ? "Post-canonical Pāli text"
+            : page.canonicalStatus === "tradition-dependent"
+              ? `${page.pitaka} · ${page.collection} · canonical classification varies by tradition`
+              : `${page.pitaka} · ${page.collection}`}
+        </p>
+        <div className="card-dhamma bg-accent-soft/35 text-sm space-y-1">
+          <p>{page.totalSegments.toLocaleString()} Pāli segments · page {page.page} of {page.pageCount}</p>
+          <p>Source: {page.attribution}</p>
+          <p>{page.licenseName}</p>
+          <a href={page.sourceUrl} className="link-dhamma break-all">{page.sourceFile} ↗</a>
+          <p className="font-mono text-xs">revision {page.sourceRevision}</p>
+        </div>
+      </header>
+
+      <nav className="flex flex-wrap gap-2 text-sm" aria-label="Text edition">
+        <Link href={`/reader/${encodeURIComponent(page.slug)}?edition=pli&page=1`} className={`rounded-full border px-3 py-1 ${edition === "pli" ? "border-accent text-accent-strong" : "border-line"}`}>Pāli</Link>
+        {englishPage ? (
+          <>
+            <Link href={`/reader/${encodeURIComponent(page.slug)}?edition=en&page=1`} className={`rounded-full border px-3 py-1 ${edition === "en" && !parallel ? "border-accent text-accent-strong" : "border-line"}`}>English</Link>
+            <Link href={`/reader/${encodeURIComponent(page.slug)}?edition=en&parallel=1&page=1`} className={`rounded-full border px-3 py-1 ${edition === "en" && parallel ? "border-accent text-accent-strong" : "border-line"}`}>Pāli + EN</Link>
+          </>
+        ) : <span className="rounded-full border border-line px-3 py-1 text-ink-faint">English unavailable</span>}
+        <span className="rounded-full border border-line px-3 py-1 text-ink-faint">Russian unavailable outside five verified seed texts</span>
+      </nav>
+
+      {edition === "en" && !englishPage ? <div className="card-dhamma">No verified English edition is available. No fallback has been substituted.</div> : null}
+      {edition === "ru" ? <div className="card-dhamma">Русский перевод отсутствует. Другой язык не подставлен.</div> : null}
+      {parallel ? <p className="text-xs text-ink-faint">The editions use independent segment systems; both retain their source segment IDs and are paginated independently.</p> : null}
+      <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
+      <div className={parallel ? "grid lg:grid-cols-2 gap-5 items-start" : ""}>
+        {(edition === "pli" || parallel) ? <PaliColumn page={page} /> : null}
+        {selectedTranslation ? <TranslationColumn page={selectedTranslation} /> : null}
+      </div>
+      <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
+    </div>
+  );
+}
+
+function PaliColumn({ page }: { page: FullCorpusReaderPage }) {
+  return (
+    <article className="space-y-5">
+      {page.segments.map((segment) => (
+        <section key={segment.id} id={segment.segmentUid} className="card-dhamma prose-dhamma scroll-mt-6">
+          {segment.chapter ? <h2 className="font-serif text-lg mb-2">{segment.chapter}</h2> : null}
+          <p className="pali">{segment.text}</p>
+          {segment.notes.length ? (
+            <details className="mt-3 text-xs text-ink-faint">
+              <summary className="cursor-pointer text-accent-strong">Variant readings and source notes ({segment.notes.length})</summary>
+              <ul className="mt-2 list-disc pl-5 space-y-1">
+                {segment.notes.map((note) => <li key={note.id}>{note.text}</li>)}
+              </ul>
+            </details>
+          ) : null}
+          <p className="text-xs text-accent-strong mt-3"><a href={`#${segment.segmentUid}`} className="link-dhamma">{segment.segmentUid}</a> · {segment.sourceRef}</p>
+        </section>
+      ))}
+    </article>
+  );
+}
+
+function TranslationColumn({ page }: { page: TranslationReaderPage }) {
+  return (
+    <article className="space-y-5">
+      <div className="card-dhamma bg-accent-soft/35 text-sm space-y-1">
+        <p>{page.language === "ru" ? "Русский" : "English"} · {page.language === "ru" ? "Переводчик" : "translator identifier"}: {page.translator}</p>
+        <p>{page.totalSegments.toLocaleString()} segments · {page.licenseName}</p>
+        <p>Source: {page.attribution}</p>
+        <a href={page.sourceUrl} className="link-dhamma break-all">{page.sourceFile} ↗</a>
+        {page.language === "ru" ? <p>Основа перевода: {page.segments[0]?.translationBasisLanguage ?? "unknown"}</p> : null}
+      </div>
+      {page.segments.map((segment) => (
+        <section key={segment.id} id={`en-${segment.segmentUid}`} className="card-dhamma prose-dhamma scroll-mt-6">
+          <p>{segment.text}</p>
+          <p className="text-xs text-accent-strong mt-3"><a href={`#en-${segment.segmentUid}`} className="link-dhamma">{segment.segmentUid}</a></p>
+        </section>
+      ))}
+    </article>
+  );
+}
+
+function ReaderPagination({ current, count, pageHref }: { current: number; count: number; pageHref: (page: number) => string }) {
+  return (
+    <nav className="flex items-center justify-between gap-4 text-sm" aria-label="Reader pages">
+      {current > 1 ? <Link href={pageHref(current - 1)} className="link-dhamma">← Previous</Link> : <span />}
+      <span className="text-ink-faint">{current} / {count}</span>
+      {current < count ? <Link href={pageHref(current + 1)} className="link-dhamma">Next →</Link> : <span />}
+    </nav>
   );
 }
 

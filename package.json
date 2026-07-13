@@ -12,11 +12,17 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ingest:dhammapada": "tsx scripts/ingest-dhammapada.ts",
-    "ingest:bilara": "tsx scripts/ingest-bilara.ts",
-    "build:index": "tsx scripts/build-search-index.ts",
-    "corpus:metadata": "tsx scripts/corpus/build-metadata.ts",
-    "corpus:validate": "tsx scripts/corpus/build-metadata.ts"
+    "ingest:dhammapada": "node --import tsx scripts/ingest-dhammapada.ts",
+    "ingest:bilara": "node --import tsx scripts/ingest-bilara.ts",
+    "build:index": "node --import tsx scripts/build-search-index.ts && node --import tsx scripts/corpus/build-full-index.ts",
+    "corpus:metadata": "node --import tsx scripts/corpus/build-metadata.ts",
+    "corpus:validate": "node --import tsx scripts/corpus/build-metadata.ts && node --import tsx scripts/corpus/validate-full.ts",
+    "corpus:validate:full": "node --import tsx scripts/corpus/validate-full.ts",
+    "corpus:inventory:vri": "node --import tsx scripts/corpus/vri.ts inventory",
+    "corpus:inventory:bilara": "node --import tsx scripts/corpus/bilara.ts inventory",
+    "corpus:ingest:pali": "node --import tsx scripts/corpus/vri.ts ingest",
+    "corpus:ingest:en": "node --import tsx scripts/corpus/bilara.ts ingest",
+    "corpus:coverage": "node --import tsx scripts/corpus/vri.ts coverage"
   },
   "dependencies": {
     "next": "15.5.20",

@@ -12,11 +12,40 @@ async function write(name: string, value: unknown) {
 
 async function main() {
   validateManifest();
+  const fullCoverage = JSON.parse(await fs.readFile(path.join(OUT, "full-canon-coverage.json"), "utf8")) as {
+    importedWorks: number;
+    fullVriMulaNavigationImported: boolean;
+    universallyCanonicalWorks: number;
+    traditionDependentWorks: number;
+    traditionDependentSegmentCount: number;
+    canonicalSegmentCount: number;
+    visuddhimagga: { importedVolumes: number; segmentCount: number };
+  };
+  const englishCoverage = JSON.parse(await fs.readFile(path.join(OUT, "bilara-en-coverage.json"), "utf8")) as {
+    importedEditions: number;
+    importedWorks: number;
+    importedSegments: number;
+  };
+  const canonicalMap = JSON.parse(await fs.readFile(path.join(OUT, "full-canon-map.json"), "utf8")) as Array<{
+    canonicalWorkId: string;
+    canonicalStatus: string;
+  }>;
+  const seedSegments = JSON.parse(await fs.readFile(path.join(OUT, "segments.json"), "utf8")) as Array<{
+    textId: string;
+    translations?: { ru?: { text?: string } };
+  }>;
+  const russianSeed = seedSegments.filter((segment) => Boolean(segment.translations?.ru?.text?.trim()));
+  const russianCoverage = {
+    importedEditions: new Set(russianSeed.map((segment) => segment.textId)).size,
+    importedWorks: new Set(russianSeed.map((segment) => segment.textId)).size,
+    importedSegments: russianSeed.length,
+  };
   const languages = ["pli", "en", "ru", "id"].map((language) => ({
     language,
-    importedEditions: CORPUS_EDITIONS.filter(
-      (edition) => edition.imported && edition.language === language
-    ).length,
+    importedEditions:
+      language === "pli" ? fullCoverage.importedWorks + fullCoverage.visuddhimagga.importedVolumes :
+      language === "en" ? englishCoverage.importedEditions :
+      language === "ru" ? russianCoverage.importedEditions : 0,
     sourceGated:
       language === "id"
         ? ["No published CC0 Indonesian Theravāda Pāli edition matches the local seed works."]
@@ -24,21 +53,41 @@ async function main() {
   }));
   const coverage = {
     generatedFrom: "src/lib/corpus/registry.ts",
-    importedEditionCount: CORPUS_EDITIONS.filter((edition) => edition.imported).length,
-    importedTextCount: new Set(CORPUS_EDITIONS.map((edition) => edition.textId)).size,
+    importedEditionCount: fullCoverage.importedWorks + fullCoverage.visuddhimagga.importedVolumes + englishCoverage.importedEditions + russianCoverage.importedEditions,
+    importedTextCount: fullCoverage.importedWorks + englishCoverage.importedWorks + russianCoverage.importedWorks + 1,
     languages,
-    canonicalWorksImported: Array.from(new Set(CORPUS_EDITIONS.map((edition) => edition.workId))),
+    canonicalWorksImported: canonicalMap.filter((entry) => entry.canonicalStatus === "canonical").map((entry) => entry.canonicalWorkId),
     sourceGatedWorks: [
       {
         workId: "work-vism",
         title: "Visuddhimagga",
         canonicalStatus: "post-canonical",
-        reason: "BPS Ñāṇamoli edition is all rights reserved; metadata link only.",
+        reason: "VRI Pāli is imported as post-canonical; the BPS Ñāṇamoli English edition remains excluded as all rights reserved.",
+      },
+      {
+        workId: "work-vri-s0518m",
+        title: "Milindapañhapāḷi",
+        canonicalStatus: "tradition-dependent",
+        reason: "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems.",
+      },
+      {
+        workId: "work-vri-s0520m",
+        title: "Peṭakopadesapāḷi",
+        canonicalStatus: "tradition-dependent",
+        reason: "Included in VRI Mūla navigation; canonical classification varies between traditional editions and classification systems.",
       },
     ],
     claims: {
-      fullTipitakaImported: false,
+      fullVriMulaNavigationImported: fullCoverage.fullVriMulaNavigationImported,
+      universalTipitakaCompletenessClaim: false,
       structureAvailable: true,
+      canonicalSegmentCount: fullCoverage.canonicalSegmentCount,
+      traditionDependentSegmentCount: fullCoverage.traditionDependentSegmentCount,
+      visuddhimaggaPaliImported: fullCoverage.visuddhimagga.segmentCount > 0,
+      russianCoverage: "partial-seed-only",
+      russianSeedEditions: russianCoverage.importedEditions,
+      russianSeedSegments: russianCoverage.importedSegments,
+      russianBulkImport: "excluded-unresolved-rights-and-mutable-provenance",
     },
   };
 

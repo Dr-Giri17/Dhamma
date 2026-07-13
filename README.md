@@ -4,18 +4,20 @@ Source-grounded Theravāda reading and guidance with explicit licensing, multili
 
 ## Current capabilities
 
-- `/library`: complete three-basket Tipiṭaka navigation with exact local-coverage labels.
+- `/library`: three-basket navigation with machine-derived local-coverage labels.
 - `/reader`: independent interface/text language, Pāli/EN/RU/ID edition states, explicit English fallback, parallel Pāli reading, source metadata, and stable segment links.
 - `/ask`: the original fail-closed cited Ask flow.
 - `/voice`: grounded guide modes plus typed input, browser speech recognition, and stoppable TTS.
 - Visuddhimagga: separate post-canonical, source-gated metadata page; no BPS text is stored.
 
-The full Tipiṭaka is **not** imported. Local coverage is 9 texts / 22 editions / 1,437 segments:
+The application does not claim a universally complete Tipiṭaka. It imports the independently reviewed source scope of the pinned VRI Mūla navigation:
 
-- Pāli: eight seed suttas;
-- English: those eight plus the 423-verse Max Müller Dhammapada;
+- Pāli: all adjudicated VRI Mūla navigation sources, with Milindapañha and Peṭakopadesa labelled `tradition-dependent` rather than universally canonical;
+- Pāli Visuddhimagga: separate `post-canonical` content; no BPS/Ñāṇamoli translation;
+- English: only aligned CC0 Bilara editions with matching roots;
 - Russian: MN 10, MN 118, DN 31, SN 56.11, and Snp 1.8;
-- Indonesian: no matching licensed seed edition, shown honestly as unavailable with explicit EN fallback.
+- Russian bulk import: excluded because Theravada.ru redistribution rights and immutable provenance are unresolved;
+- Indonesian: no matching licensed local edition.
 
 ## Quick start
 

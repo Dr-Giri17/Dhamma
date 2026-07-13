@@ -59,6 +59,7 @@ export default async function RootLayout({
             <div className="max-w-4xl mx-auto px-4 space-y-1">
               <p>{ui.footer.corpus}</p>
               <p>{ui.footer.disclaimer}</p>
+              <p><a href="/sources" className="link-dhamma">Источники и лицензии · Sources and licenses</a></p>
             </div>
           </footer>
         </div>

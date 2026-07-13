@@ -62,7 +62,7 @@ export const TEACHER_CONCEPTS: TeacherConcept[] = [
     keywords: {
       pali: ["dukkha"],
       en: ["suffering", "stress", "unsatisfactoriness", "pain"],
-      ru: ["страдание", "страдания", "неудовлетворенность", "неудовлетворённость", "напряжение"],
+      ru: ["дуккха", "дуккхи", "страдание", "страдания", "неудовлетворенность", "неудовлетворённость", "напряжение"],
       id: ["penderitaan", "ketidakpuasan", "tekanan"],
     },
   },

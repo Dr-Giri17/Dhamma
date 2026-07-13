@@ -49,8 +49,8 @@ export const POST_CANONICAL_CATALOG: readonly CatalogNode[] = [
     id: "visuddhimagga",
     title: "Visuddhimagga",
     canonicalStatus: "post-canonical",
-    capabilities: ["structure_available", "source_link_available"],
+    capabilities: ["structure_available", "source_link_available", "root_text_available"],
     textSlug: "visuddhimagga",
-    sourceUrl: "https://bps.lk/library-search-select.php?id=bp207h",
+    sourceUrl: "https://github.com/VipassanaTech/tipitaka-xml/tree/77b57a6daca231b3ca265400fb8a411822f025f4/romn",
   },
 ];

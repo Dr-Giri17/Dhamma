@@ -1,0 +1,32 @@
+{
+  "edition": "Reviewed VRI Mūla navigation scope",
+  "sourceRevision": "77b57a6daca231b3ca265400fb8a411822f025f4",
+  "expectedWorks": 61,
+  "mappedWorks": 61,
+  "importedWorks": 61,
+  "universallyCanonicalWorks": 59,
+  "traditionDependentWorks": 2,
+  "traditionDependentSources": [
+    "s0518m.nrf.xml",
+    "s0520m.nrf.xml"
+  ],
+  "missingWorks": [],
+  "duplicateMappings": [],
+  "unknownFiles": [],
+  "canonicalSegmentCount": 155918,
+  "traditionDependentSegmentCount": 3090,
+  "pitakaSegmentCounts": {
+    "vinaya": 12957,
+    "sutta": 102589,
+    "abhidhamma": 40372
+  },
+  "visuddhimagga": {
+    "expectedVolumes": 2,
+    "importedVolumes": 2,
+    "segmentCount": 4068,
+    "canonicalStatus": "post-canonical"
+  },
+  "blockers": [],
+  "fullVriMulaNavigationImported": true,
+  "universalTipitakaCompletenessClaim": false
+}

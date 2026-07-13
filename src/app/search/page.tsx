@@ -1,8 +1,7 @@
-import { getCorpus } from "@/lib/server";
-import { search } from "@/lib/corpus/search";
 import SearchClient from "@/components/search-client";
 import { getRequestLanguage } from "@/lib/i18n/server";
 import { getUi } from "@/lib/ui";
+import { searchFullCorpus } from "@/lib/corpus/full-search";
 
 export default async function SearchPage({
   searchParams,
@@ -12,8 +11,8 @@ export default async function SearchPage({
   const { q } = await searchParams;
   const language = await getRequestLanguage();
   const ui = getUi(language);
-  const corpus = await getCorpus();
-  const results = q ? search(corpus, q, { limit: 20 }) : [];
+  const fullResults = q ? await searchFullCorpus(q, { limit: 20 }) : [];
+  const results = q ? fullResults : [];
 
   return (
     <div className="space-y-6">

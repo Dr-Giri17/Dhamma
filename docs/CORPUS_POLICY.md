@@ -1,4 +1,8 @@
-# Corpus Policy
+# Corpus Policy (seed retrieval layer)
+
+> The protected BPS English Visuddhimagga remains excluded. The separately
+> licensed VRI Pāli Visuddhimagga is now imported as post-canonical material;
+> see [FULL_CORPUS_ARCHITECTURE.md](./FULL_CORPUS_ARCHITECTURE.md).
 
 This document governs what texts may enter the Dhamma App corpus, under what
 license, and how they are labelled. It implements the requirements of the
@@ -58,18 +62,20 @@ A segment missing any of these is a validation error, not a warning.
   `suttacentral/bilara-data`. Each fetched segment preserves Bilara's stable
   segment UID and attaches CC0 license metadata.
 
-## 6. Visuddhimagga — explicitly NOT ingested
+## 6. Visuddhimagga in seed retrieval
 
 The Visuddhimagga is a **post-canonical** commentary by Buddhaghosa. It is
 **not** part of the Tipiṭaka and is not words attributed to the Buddha.
 
 - The schema/interface exists (`category: "commentarial"`,
   `pitaka: "post_canonical"`).
-- **No Visuddhimagga segment may enter the corpus** in the MVP.
+- No Visuddhimagga segment may enter the **Ask/Guide seed corpus**.
   `validateCorpus()` rejects any segment whose owning work slug is
   `visuddhimagga` / `vism`.
-- Ingestion requires a separate license review. The Ñāṇamoli / BPS edition has
-  distribution restrictions that must be honoured.
+- The full-reader layer separately imports the VRI Pāli edition under its
+  non-commercial attribution terms and always marks it post-canonical.
+- The Ñāṇamoli / BPS English edition has distribution restrictions and remains
+  excluded.
 
 ## 7. Prohibited sources
 

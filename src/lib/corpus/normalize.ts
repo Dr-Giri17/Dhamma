@@ -53,11 +53,30 @@ export function stripPaliDiacritics(input: string): string {
  * Does NOT remove hyphens — `dukkha-` stays distinct for exact work.
  */
 export function normalizeForSearch(input: string): string {
-  return stripPaliDiacritics(input)
-    .toLowerCase()
+  let normalized = input.toLowerCase();
+  for (const [alias, canonical] of Object.entries(CYRILLIC_DHAMMA_ALIASES)) {
+    normalized = normalized.replaceAll(alias, canonical);
+  }
+  return stripPaliDiacritics(normalized)
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/**
+ * Common Russian spellings of Pāli terms. Russian framing words are still
+ * ignored by the ASCII lexical index, while the doctrinal term remains a
+ * precise, reviewable retrieval signal.
+ */
+const CYRILLIC_DHAMMA_ALIASES: Record<string, string> = {
+  "дуккха": "dukkha",
+  "аничча": "anicca",
+  "анатта": "anatta",
+  "танха": "tanha",
+  "ниббана": "nibbana",
+  "метта": "metta",
+  "сати": "sati",
+  "самадхи": "samadhi",
+};
 
 /**
  * Tokenize a string into normalized search terms.

@@ -1,6 +1,11 @@
-# Corpus coverage
+# Corpus coverage (historical seed report)
 
-This repository exposes the complete navigation structure of the three Tipiṭaka baskets, but it does **not** contain the full Tipiṭaka text.
+> Superseded for reader/library coverage by
+> [FULL_TIPITAKA_COVERAGE.md](./FULL_TIPITAKA_COVERAGE.md),
+> [BILARA_ENGLISH_COVERAGE.md](./BILARA_ENGLISH_COVERAGE.md), and
+> [THERAVADA_RU_INVENTORY.md](./THERAVADA_RU_INVENTORY.md).
+
+This historical table describes the former seed-only state; it must not be used as the current full-corpus coverage claim.
 
 ## Exact local coverage
 
