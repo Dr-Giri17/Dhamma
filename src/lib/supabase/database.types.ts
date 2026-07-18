@@ -39,7 +39,9 @@ export type Database = {
           created_at: string
           edition: string
           id: string
+          page: number
           reader_slug: string
+          segment_anchor: string | null
           segment_id: string
           source_ref: string
           user_id: string
@@ -48,7 +50,9 @@ export type Database = {
           created_at?: string
           edition: string
           id?: string
+          page?: number
           reader_slug: string
+          segment_anchor?: string | null
           segment_id: string
           source_ref: string
           user_id: string
@@ -57,7 +61,9 @@ export type Database = {
           created_at?: string
           edition?: string
           id?: string
+          page?: number
           reader_slug?: string
+          segment_anchor?: string | null
           segment_id?: string
           source_ref?: string
           user_id?: string

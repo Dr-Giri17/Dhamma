@@ -19,6 +19,8 @@ export interface BookmarkRow {
   source_ref: string;
   reader_slug: string;
   edition: string;
+  page: number;
+  segment_anchor: string | null;
   created_at: string;
 }
 
@@ -31,11 +33,14 @@ export interface ReadingProgressRow {
   updated_at: string;
 }
 
+const BOOKMARK_COLUMNS =
+  "id, user_id, segment_id, source_ref, reader_slug, edition, page, segment_anchor, created_at";
+
 export async function listBookmarks(userId: string): Promise<BookmarkRow[]> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("bookmarks")
-    .select("id, user_id, segment_id, source_ref, reader_slug, edition, created_at")
+    .select(BOOKMARK_COLUMNS)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -61,7 +66,7 @@ export async function getBookmark(
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("bookmarks")
-    .select("id, user_id, segment_id, source_ref, reader_slug, edition, created_at")
+    .select(BOOKMARK_COLUMNS)
     .eq("user_id", userId)
     .eq("segment_id", segmentId)
     .eq("edition", edition)
@@ -76,6 +81,8 @@ export async function addBookmark(input: {
   sourceRef: string;
   readerSlug: string;
   edition: string;
+  page: number;
+  segmentAnchor?: string | null;
 }): Promise<BookmarkRow | null> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
@@ -86,8 +93,10 @@ export async function addBookmark(input: {
       source_ref: input.sourceRef,
       reader_slug: input.readerSlug,
       edition: input.edition,
+      page: input.page,
+      segment_anchor: input.segmentAnchor ?? null,
     })
-    .select("id, user_id, segment_id, source_ref, reader_slug, edition, created_at")
+    .select(BOOKMARK_COLUMNS)
     .single();
   if (error) throw error;
   return data as BookmarkRow;

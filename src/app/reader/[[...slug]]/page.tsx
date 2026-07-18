@@ -280,6 +280,8 @@ export default async function ReaderPage({
                   sourceRef={segment.sourceRef}
                   readerSlug={text.slug}
                   edition={requestedEdition}
+                  page={1}
+                  segmentAnchor={segment.segmentUid}
                   initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${requestedEdition}`)}
                   signedIn={signedIn}
                 />
@@ -353,10 +355,10 @@ function FullPaliReader({
       <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
       <div className={parallel ? "grid lg:grid-cols-2 gap-5 items-start" : ""}>
         {(edition === "pli" || parallel) ? (
-          <PaliColumn page={page} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="pli" />
+          <PaliColumn page={page} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="pli" pageNumber={selectedPage} />
         ) : null}
         {selectedTranslation ? (
-          <TranslationColumn page={selectedTranslation} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="en" />
+          <TranslationColumn page={selectedTranslation} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="en" pageNumber={selectedPage} />
         ) : null}
       </div>
       <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
@@ -370,12 +372,14 @@ function PaliColumn({
   signedIn,
   readerSlug,
   edition,
+  pageNumber,
 }: {
   page: FullCorpusReaderPage;
   bookmarkSet: Set<string>;
   signedIn: boolean;
   readerSlug: string;
   edition: "pli";
+  pageNumber: number;
 }) {
   return (
     <article className="space-y-5">
@@ -398,6 +402,8 @@ function PaliColumn({
               sourceRef={segment.sourceRef}
               readerSlug={readerSlug}
               edition={edition}
+              page={pageNumber}
+              segmentAnchor={segment.segmentUid}
               initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${edition}`)}
               signedIn={signedIn}
             />
@@ -414,12 +420,14 @@ function TranslationColumn({
   signedIn,
   readerSlug,
   edition,
+  pageNumber,
 }: {
   page: TranslationReaderPage;
   bookmarkSet: Set<string>;
   signedIn: boolean;
   readerSlug: string;
   edition: "en";
+  pageNumber: number;
 }) {
   return (
     <article className="space-y-5">
@@ -440,6 +448,8 @@ function TranslationColumn({
               sourceRef={segment.segmentUid}
               readerSlug={readerSlug}
               edition={edition}
+              page={pageNumber}
+              segmentAnchor={`en-${segment.segmentUid}`}
               initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${edition}`)}
               signedIn={signedIn}
             />

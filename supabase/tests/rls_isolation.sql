@@ -36,6 +36,11 @@ begin
 end;
 $$;
 
+-- Restore superuser role. Note: `set local role` cannot run inside a
+-- security-definer function, so this runs as the invoker. Callers must ensure
+-- they are still operating as a privileged role when restore() is invoked; for
+-- the anon checks below we instead use privilege introspection from the
+-- superuser context so the role is never actually switched.
 create or replace function pg_temp.restore() returns void
 language plpgsql as $$
 begin
@@ -164,17 +169,39 @@ begin
   end;
   raise notice 'CHECK 9 PASS: non-positive page rejected';
 
-  -- CHECK 10: anon role CANNOT read user data (no policies for anon).
-  perform pg_temp.become('anon', null);
+  -- CHECK 10: anon role CANNOT read or write user data.
+  -- We prove this from the superuser context via privilege/RLS introspection,
+  -- which is unambiguous and cannot produce a false positive:
+  --   (a) anon has NO table privileges on bookmarks/user_preferences/reading_progress
+  --       (confirmed via has_table_privilege for SELECT/INSERT/UPDATE/DELETE),
+  --   (b) RLS is enabled on all three tables, and
+  --   (c) no policy targets the anon role.
+  -- If any of these is false, anon could read or write user data and the test
+  -- FAILS loudly. This supersedes the earlier "set role anon" form which was
+  -- false-positive-prone (an empty RLS-filtered SELECT returned 0 rows but did
+  -- not raise, so the test "passed" even if anon retained privileges).
+  declare
+    t text;
+    priv text;
+    has_priv boolean;
+    rls_on boolean;
+    anon_policies integer;
   begin
-    select count(*) into cnt from public.bookmarks;
-    perform pg_temp.restore();
-    raise exception 'CHECK 10 FAILED: anon read bookmarks returned rows';
-  exception
-    when others then
-      perform pg_temp.restore();
+    foreach t in array array['user_preferences','bookmarks','reading_progress'] loop
+      foreach priv in array array['SELECT','INSERT','UPDATE','DELETE'] loop
+        select has_table_privilege('anon', format('public.%I', t), priv) into has_priv;
+        assert not has_priv, 'CHECK 10 FAILED: anon has %s on %s', priv, t;
+      end loop;
+      select c.relrowsecurity into rls_on
+        from pg_class c join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = 'public' and c.relname = t;
+      assert rls_on, 'CHECK 10 FAILED: RLS not enabled on %s', t;
+      select count(*) into anon_policies from pg_policies
+        where schemaname = 'public' and tablename = t and array_to_string(roles, ',') like '%anon%';
+      assert anon_policies = 0, 'CHECK 10 FAILED: anon-targeted policy exists on %s', t;
+    end loop;
   end;
-  raise notice 'CHECK 10 PASS: anon cannot read bookmarks';
+  raise notice 'CHECK 10 PASS: anon has no privileges, RLS is on, no anon policies';
 
   raise notice 'ALL RLS ISOLATION CHECKS PASSED';
 end;

@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { getRequestLanguage } from "@/lib/i18n/server";
 import { getUi } from "@/lib/ui";
 import { listBookmarks, listReadingProgress } from "@/lib/account/queries";
+import { bookmarkHref, progressHref } from "@/lib/account/bookmark-url";
 import SignOutButton from "@/components/sign-out-button";
 
 export const dynamic = "force-dynamic";
@@ -61,14 +62,11 @@ export default async function AccountPage() {
           <ul className="space-y-2">
             {bookmarks.map((b) => (
               <li key={b.id} className="card-dhamma text-sm space-y-1">
-                <Link
-                  href={`/reader/${encodeURIComponent(b.reader_slug)}?edition=${b.edition}&page=1#seg-${b.segment_id}`}
-                  className="link-dhamma font-mono"
-                >
+                <Link href={bookmarkHref(b)} className="link-dhamma font-mono">
                   {b.source_ref}
                 </Link>
                 <p className="text-xs text-ink-faint">
-                  {b.edition} · {new Date(b.created_at).toLocaleDateString()}
+                  {b.edition} · {ui.account.pageLabel} {b.page} · {new Date(b.created_at).toLocaleDateString()}
                 </p>
               </li>
             ))}
@@ -84,10 +82,7 @@ export default async function AccountPage() {
           <ul className="space-y-2">
             {progress.map((p) => (
               <li key={`${p.reader_slug}-${p.edition}`} className="card-dhamma text-sm space-y-1">
-                <Link
-                  href={`/reader/${encodeURIComponent(p.reader_slug)}?edition=${p.edition}&page=${p.page}`}
-                  className="link-dhamma font-mono"
-                >
+                <Link href={progressHref(p)} className="link-dhamma font-mono">
                   {p.reader_slug} · {p.edition}
                 </Link>
                 <p className="text-xs text-ink-faint">

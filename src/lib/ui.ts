@@ -145,6 +145,7 @@ export interface UiStrings {
     bookmarkRemoved: string;
     bookmarkAddLabel: string;
     bookmarkRemoveLabel: string;
+    bookmarkError: string;
     resumeLabel: string;
     pageLabel: string;
     openLabel: string;
@@ -313,6 +314,7 @@ const en: UiStrings = {
     bookmarkRemoved: "Bookmark removed",
     bookmarkAddLabel: "Bookmark this segment",
     bookmarkRemoveLabel: "Remove bookmark",
+    bookmarkError: "Could not save this bookmark. Please try again.",
     resumeLabel: "Resume",
     pageLabel: "page",
     openLabel: "Open",
@@ -481,6 +483,7 @@ const ru: UiStrings = {
     bookmarkRemoved: "Закладка удалена",
     bookmarkAddLabel: "Добавить фрагмент в закладки",
     bookmarkRemoveLabel: "Убрать закладку",
+    bookmarkError: "Не удалось сохранить закладку. Попробуйте ещё раз.",
     resumeLabel: "Продолжить",
     pageLabel: "страница",
     openLabel: "Открыть",
@@ -649,6 +652,7 @@ const id: UiStrings = {
     bookmarkRemoved: "Penanda dihapus",
     bookmarkAddLabel: "Tandai bagian ini",
     bookmarkRemoveLabel: "Hapus penanda",
+    bookmarkError: "Tidak dapat menyimpan penanda. Silakan coba lagi.",
     resumeLabel: "Lanjutkan",
     pageLabel: "halaman",
     openLabel: "Buka",
