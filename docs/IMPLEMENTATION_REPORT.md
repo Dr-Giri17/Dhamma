@@ -1,5 +1,22 @@
 # DHAMMA APP IMPLEMENTATION REPORT
 
+> ⚠️ **HISTORICAL DOCUMENT.** This report records the original MVP scaffold
+> (the `feat/dhamma-mvp` branch) and is preserved for provenance. Two of its
+> claims no longer reflect the verified current state of the project and must
+> not be read as live status:
+>
+> - **"12 Pāli segments"** — the corpus now contains the full Tipiṭaka +
+>   Visuddhimagga (155,918 canonical Pāli segments, 3,090 tradition-dependent
+>   segments, 4,068 Visuddhimagga segments, 4,425 English editions). See
+>   `docs/FULL_TIPITAKA_COVERAGE.md` and `docs/CORPUS_COVERAGE.md`.
+> - **"head after: uncommitted working tree"** — the tree is committed and
+>   merged; the current verified baseline is on `main` (see `README.md` and the
+>   git log). Subsequent work (full corpus, production corpus-asset origin fix,
+>   and the optional Supabase account layer) is tracked in later branches and
+>   the git history.
+>
+> Treat everything below as a point-in-time snapshot of the MVP only.
+
 ## Verdict
 
 **PASS** — MVP scaffold complete and validated end-to-end.
