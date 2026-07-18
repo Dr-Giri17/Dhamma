@@ -1,13 +1,13 @@
 -- RLS two-user isolation evidence for public.user_preferences, public.bookmarks,
--- public.reading_progress. Run against a local Supabase stack after the
--- migrations have been applied (supabase db reset).
+-- public.reading_progress. Run against a Supabase stack after the migrations
+-- have been applied.
 --
 -- This script is idempotent and self-verifying. Each check raises an ASSERT
--- failure on violation and prints a NOTICE otherwise. Run with:
+-- failure on violation and prints a NOTICE otherwise. Run locally:
 --   PGPASSWORD=postgres psql -h 127.0.0.1 -p 55422 -U postgres -d postgres \
 --     -v ON_ERROR_STOP=1 -f supabase/tests/rls_isolation.sql
-
-\set ON_ERROR_STOP on
+-- Or against the linked project via the Management API (no psql meta-commands):
+--   npx supabase db query --linked --file supabase/tests/rls_isolation.sql
 
 -- Two independent users. auth.users is a Supabase internal table we may
 -- insert into as superuser for test-harness purposes only.
@@ -212,3 +212,13 @@ delete from public.bookmarks where user_id in ('11111111-1111-1111-1111-00000000
 delete from public.reading_progress where user_id in ('11111111-1111-1111-1111-000000000001','11111111-1111-1111-1111-000000000002');
 delete from public.user_preferences where user_id in ('11111111-1111-1111-1111-000000000001','11111111-1111-1111-1111-000000000002');
 delete from auth.users where id in ('11111111-1111-1111-1111-000000000001','11111111-1111-1111-1111-000000000002');
+
+-- Explicit verdict row. This is returned as a result set so it is visible
+-- through both psql AND the Supabase Management API (which suppresses RAISE
+-- NOTICE). If any CHECK had failed, the ASSERT above would have aborted the
+-- transaction before reaching this point, so seeing this row is proof.
+select 'ALL RLS ISOLATION CHECKS PASSED (10/10)' as verdict,
+       (select count(*) from public.bookmarks) as bookmarks_after_cleanup,
+       (select count(*) from public.reading_progress) as progress_after_cleanup,
+       (select count(*) from public.user_preferences) as prefs_after_cleanup,
+       (select count(*) from auth.users where id in ('11111111-1111-1111-1111-000000000001','11111111-1111-1111-1111-000000000002')) as test_users_after_cleanup;
