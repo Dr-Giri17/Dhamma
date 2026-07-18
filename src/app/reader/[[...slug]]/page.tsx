@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EditionControls from "@/components/edition-controls";
+import BookmarkButton from "@/components/bookmark-button";
+import ReadingProgressSaver from "@/components/reading-progress-saver";
 import { getCorpus } from "@/lib/server";
 import { getRequestLanguage } from "@/lib/i18n/server";
+import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { getUi } from "@/lib/ui";
 import { manifestEdition } from "@/lib/corpus/manifest";
 import {
@@ -23,6 +26,7 @@ import {
   normalizeTextEdition,
   type TextEditionLanguage,
 } from "@/lib/reader/navigation";
+import { listBookmarks } from "@/lib/account/queries";
 
 export default async function ReaderPage({
   params,
@@ -35,6 +39,19 @@ export default async function ReaderPage({
   const language = await getRequestLanguage();
   const ui = getUi(language);
   const corpus = getCorpus();
+  // Auth state for optional persistence controls. Supabase failure must not
+  // break reading: any error resolves to signed-out, anonymous-friendly mode.
+  const { user } = await getAuthenticatedUser().catch(() => ({ user: null }));
+  const signedIn = Boolean(user);
+  // Bookmark lookup is best-effort; an unreachable persistence layer yields an
+  // empty set so the page still renders without persistence affordances.
+  const bookmarkSet = user
+    ? new Set(
+        (await listBookmarks(user.id).catch(() => [] as Awaited<ReturnType<typeof listBookmarks>>)).map(
+          (b) => `${b.segment_id}|${b.edition}`
+        )
+      )
+    : new Set<string>();
 
   if (!slug || slug.length === 0) {
     const texts = corpus.texts.map((text) => {
@@ -139,7 +156,21 @@ export default async function ReaderPage({
     if (!fullPage) notFound();
     const edition = query.edition === "en" || query.edition === "ru" ? query.edition : "pli";
     const parallel = query.parallel === "1" && edition !== "pli";
-    return <FullPaliReader page={fullPage} englishPage={englishPage} edition={edition} parallel={parallel} backLabel={ui.reader.backToLibrary} />;
+    return (
+      <>
+        <ReadingProgressSaver signedIn={signedIn} readerSlug={requestedSlug} edition={edition} page={pageNumber} />
+        <FullPaliReader
+          page={fullPage}
+          englishPage={englishPage}
+          edition={edition}
+          parallel={parallel}
+          backLabel={ui.reader.backToLibrary}
+          bookmarkSet={bookmarkSet}
+          signedIn={signedIn}
+          readerSlug={requestedSlug}
+        />
+      </>
+    );
   }
   const work = corpus.works.find((candidate) => candidate.id === text.workId);
   const segments = corpus.segments
@@ -167,6 +198,7 @@ export default async function ReaderPage({
 
   return (
     <div className="space-y-6">
+      <ReadingProgressSaver signedIn={signedIn} readerSlug={requestedSlug} edition={requestedEdition} page={1} />
       <div>
         <Link href="/library" className="link-dhamma text-sm">
           ← {ui.reader.backToLibrary}
@@ -242,6 +274,16 @@ export default async function ReaderPage({
                 </Link>
                 {segment.verseNumber ? ` · ${ui.reader.verse} ${segment.verseNumber}` : ""}
               </p>
+              <div className="mt-2">
+                <BookmarkButton
+                  segmentId={segment.segmentUid}
+                  sourceRef={segment.sourceRef}
+                  readerSlug={text.slug}
+                  edition={requestedEdition}
+                  initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${requestedEdition}`)}
+                  signedIn={signedIn}
+                />
+              </div>
             </section>
           );
         })}
@@ -256,12 +298,18 @@ function FullPaliReader({
   edition,
   parallel,
   backLabel,
+  bookmarkSet,
+  signedIn,
+  readerSlug,
 }: {
   page: FullCorpusReaderPage;
   englishPage?: TranslationReaderPage;
   edition: "pli" | "en" | "ru";
   parallel: boolean;
   backLabel: string;
+  bookmarkSet: Set<string>;
+  signedIn: boolean;
+  readerSlug: string;
 }) {
   const selectedTranslation = edition === "en" ? englishPage : undefined;
   const selectedPage = selectedTranslation?.page ?? page.page;
@@ -304,15 +352,31 @@ function FullPaliReader({
       {parallel ? <p className="text-xs text-ink-faint">The editions use independent segment systems; both retain their source segment IDs and are paginated independently.</p> : null}
       <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
       <div className={parallel ? "grid lg:grid-cols-2 gap-5 items-start" : ""}>
-        {(edition === "pli" || parallel) ? <PaliColumn page={page} /> : null}
-        {selectedTranslation ? <TranslationColumn page={selectedTranslation} /> : null}
+        {(edition === "pli" || parallel) ? (
+          <PaliColumn page={page} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="pli" />
+        ) : null}
+        {selectedTranslation ? (
+          <TranslationColumn page={selectedTranslation} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="en" />
+        ) : null}
       </div>
       <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
     </div>
   );
 }
 
-function PaliColumn({ page }: { page: FullCorpusReaderPage }) {
+function PaliColumn({
+  page,
+  bookmarkSet,
+  signedIn,
+  readerSlug,
+  edition,
+}: {
+  page: FullCorpusReaderPage;
+  bookmarkSet: Set<string>;
+  signedIn: boolean;
+  readerSlug: string;
+  edition: "pli";
+}) {
   return (
     <article className="space-y-5">
       {page.segments.map((segment) => (
@@ -328,13 +392,35 @@ function PaliColumn({ page }: { page: FullCorpusReaderPage }) {
             </details>
           ) : null}
           <p className="text-xs text-accent-strong mt-3"><a href={`#${segment.segmentUid}`} className="link-dhamma">{segment.segmentUid}</a> · {segment.sourceRef}</p>
+          <div className="mt-2">
+            <BookmarkButton
+              segmentId={segment.segmentUid}
+              sourceRef={segment.sourceRef}
+              readerSlug={readerSlug}
+              edition={edition}
+              initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${edition}`)}
+              signedIn={signedIn}
+            />
+          </div>
         </section>
       ))}
     </article>
   );
 }
 
-function TranslationColumn({ page }: { page: TranslationReaderPage }) {
+function TranslationColumn({
+  page,
+  bookmarkSet,
+  signedIn,
+  readerSlug,
+  edition,
+}: {
+  page: TranslationReaderPage;
+  bookmarkSet: Set<string>;
+  signedIn: boolean;
+  readerSlug: string;
+  edition: "en";
+}) {
   return (
     <article className="space-y-5">
       <div className="card-dhamma bg-accent-soft/35 text-sm space-y-1">
@@ -348,6 +434,16 @@ function TranslationColumn({ page }: { page: TranslationReaderPage }) {
         <section key={segment.id} id={`en-${segment.segmentUid}`} className="card-dhamma prose-dhamma scroll-mt-6">
           <p>{segment.text}</p>
           <p className="text-xs text-accent-strong mt-3"><a href={`#en-${segment.segmentUid}`} className="link-dhamma">{segment.segmentUid}</a></p>
+          <div className="mt-2">
+            <BookmarkButton
+              segmentId={segment.segmentUid}
+              sourceRef={segment.segmentUid}
+              readerSlug={readerSlug}
+              edition={edition}
+              initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${edition}`)}
+              signedIn={signedIn}
+            />
+          </div>
         </section>
       ))}
     </article>
