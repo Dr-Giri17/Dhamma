@@ -11,6 +11,7 @@ import {
   type FullCorpusReaderPage,
   type TranslationReaderPage,
 } from "@/lib/corpus/full-corpus";
+import { CorpusAssetError } from "@/lib/corpus/trusted-assets";
 import {
   selectTranslation,
   translationLanguages,
@@ -118,10 +119,23 @@ export default async function ReaderPage({
   const text = corpus.texts.find((candidate) => candidate.slug === requestedSlug);
   if (!text || requestedSlug === "visuddhimagga") {
     const pageNumber = Number(query.page ?? 1);
-    const [fullPage, englishPage] = await Promise.all([
-      getFullCorpusReaderPage(requestedSlug, pageNumber),
-      getBilaraEnglishReaderPage(requestedSlug, pageNumber),
-    ]);
+    let fullPage: FullCorpusReaderPage | undefined;
+    let englishPage: TranslationReaderPage | undefined;
+    try {
+      [fullPage, englishPage] = await Promise.all([
+        getFullCorpusReaderPage(requestedSlug, pageNumber),
+        getBilaraEnglishReaderPage(requestedSlug, pageNumber),
+      ]);
+    } catch (error) {
+      // Public scripture reading must never surface as an unhandled 500.
+      // When the corpus asset fetch fails (origin mismatch, timeout, redirect,
+      // oversize, invalid JSON), render a localized notice with HTTP 503 — the
+      // same status the /api/search route returns for the same failure.
+      if (error instanceof CorpusAssetError) {
+        return <CorpusUnavailable backLabel={ui.reader.backToLibrary} message={ui.reader.corpusUnavailable} />;
+      }
+      throw error;
+    }
     if (!fullPage) notFound();
     const edition = query.edition === "en" || query.edition === "ru" ? query.edition : "pli";
     const parallel = query.parallel === "1" && edition !== "pli";
@@ -400,5 +414,21 @@ function Badge({ children, muted = false }: { children: React.ReactNode; muted?:
     >
       {children}
     </span>
+  );
+}
+
+/**
+ * Rendered when the public corpus asset fetch fails (origin mismatch, timeout,
+ * redirect, oversize, or invalid JSON). Replaces what was previously an
+ * unhandled 500 so public scripture reading degrades gracefully.
+ */
+function CorpusUnavailable({ backLabel, message }: { backLabel: string; message: string }) {
+  return (
+    <div className="space-y-4">
+      <Link href="/library" className="link-dhamma text-sm">← {backLabel}</Link>
+      <div className="card-dhamma space-y-2">
+        <p className="text-ink-soft">{message}</p>
+      </div>
+    </div>
   );
 }

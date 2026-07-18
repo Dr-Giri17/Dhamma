@@ -101,6 +101,7 @@ export interface UiStrings {
     sourceAndLicense: string;
     backToLibrary: string;
     fallbackBadge: string;
+    corpusUnavailable: string;
   };
   terms: {
     title: string;
@@ -223,6 +224,8 @@ const en: UiStrings = {
     sourceAndLicense: "Source and license",
     backToLibrary: "Library / Tipiṭaka",
     fallbackBadge: "fallback EN",
+    corpusUnavailable:
+      "This scripture could not be loaded right now. The public corpus assets are temporarily unavailable; please try again shortly.",
   },
   terms: {
     title: "Terms",
@@ -346,6 +349,8 @@ const ru: UiStrings = {
     sourceAndLicense: "Источник и лицензия",
     backToLibrary: "Библиотека / Трипитака",
     fallbackBadge: "резервный EN",
+    corpusUnavailable:
+      "Не удалось загрузить этот текст прямо сейчас. Публичные ресурсы корпуса временно недоступны; пожалуйста, повторите попытку чуть позже.",
   },
   terms: {
     title: "Термины",
@@ -469,6 +474,8 @@ const id: UiStrings = {
     sourceAndLicense: "Sumber dan lisensi",
     backToLibrary: "Pustaka / Tipiṭaka",
     fallbackBadge: "cadangan EN",
+    corpusUnavailable:
+      "Teks suci ini tidak dapat dimuat saat ini. Aset korpus publik untuk sementara tidak tersedia; silakan coba lagi sebentar lagi.",
   },
   terms: {
     title: "Istilah",
