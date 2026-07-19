@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookmarkHref, progressHref } from "../bookmark-url";
+import { bookmarkHref, legacyAnchor, progressHref } from "../bookmark-url";
 
 describe("bookmarkHref", () => {
   it("builds a deep link to the saved page and anchor", () => {
@@ -26,11 +26,9 @@ describe("bookmarkHref", () => {
     ).toBe("/reader/dn1?edition=en&page=2#en-dn1%3A1.1");
   });
 
-  it("falls back to the segment_id itself for legacy rows without an anchor", () => {
-    // Legacy rows stored the segment UID in segment_id; the reader renders that
-    // value verbatim as the Pali column's DOM id. We must NOT synthesize a
-    // `seg-` prefix (no reader column ever emits such an id, so the scroll
-    // target would never exist).
+  it("falls back to the segment_id itself for legacy Pali rows without an anchor", () => {
+    // Legacy Pali rows: the reader renders id={segmentUid} on the Pali column,
+    // and the stored segment_id IS that segment UID.
     expect(
       bookmarkHref({
         reader_slug: "mn10",
@@ -42,7 +40,29 @@ describe("bookmarkHref", () => {
     ).toBe("/reader/mn10?edition=pli&page=1#mn10%3A1.1");
   });
 
-  it("never synthesizes a seg- prefix that no reader column emits", () => {
+  it("falls back to en-${segment_id} for legacy English-column rows without an anchor", () => {
+    // Legacy English rows: the reader renders id={`en-${segmentUid}`} on the
+    // English column, so the fallback must synthesize the en- prefix.
+    expect(
+      bookmarkHref({
+        reader_slug: "dn1",
+        edition: "en",
+        page: 4,
+        segment_id: "dn1:3.2",
+        segment_anchor: null,
+      })
+    ).toBe("/reader/dn1?edition=en&page=4#en-dn1%3A3.2");
+  });
+
+  it("legacyAnchor returns the stored anchor when present, regardless of edition", () => {
+    // When a real anchor is stored (new rows), it is used verbatim and the
+    // edition-based synthesis is bypassed.
+    expect(
+      legacyAnchor({ reader_slug: "dn1", edition: "en", page: 1, segment_id: "x", segment_anchor: "en-dn1:1.1" })
+    ).toBe("en-dn1:1.1");
+  });
+
+  it("never synthesizes a seg- prefix that no reader column emits (Pali)", () => {
     const href = bookmarkHref({
       reader_slug: "dn1",
       edition: "pli",
@@ -51,6 +71,18 @@ describe("bookmarkHref", () => {
       segment_anchor: null,
     });
     expect(href).not.toMatch(/#seg-/);
+  });
+
+  it("never synthesizes a seg- prefix for English legacy rows either", () => {
+    const href = bookmarkHref({
+      reader_slug: "dn1",
+      edition: "en",
+      page: 1,
+      segment_id: "dn1:5.5",
+      segment_anchor: null,
+    });
+    expect(href).not.toMatch(/#seg-/);
+    expect(href).toMatch(/#en-dn1%3A5\.5$/);
   });
 
   it("encodes a slug with characters that need escaping", () => {

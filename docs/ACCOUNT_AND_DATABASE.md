@@ -132,9 +132,28 @@ Every user-data table enforces, by construction:
 - **service_role gets nothing through the app.** `revoke all ... from
   service_role`; the service_role key is never read in code and is never
   shipped to the browser (`NEXT_PUBLIC_*` exposes only the publishable/anon
-  key). The only functions marked `SECURITY DEFINER` are the small
-  `updated_at`/auto-insert triggers, each scoped with `set search_path =
-  public`.
+  key). The three application functions marked `SECURITY DEFINER`
+  (`handle_new_user_preferences`, `set_user_preferences_updated_at`,
+  `set_reading_progress_updated_at`) have EXECUTE granted only to
+  `postgres`/`service_role` (revoked from PUBLIC/anon/authenticated), and each
+  is scoped with `set search_path = public`.
+
+> **Erratum — `public.rls_auto_enable()` (platform-managed).** An earlier
+> migration comment states `public.rls_auto_enable()` does not exist in this
+> schema. That is accurate for the *local* Supabase stack but **inaccurate for
+> the remote project**: the remote `cgkxarfkrzuzqvvevlxw` ships the
+> platform-managed `public.rls_auto_enable()` SECURITY DEFINER function, bound
+> to the `ensure_rls` DDL event trigger that auto-enables RLS on any new
+> `public` table (a fail-closed safety feature). We do NOT own this object and
+> intentionally do NOT modify it; mutating platform-managed objects risks
+> breaking future Supabase platform updates and the auto-RLS safety net. The
+> two Supabase advisor warnings
+> (`anon_security_definer_function_executable` and
+> `authenticated_security_definer_function_executable`) that reference it are
+> therefore **intentionally unresolved**. The function body reads only
+> `pg_event_trigger_ddl_commands()`, which is empty outside a DDL event, so
+> direct RPC invocation by anon/authenticated is a no-op (no privilege
+> escalation surface in practice).
 - **authenticated gets only the DML it needs.** `grant select, insert, update,
   delete` (and `select, insert, update` only for `user_preferences`, which is
   removed implicitly via `on delete cascade`).
