@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
-# Local E2E smoke for the account layer against the LOCAL Supabase stack.
-# Requires: supabase start (with kong+auth on 54321), the Next app running on
+# Supabase integration smoke for the account layer against the LOCAL Supabase
+# stack. This is NOT a full application/browser E2E - it drives the Supabase
+# Auth + Postgres REST + RLS pipeline via curl against the local stack, plus a
+# single app-route check (/account anonymous shell). Browser-level flows
+# (SSR cookie wiring, BookmarkButton UI, deep-link scroll) are covered by the
+# Preview browser E2E, not here.
+#
+# Requires: supabase start (with kong+auth+postgrest), the Next app running on
 # PORT (default 3100) with .env.local pointing at the local stack.
 #
-# This exercises the AUTH + RLS + persistence pipeline end-to-end:
+# What this script verifies:
 #   - anonymous reader works (no session)
 #   - signup (email/password) creates an auth user
-#   - sign-in returns access+refresh cookies
+#   - sign-in returns an access token (authenticated role)
 #   - authenticated user can INSERT a bookmark (page + anchor stored)
 #   - cross-user isolation (user B cannot read user A's bookmark) via RLS
 #   - authenticated user can DELETE their bookmark
@@ -115,7 +121,7 @@ acct=$(curl -s -H "Cookie: dhamma_lang=en" "$APP/account")
 echo "$acct" | grep -q "You are not signed in\|Create account" && pass "/account renders not-signed-in shell (en) for anonymous" || fail "/account did not show not-signed-in shell"
 
 echo ""
-echo "=== ALL LOCAL E2E CHECKS PASSED ==="
+echo "=== ALL SUPABASE INTEGRATION SMOKE CHECKS PASSED ==="
 
 # Cleanup: remove the two test users via the DB so the local stack is tidy.
 echo "=== cleanup test users ==="

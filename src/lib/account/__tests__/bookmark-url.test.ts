@@ -26,7 +26,11 @@ describe("bookmarkHref", () => {
     ).toBe("/reader/dn1?edition=en&page=2#en-dn1%3A1.1");
   });
 
-  it("falls back to a segment_id-derived anchor for legacy rows without one", () => {
+  it("falls back to the segment_id itself for legacy rows without an anchor", () => {
+    // Legacy rows stored the segment UID in segment_id; the reader renders that
+    // value verbatim as the Pali column's DOM id. We must NOT synthesize a
+    // `seg-` prefix (no reader column ever emits such an id, so the scroll
+    // target would never exist).
     expect(
       bookmarkHref({
         reader_slug: "mn10",
@@ -35,7 +39,18 @@ describe("bookmarkHref", () => {
         segment_id: "mn10:1.1",
         segment_anchor: null,
       })
-    ).toBe("/reader/mn10?edition=pli&page=1#seg-mn10%3A1.1");
+    ).toBe("/reader/mn10?edition=pli&page=1#mn10%3A1.1");
+  });
+
+  it("never synthesizes a seg- prefix that no reader column emits", () => {
+    const href = bookmarkHref({
+      reader_slug: "dn1",
+      edition: "pli",
+      page: 1,
+      segment_id: "dn1:5.5",
+      segment_anchor: null,
+    });
+    expect(href).not.toMatch(/#seg-/);
   });
 
   it("encodes a slug with characters that need escaping", () => {

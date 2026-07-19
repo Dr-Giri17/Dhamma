@@ -13,14 +13,22 @@ export interface BookmarkLinkInput {
 
 /**
  * Build a reader deep-link URL that opens the exact page and scrolls to the
- * saved segment anchor. The anchor is the exact in-page id emitted by the
- * reader (segmentUid for the Pali column, `en-<segmentUid>` for the English
- * column). For legacy rows without an anchor, fall back to a stable id derived
- * from segment_id.
+ * saved segment anchor.
+ *
+ * The reader emits these in-page ids:
+ *   - Pali / static-text column: `id={segmentUid}` (the segment UID itself).
+ *   - English translation column: `id={`en-${segmentUid}`}`.
+ *
+ * `segment_anchor` is stored at bookmark time to match exactly (e.g.
+ * `dn1:1.1` for Pali, `en-dn1:1.1` for English). For legacy rows written
+ * before `segment_anchor` existed we fall back to the stored `segment_id`,
+ * which for those rows IS the segment UID the reader renders as the Pali
+ * column's DOM id. We deliberately do NOT synthesize a `seg-` prefix: no
+ * reader column ever emits an id of that shape, so it would never scroll.
  */
 export function bookmarkHref(input: BookmarkLinkInput): string {
   const slug = encodeURIComponent(input.reader_slug);
-  const anchor = encodeURIComponent(input.segment_anchor ?? `seg-${input.segment_id}`);
+  const anchor = encodeURIComponent(input.segment_anchor ?? input.segment_id);
   return `/reader/${slug}?edition=${input.edition}&page=${input.page}#${anchor}`;
 }
 
