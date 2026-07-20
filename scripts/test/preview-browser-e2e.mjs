@@ -7,27 +7,34 @@
 //   exit 0  PASS          - every mandatory step asserted successfully.
 //   exit 1  FAIL          - a mandatory assertion failed.
 //   exit 2  NOT EXECUTED  - one or more mandatory steps could not run
-//                            (e.g. missing secret, playwright not installed,
-//                            or signup required email confirmation and no
-//                            authenticated session could be established).
+//                            (e.g. missing secret, Playwright not installed,
+//                            browser binary missing, or signup required email
+//                            confirmation and no authenticated session could
+//                            be established).
 //
 // Hard rules enforced by this file:
 //   - No service_role / Admin API logic whatsoever. Cleanup of test users is
-//     MANUAL via the Supabase Dashboard (documented in the runbook and in the
-//     final report line).
+//     MANUAL via the Supabase Dashboard (documented in the runbook).
 //   - process.exit() is NEVER called inside try/finally. Exit decisions are
 //     computed in plain control flow after the finally closes the browser.
-//   - browser.close() always runs in finally.
-//   - reader status, DOM anchor existence, visibility, reading-progress
-//     presence, and two-user isolation are all MANDATORY assertions (not just
-//     logged).
+//   - browser.close() always runs in finally (when a browser was launched).
+//   - reader status, search API, DOM anchor existence, visibility,
+//     reading-progress entry, sign-out removal, and two-user isolation are all
+//     MANDATORY assertions (not just logged).
 //   - Production email confirmation is NOT weakened.
+//   - No use of browser-only globals (e.g. CSS.escape) from Node context.
 //
 // Environment requirements (never printed / logged / URL-embedded):
 //   PREVIEW_URL                       - the Preview deployment origin.
 //   VERCEL_AUTOMATION_BYPASS_SECRET   - Vercel automation bypass secret.
 //
 // The bypass secret is sent ONLY as the x-vercel-protection-bypass header.
+//
+// Playwright is loaded via createRequire(import.meta.url) so that an isolated
+// install (pointed at via NODE_PATH) is honored for BOTH CJS and ESM. See
+// docs/PREVIEW_E2E_RUNBOOK.md for the reproduceable install commands.
+
+import { createRequire } from "node:module";
 
 const REQUIRED_ENV = ["PREVIEW_URL", "VERCEL_AUTOMATION_BYPASS_SECRET"];
 
@@ -56,32 +63,56 @@ function markPass(step, detail = "") {
   console.log(`PASS: ${step}${detail ? ` — ${detail}` : ""}`);
 }
 
-// --- Pre-flight: required env (no secrets printed) ----------------------
-const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
-if (missingEnv.length > 0) {
-  markNotExecuted(`missing required env (values never printed): ${missingEnv.join(", ")}.`);
-  console.log("This test must run where the operator's Vercel automation bypass secret and Preview URL are available.");
-} else if (!await canLoadPlaywright()) {
-  markNotExecuted("playwright is not installed; see docs/PREVIEW_E2E_RUNBOOK.md for the reproduceable install.");
-} else {
-  await runScenario();
+// --- Playwright loader (NODE_PATH-aware via createRequire) --------------
+// `import("playwright")` does NOT honor NODE_PATH for ESM resolution, which
+// breaks the isolated-install workflow. createRequire() builds a CJS require
+// rooted at this file, and CJS require DOES consult NODE_PATH, so an isolated
+// Playwright install works regardless of module style.
+let playwrightMod = null;
+function loadPlaywrightSync() {
+  if (playwrightMod) return playwrightMod;
+  const require = createRequire(import.meta.url);
+  playwrightMod = require("playwright");
+  return playwrightMod;
 }
 
-async function canLoadPlaywright() {
+function canLoadPlaywright() {
   try {
-    await import("playwright");
+    loadPlaywrightSync();
     return true;
   } catch {
     return false;
   }
 }
 
+// --- Pre-flight: required env (no secrets printed) ----------------------
+const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missingEnv.length > 0) {
+  markNotExecuted(`missing required env (values never printed): ${missingEnv.join(", ")}.`);
+  console.log("This test must run where the operator's Vercel automation bypass secret and Preview URL are available.");
+} else if (!canLoadPlaywright()) {
+  markNotExecuted("playwright is not installed; see docs/PREVIEW_E2E_RUNBOOK.md for the reproduceable install.");
+} else {
+  await runScenario();
+}
+
 async function runScenario() {
   const PREVIEW = process.env.PREVIEW_URL.replace(/\/$/, "");
   const BYPASS = process.env.VERCEL_AUTOMATION_BYPASS_SECRET; // header-only, never logged
-  const { chromium } = await import("playwright");
+  const { chromium } = loadPlaywrightSync();
 
-  const browser = await chromium.launch();
+  // Launch can fail if the Chromium binary is not installed. Treat that as
+  // NOT_EXECUTED (exit 2) with a clear reason, not an unhandled exception.
+  let browser;
+  try {
+    browser = await chromium.launch();
+  } catch (e) {
+    markNotExecuted(
+      `Chromium browser binary not available: ${(e && e.message ? e.message : String(e)).split("\n")[0]} — run \`npx playwright install chromium\` (see docs/PREVIEW_E2E_RUNBOOK.md).`
+    );
+    return;
+  }
+
   // We use a single try/finally so browser.close() is guaranteed.
   try {
     const context = await browser.newContext({
@@ -106,7 +137,35 @@ async function runScenario() {
     }
     markPass("anonymous /reader/dn1 returns 200");
 
-    // 2. Sign-up user A. We do NOT weaken email confirmation; we report the
+    // 2. /api/search?q=dukkha&language=en is MANDATORY:
+    //    HTTP 200, valid JSON, non-empty results array. FAIL on 503, empty,
+    //    or malformed. (Production currently returns 503 corpus-unavailable
+    //    for this route; this step proves the Preview has the corpus fix.)
+    const searchApi = `${PREVIEW}/api/search?q=dukkha&language=en`;
+    const searchRes = await page.goto(searchApi, { waitUntil: "domcontentloaded" });
+    const searchStatus = searchRes ? searchRes.status() : 0;
+    if (searchStatus !== 200) {
+      markFail(`/api/search?q=dukkha&language=en status=${searchStatus} (expected 200; 503 = corpus-unavailable)`);
+      return;
+    }
+    let searchBody;
+    try {
+      searchBody = await searchRes.json();
+    } catch (e) {
+      markFail(`/api/search did not return valid JSON: ${(e && e.message) || e}`);
+      return;
+    }
+    if (!searchBody || !Array.isArray(searchBody.results)) {
+      markFail(`/api/search JSON missing 'results' array: ${JSON.stringify(searchBody).slice(0, 120)}`);
+      return;
+    }
+    if (searchBody.results.length === 0) {
+      markFail(`/api/search returned an empty results array for 'dukkha'`);
+      return;
+    }
+    markPass(`/api/search?q=dukkha&language=en 200 + non-empty results`, `count>=${searchBody.results.length}`);
+
+    // 3. Sign-up user A. We do NOT weaken email confirmation; we report the
     //    resulting state honestly. If confirmation is required, the dependent
     //    mandatory steps cannot run -> overall NOT EXECUTED.
     await page.goto(`${PREVIEW}/auth/sign-up`, { waitUntil: "domcontentloaded" });
@@ -118,9 +177,6 @@ async function runScenario() {
     ]);
     const afterSignupUrl = page.url();
     if (/state=confirm/.test(afterSignupUrl)) {
-      // Email confirmation required and we cannot receive it here: the
-      // remaining mandatory steps depend on a session, so this is NOT
-      // EXECUTED, not a PASS.
       markNotExecuted("signup required email confirmation; no authenticated session could be established");
       return;
     }
@@ -130,14 +186,14 @@ async function runScenario() {
     }
     markPass("signup A established a session (no confirmation required)");
 
-    // 3. Authenticated /account shell is MANDATORY (no not-signed-in notice).
+    // 4. Authenticated /account shell is MANDATORY (no not-signed-in notice).
     if (await showsNotSignedIn(page)) {
       markFail("post-signup /account rendered the not-signed-in shell");
       return;
     }
     markPass("authenticated /account shell renders");
 
-    // 4. SSR session persists across navigation is MANDATORY.
+    // 5. SSR session persists across navigation is MANDATORY.
     await page.goto(`${PREVIEW}/library`, { waitUntil: "domcontentloaded" });
     await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
     if (await showsNotSignedIn(page)) {
@@ -146,7 +202,7 @@ async function runScenario() {
     }
     markPass("SSR session persists across navigation");
 
-    // 5. BookmarkButton aria-pressed false -> true is MANDATORY.
+    // 6. BookmarkButton aria-pressed false -> true is MANDATORY.
     await page.goto(`${PREVIEW}/reader/dn1?page=2&edition=pli`, { waitUntil: "domcontentloaded" });
     const offBtn = page.locator('button[aria-pressed="false"]').first();
     if (!(await offBtn.count())) {
@@ -161,22 +217,26 @@ async function runScenario() {
     }
     markPass("BookmarkButton toggles aria-pressed false -> true");
 
-    // 6. Bookmark page + anchor persistence is MANDATORY.
+    // 7. Bookmark page + anchor persistence is MANDATORY. Scope the search to
+    //    the Bookmarks section so we do not match the reading-progress link.
     await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
-    const bookmarkLink = page.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
+    const bookmarksSection = sectionByHeading(page, "Bookmarks");
+    const bookmarkLink = bookmarksSection.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
     if (!(await bookmarkLink.count())) {
-      markFail("bookmark link not present on /account");
+      markFail("bookmark link not present in Bookmarks section on /account");
       return;
     }
     const href = await bookmarkLink.getAttribute("href");
-    if (!href || !/page=2/.test(href) || !/#/.test(href)) {
-      markFail(`bookmark href did not preserve page/anchor: ${href}`);
+    if (!href || !/edition=pli/.test(href) || !/page=2/.test(href) || !/#/.test(href)) {
+      markFail(`bookmark href did not preserve edition=pli, page=2, and an anchor: ${href}`);
       return;
     }
-    markPass("bookmark page + anchor persistence", href);
+    markPass("bookmark edition=pli + page=2 + anchor persistence", href);
 
-    // 7. Click the bookmark link and confirm the actual target element EXISTS
-    //    and is reached/scrolled into view — MANDATORY.
+    // 8. Click the bookmark link and confirm the actual target element EXISTS
+    //    and is reached/scrolled into view — MANDATORY. Build the locator via
+    //    an attribute selector with the already-URL-encoded fragment so we
+    //    never call the browser-only CSS.escape from Node context.
     await Promise.all([
       page.waitForURL(/\/reader\/dn1/, { waitUntil: "domcontentloaded" }),
       bookmarkLink.click(),
@@ -186,33 +246,63 @@ async function runScenario() {
       markFail("bookmark href has no anchor fragment");
       return;
     }
-    const anchorId = decodeURIComponent(anchorEnc);
-    const targetEl = page.locator(`#${CSS.escape(anchorId)}`).first();
-    if (!(await targetEl.count())) {
-      markFail(`bookmark target DOM element not found: id=${anchorId}`);
+    // Use a Playwright attribute-locator with the encoded id verbatim. This is
+    // safe in Node (no CSS.escape) and matches the reader's id attribute as it
+    // appears in the DOM (ids are emitted verbatim, not re-encoded).
+    const targetEl = page.locator(`[id="${anchorEnc}"]`).first();
+    let exists = await targetEl.count();
+    if (!exists) {
+      // Fall back: some ids are emitted decoded while the href is encoded.
+      // Resolve via the browser context (CSS.escape is available there).
+      const decoded = await page.evaluate((enc) => {
+        try {
+          return decodeURIComponent(enc);
+        } catch {
+          return enc;
+        }
+      }, anchorEnc);
+      const escapedSel = await page.evaluate((raw) => `#${CSS.escape(raw)}`, decoded);
+      const alt = page.locator(escapedSel).first();
+      if (await alt.count()) {
+        exists = true;
+      }
+    }
+    if (!exists) {
+      markFail(`bookmark target DOM element not found for anchor: ${anchorEnc}`);
       return;
     }
-    markPass("bookmark target DOM element exists", `id=${anchorId}`);
-    await targetEl.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
-    if (!(await targetEl.isVisible())) {
-      markFail(`bookmark target not visible after scroll: id=${anchorId}`);
+    markPass("bookmark target DOM element exists", `anchor=${anchorEnc}`);
+    // Re-derive the locator for the visibility check.
+    const visibleTarget = (await targetEl.count()) ? targetEl : page.locator(`[id="${anchorEnc}"]`).first();
+    await visibleTarget.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+    if (!(await visibleTarget.isVisible())) {
+      markFail(`bookmark target not visible after scroll: anchor=${anchorEnc}`);
       return;
     }
     markPass("bookmark target reached/scrolled into view");
 
-    // 8. Reading-progress entry is MANDATORY.
+    // 9. Reading-progress entry is MANDATORY. Scope to the "Reading progress"
+    //    section so the existing bookmark link cannot satisfy this check, and
+    //    wait for the save round-trip before asserting the resume href.
     await page.goto(`${PREVIEW}/reader/dn1?page=3&edition=pli`, { waitUntil: "domcontentloaded" });
+    // Give the silent ReadingProgressSaver Server Action time to upsert.
+    await page.waitForTimeout(1500);
     await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
-    const progressLink = page.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
-    const progressHref = await progressLink.getAttribute("href").catch(() => null);
-    if (!progressHref) {
-      markFail("reading-progress entry not present on /account");
+    const progressSection = sectionByHeading(page, "Reading progress");
+    const progressLink = progressSection.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
+    if (!(await progressLink.count())) {
+      markFail("reading-progress link not present in Reading progress section on /account");
       return;
     }
-    markPass("reading-progress entry present", progressHref);
+    const progressHref = await progressLink.getAttribute("href");
+    if (!progressHref || !/edition=pli/.test(progressHref) || !/page=3/.test(progressHref)) {
+      markFail(`reading-progress href did not contain edition=pli and page=3: ${progressHref}`);
+      return;
+    }
+    markPass("reading-progress entry in its section with edition=pli & page=3", progressHref);
 
-    // 9. Sign-out is MANDATORY; a failed sign-out is a FAIL (never swallowed).
-    const signOutBtn = page.locator('button').filter({ hasText: /sign out/i }).first();
+    // 10. Sign-out is MANDATORY; a failed sign-out is a FAIL (never swallowed).
+    const signOutBtn = page.locator("button").filter({ hasText: /sign out/i }).first();
     if (!(await signOutBtn.count())) {
       markFail("Sign out button not found");
       return;
@@ -228,7 +318,7 @@ async function runScenario() {
     }
     markPass("sign-out removed /account access");
 
-    // 10. Two-user isolation is MANDATORY: sign up B, B must see none of A's data.
+    // 11. Two-user isolation is MANDATORY: sign up B, B must see none of A's data.
     await page.goto(`${PREVIEW}/auth/sign-up`, { waitUntil: "domcontentloaded" });
     await page.locator('input[name="email"]').fill(emailB);
     await page.locator('input[name="password"]').fill(password);
@@ -238,8 +328,6 @@ async function runScenario() {
     ]);
     const bUrl = page.url();
     if (/state=confirm/.test(bUrl)) {
-      // Cannot establish B's session without email; isolation step is mandatory
-      // and not satisfiable -> NOT EXECUTED (not a silent PASS).
       markNotExecuted("user B signup required email confirmation; isolation step could not run");
       return;
     }
@@ -247,13 +335,16 @@ async function runScenario() {
       markFail(`user B signup navigation unexpected: ${bUrl}`);
       return;
     }
-    const bHtml = await page.content();
-    const bLeaksA = /dn1/i.test(bHtml) && /page=2/.test(bHtml);
-    if (bLeaksA) {
-      markFail("user B can see user A's bookmark (isolation broken)");
+    // B's Bookmarks section must be empty (must NOT show A's page=2 bookmark).
+    const bBookmarksSection = sectionByHeading(page, "Bookmarks");
+    const bBookmarkLinks = bBookmarksSection.locator('a[href*="/reader/"]');
+    const bLinkCount = await bBookmarkLinks.count();
+    if (bLinkCount > 0) {
+      const firstHref = await bBookmarkLinks.first().getAttribute("href");
+      markFail(`user B sees bookmarks in /account Bookmarks section (isolation broken): first=${firstHref}`);
       return;
     }
-    markPass("two-user isolation: B sees none of A's bookmark");
+    markPass("two-user isolation: B's Bookmarks section is empty");
 
     // All mandatory steps asserted successfully.
     outcome = "PASS";
@@ -268,6 +359,18 @@ async function runScenario() {
       // ignore — best effort, never mask the real outcome.
     }
   }
+}
+
+/**
+ * Return a Playwright locator scoped to the <section> whose heading text
+ * matches `headingText` (e.g. "Bookmarks", "Reading progress"). Falls back to
+ * the whole page if no such section is found, so the caller's count() check
+ * fails loudly rather than throwing.
+ */
+function sectionByHeading(page, headingText) {
+  // h2 inside a section, matching the /account markup.
+  const section = page.locator("section", { has: page.locator(`h2`, { hasText: headingText }) }).first();
+  return section;
 }
 
 async function showsNotSignedIn(page) {
