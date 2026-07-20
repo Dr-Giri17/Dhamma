@@ -234,9 +234,21 @@ async function runScenario() {
     markPass("bookmark edition=pli + page=2 + anchor persistence", href);
 
     // 8. Click the bookmark link and confirm the actual target element EXISTS
-    //    and is reached/scrolled into view — MANDATORY. Build the locator via
-    //    an attribute selector with the already-URL-encoded fragment so we
-    //    never call the browser-only CSS.escape from Node context.
+    //    and is reached/scrolled into view — MANDATORY.
+    //
+    //    The href fragment is URL-encoded (e.g. `dn1%3A1.1`), but the reader
+    //    emits the DOM id verbatim and decoded (`<section id="dn1:1.1">`). An
+    //    attribute selector built from the encoded fragment (`[id="dn1%3A1.1"]`)
+    //    therefore does NOT match. We resolve ONE locator and reuse it for
+    //    existence, scroll, and visibility:
+    //      1. try the encoded attribute selector (in case the id is stored
+    //         encoded somewhere);
+    //      2. otherwise decode the fragment and build a CSS selector inside the
+    //         browser context via page.evaluate(`#${CSS.escape(...)}`). CSS.escape
+    //         is a browser global, so it is NEVER called from Node.
+    //    Both existence and visibility MUST run against this single
+    //    `resolvedTarget`, otherwise a fallback match would be discarded and
+    //    visibility would re-check a non-matching encoded locator (false FAIL).
     await Promise.all([
       page.waitForURL(/\/reader\/dn1/, { waitUntil: "domcontentloaded" }),
       bookmarkLink.click(),
@@ -246,36 +258,34 @@ async function runScenario() {
       markFail("bookmark href has no anchor fragment");
       return;
     }
-    // Use a Playwright attribute-locator with the encoded id verbatim. This is
-    // safe in Node (no CSS.escape) and matches the reader's id attribute as it
-    // appears in the DOM (ids are emitted verbatim, not re-encoded).
-    const targetEl = page.locator(`[id="${anchorEnc}"]`).first();
-    let exists = await targetEl.count();
-    if (!exists) {
-      // Fall back: some ids are emitted decoded while the href is encoded.
-      // Resolve via the browser context (CSS.escape is available there).
-      const decoded = await page.evaluate((enc) => {
+
+    const encodedLocator = page.locator(`[id="${anchorEnc}"]`).first();
+    let resolvedTarget;
+    if (await encodedLocator.count()) {
+      resolvedTarget = encodedLocator;
+    } else {
+      // Decode + CSS.escape entirely inside the browser context, then build the
+      // Playwright locator from the resulting selector string. No CSS.escape in
+      // Node. The selector is returned to Node as plain text and used as-is.
+      const sel = await page.evaluate((enc) => {
+        let decoded;
         try {
-          return decodeURIComponent(enc);
+          decoded = decodeURIComponent(enc);
         } catch {
-          return enc;
+          decoded = enc;
         }
+        return `#${CSS.escape(decoded)}`;
       }, anchorEnc);
-      const escapedSel = await page.evaluate((raw) => `#${CSS.escape(raw)}`, decoded);
-      const alt = page.locator(escapedSel).first();
-      if (await alt.count()) {
-        exists = true;
-      }
+      resolvedTarget = page.locator(sel).first();
     }
-    if (!exists) {
+
+    if (!(await resolvedTarget.count())) {
       markFail(`bookmark target DOM element not found for anchor: ${anchorEnc}`);
       return;
     }
     markPass("bookmark target DOM element exists", `anchor=${anchorEnc}`);
-    // Re-derive the locator for the visibility check.
-    const visibleTarget = (await targetEl.count()) ? targetEl : page.locator(`[id="${anchorEnc}"]`).first();
-    await visibleTarget.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
-    if (!(await visibleTarget.isVisible())) {
+    await resolvedTarget.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+    if (!(await resolvedTarget.isVisible())) {
       markFail(`bookmark target not visible after scroll: anchor=${anchorEnc}`);
       return;
     }
