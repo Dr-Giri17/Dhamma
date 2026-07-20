@@ -1,255 +1,294 @@
 // Preview browser E2E for the Dhamma account layer.
 //
 // Truthful Playwright test against the deployed Vercel Preview. Every required
-// condition either ASSERTS (and aborts the run on failure) or is explicitly
-// reported as NOT EXECUTED. No overall PASS is printed after a skipped or
-// failed assertion. A failed Sign out aborts; it is never swallowed.
+// condition ASSERTS (mandatory). Outcomes are reported with an explicit final
+// status and exit code:
 //
-// Coverage:
-//   - signup / email-confirmation status reported honestly
-//   - sign-in / SSR cookie persistence across navigation
-//   - authenticated /account shell renders
-//   - BookmarkButton aria-pressed false -> true
-//   - bookmark page + anchor persistence
-//   - clicking the bookmark link reaches the actual target element
-//   - reading-progress resume
-//   - sign-out removes /account access
-//   - two-user isolation (user B sees none of user A's data)
+//   exit 0  PASS          - every mandatory step asserted successfully.
+//   exit 1  FAIL          - a mandatory assertion failed.
+//   exit 2  NOT EXECUTED  - one or more mandatory steps could not run
+//                            (e.g. missing secret, playwright not installed,
+//                            or signup required email confirmation and no
+//                            authenticated session could be established).
+//
+// Hard rules enforced by this file:
+//   - No service_role / Admin API logic whatsoever. Cleanup of test users is
+//     MANUAL via the Supabase Dashboard (documented in the runbook and in the
+//     final report line).
+//   - process.exit() is NEVER called inside try/finally. Exit decisions are
+//     computed in plain control flow after the finally closes the browser.
+//   - browser.close() always runs in finally.
+//   - reader status, DOM anchor existence, visibility, reading-progress
+//     presence, and two-user isolation are all MANDATORY assertions (not just
+//     logged).
+//   - Production email confirmation is NOT weakened.
 //
 // Environment requirements (never printed / logged / URL-embedded):
-//   PREVIEW_URL                          - the Preview deployment origin
-//   VERCEL_AUTOMATION_BYPASS_SECRET      - Vercel automation bypass secret
-//   (Optional) SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY - if both set, the
-//   script performs deterministic cleanup of the two test users; otherwise
-//   cleanup is reported NOT EXECUTED.
-//
-// Run:
-//   PREVIEW_URL=... VERCEL_AUTOMATION_BYPASS_SECRET=... \
-//   node scripts/test/preview-browser-e2e.mjs
+//   PREVIEW_URL                       - the Preview deployment origin.
+//   VERCEL_AUTOMATION_BYPASS_SECRET   - Vercel automation bypass secret.
 //
 // The bypass secret is sent ONLY as the x-vercel-protection-bypass header.
-// It is never placed in a URL, the DOM, a log line, or error text.
 
-import assert from "node:assert/strict";
+const REQUIRED_ENV = ["PREVIEW_URL", "VERCEL_AUTOMATION_BYPASS_SECRET"];
 
-const REQUIRED = ["PREVIEW_URL", "VERCEL_AUTOMATION_BYPASS_SECRET"];
-const missing = REQUIRED.filter((k) => !process.env[k]);
-if (missing.length > 0) {
-  console.log(`NOT EXECUTED: missing required env (present values never printed): ${missing.join(", ")}.`);
+// Outcome is captured here and resolved to an exit code after the finally
+// block closes the browser. Values: "PASS" | "FAIL" | "NOT_EXECUTED".
+let outcome = "NOT_EXECUTED";
+let outcomeReason = "";
+let createdUsers = [];
+
+function markNotExecuted(reason) {
+  if (outcome !== "FAIL") {
+    outcome = "NOT_EXECUTED";
+    outcomeReason = reason;
+  }
+  console.log(`NOT EXECUTED: ${reason}`);
+}
+
+function markFail(reason) {
+  // FAIL takes priority over NOT_EXECUTED once a real assertion has failed.
+  outcome = "FAIL";
+  outcomeReason = reason;
+  console.log(`FAIL: ${reason}`);
+}
+
+function markPass(step, detail = "") {
+  console.log(`PASS: ${step}${detail ? ` — ${detail}` : ""}`);
+}
+
+// --- Pre-flight: required env (no secrets printed) ----------------------
+const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missingEnv.length > 0) {
+  markNotExecuted(`missing required env (values never printed): ${missingEnv.join(", ")}.`);
   console.log("This test must run where the operator's Vercel automation bypass secret and Preview URL are available.");
-  process.exit(0);
-}
-
-const PREVIEW = process.env.PREVIEW_URL.replace(/\/$/, "");
-const BYPASS = process.env.VERCEL_AUTOMATION_BYPASS_SECRET; // header-only, never logged
-const CAN_CLEANUP = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
-
-let chromium;
-try {
-  ({ chromium } = await import("playwright"));
-} catch {
-  console.log("NOT EXECUTED: playwright is not installed.");
-  console.log("Install with `npm i -D playwright && npx playwright install chromium`, then rerun.");
-  process.exit(0);
-}
-
-const browser = await chromium.launch();
-const context = await browser.newContext({ extraHTTPHeaders: { "x-vercel-protection-bypass": BYPASS, "x-vercel-set-bypass-cookie": "true" } });
-
-// Pin the interface language to English so the assertions can target stable
-// English strings, regardless of the operator's default locale.
-await context.addCookies([{ name: "dhamma_lang", value: "en", url: PREVIEW }]);
-const page = await context.newPage();
-
-const stamp = Date.now();
-const emailA = `preview-e2e-a-${stamp}@example.test`;
-const emailB = `preview-e2e-b-${stamp}@example.test`;
-const password = "Test-pass-12345!";
-const createdUsers = [];
-
-const steps = [];
-function record(name, ok, detail = "") {
-  steps.push({ name, status: ok ? "PASS" : "FAIL", detail });
-  if (!ok) {
-    console.log(`FAIL: ${name}${detail ? ` — ${detail}` : ""}`);
-  } else {
-    console.log(`PASS: ${name}${detail ? ` — ${detail}` : ""}`);
-  }
-}
-
-function hardFail(msg) {
-  // An assertion that MUST abort the run (Sign out failure, navigation loss).
-  console.log(`HARD FAIL: ${msg}`);
-  process.exitCode = 1;
-  throw new Error(msg);
-}
-
-async function assertSignedInShell(label) {
-  const html = await page.content();
-  if (/You are not signed in/i.test(html)) {
-    hardFail(`${label}: /account rendered the not-signed-in shell; SSR session not established.`);
-  }
-  record(`${label}: authenticated /account shell renders`, true);
-}
-
-try {
-  // 1. Anonymous reader works.
-  const r = await page.goto(`${PREVIEW}/reader/dn1`, { waitUntil: "domcontentloaded" });
-  record("anonymous /reader/dn1 loads", r && r.status() === 200, `status=${r ? r.status() : "n/a"}`);
-
-  // 2. Sign-up user A. We do NOT weaken email confirmation: we read the
-  //    resulting state honestly (session vs confirmation-required).
-  await page.goto(`${PREVIEW}/auth/sign-up`, { waitUntil: "domcontentloaded" });
-  await page.locator('input[name="email"]').fill(emailA);
-  await page.locator('input[name="password"]').fill(password);
-  await Promise.all([
-    page.waitForURL(/\/(account|auth\/sign-in)/, { waitUntil: "domcontentloaded" }).catch(() => null),
-    page.locator('button[type="submit"]').click(),
-  ]);
-  createdUsers.push(emailA);
-  const afterSignupUrl = page.url();
-  if (/\/account/.test(afterSignupUrl)) {
-    record("signup A: session established (no confirmation required)", true);
-  } else if (/state=confirm/.test(afterSignupUrl)) {
-    record("signup A: email confirmation required", true, "redirected to /auth/sign-in?state=confirm");
-  } else {
-    record("signup A: landed somewhere unexpected", false, afterSignupUrl);
-    hardFail("signup A navigation");
-  }
-
-  // 3. If email confirmation was required, we cannot continue without the
-  //    email. Report honestly and stop the dependent steps.
-  if (/state=confirm/.test(afterSignupUrl)) {
-    console.log("NOT EXECUTED: dependent steps require an authenticated session, which needs email confirmation.");
-    console.log(`NOT EXECUTED: cleanup of ${createdUsers.join(", ")} (no service role configured).`);
-    await browser.close();
-    process.exit(0);
-  }
-
-  // 4. SSR session persists across navigation.
-  await assertSignedInShell("post-signup A");
-  await page.goto(`${PREVIEW}/library`, { waitUntil: "domcontentloaded" });
-  await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
-  await assertSignedInShell("post-navigation A (SSR session persisted)");
-
-  // 5. Bookmark a Pali segment; aria-pressed must flip false -> true.
-  await page.goto(`${PREVIEW}/reader/dn1?page=2&edition=pli`, { waitUntil: "domcontentloaded" });
-  const bookmarkBtn = page.locator('button[aria-pressed="false"]').first();
-  await bookmarkBtn.waitFor({ state: "attached", timeout: 10000 });
-  record("BookmarkButton present (aria-pressed=false)", true);
-  await bookmarkBtn.click();
-  await page.locator('button[aria-pressed="true"]').first().waitFor({ state: "attached", timeout: 5000 });
-  record("BookmarkButton toggles aria-pressed false -> true", true);
-
-  // 6. Bookmark deep-link preserves page + anchor.
-  await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
-  const bookmarkLink = page.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
-  const href = await bookmarkLink.first().getAttribute("href");
-  assert.ok(href, "bookmark link missing");
-  assert.match(href, /page=2/, `bookmark href must preserve page=2: ${href}`);
-  assert.match(href, /#/, `bookmark href must contain an anchor: ${href}`);
-  record("bookmark page + anchor persistence", true, href);
-
-  // 7. Clicking the bookmark link reaches the actual target element.
-  await Promise.all([
-    page.waitForURL(/\/reader\/dn1/, { waitUntil: "domcontentloaded" }),
-    bookmarkLink.first().click(),
-  ]);
-  const target = (href.match(/#(.+)$/) || [])[1];
-  if (target) {
-    const decoded = decodeURIComponent(target);
-    const targetEl = page.locator(`#${CSS.escape(decoded)}`).first();
-    const exists = await targetEl.count().then((c) => c > 0);
-    record("bookmark link target element exists in DOM", exists, `id=${decoded}`);
-    if (exists) {
-      await targetEl.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
-      const inView = await targetEl.isVisible();
-      record("bookmark target reached/scrolled into view", inView);
-    }
-  }
-
-  // 8. Reading progress resume: navigate a page, return to /account, click resume.
-  await page.goto(`${PREVIEW}/reader/dn1?page=3&edition=pli`, { waitUntil: "domcontentloaded" });
-  await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
-  const progressLink = page.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
-  const progressHref = await progressLink.getAttribute("href");
-  record("reading progress entry present", Boolean(progressHref), progressHref ?? "(none)");
-
-  // 9. Sign out (NEVER swallow). Must remove /account access.
-  //    The Sign out button is a Server Action submit button.
-  const signOutBtn = page.locator('button').filter({ hasText: /sign out/i }).first();
-  await signOutBtn.waitFor({ state: "attached", timeout: 5000 });
-  await Promise.all([
-    page.waitForLoadState("domcontentloaded"),
-    signOutBtn.click(),
-  ]);
-  record("Sign out button clicked", true);
-
-  // After sign out, /account must show the not-signed-in shell.
-  await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
-  const signedOutHtml = await page.content();
-  const signedOutNotice = /You are not signed in/i.test(signedOutHtml);
-  record("sign-out removed /account access (not-signed-in shell)", signedOutNotice);
-  if (!signedOutNotice) hardFail("sign-out did not remove access");
-
-  // 10. Two-user isolation: sign up B, B sees none of A's bookmarks.
-  await page.goto(`${PREVIEW}/auth/sign-up`, { waitUntil: "domcontentloaded" });
-  await page.locator('input[name="email"]').fill(emailB);
-  await page.locator('input[name="password"]').fill(password);
-  await Promise.all([
-    page.waitForURL(/\/(account|auth\/sign-in)/, { waitUntil: "domcontentloaded" }).catch(() => null),
-    page.locator('button[type="submit"]').click(),
-  ]);
-  createdUsers.push(emailB);
-  const bUrl = page.url();
-  if (/state=confirm/.test(bUrl)) {
-    console.log("NOT EXECUTED: user B signup requires email confirmation; isolation step skipped (no session).");
-  } else if (/\/account/.test(bUrl)) {
-    // If B is on /account, ensure no bookmark referencing page=2 is visible.
-    const bHtml = await page.content();
-    const bLeaks = /page=2/.test(bHtml) && /dn1/i.test(bHtml);
-    record("two-user isolation: B sees none of A's bookmark", !bLeaks);
-  } else {
-    record("user B signup navigation unexpected", false, bUrl);
-  }
-} catch (e) {
-  if (!process.exitCode) process.exitCode = 1;
-  console.log(`ABORTED: ${e.message}`);
-} finally {
-  // Cleanup: deterministic if service role is configured, else NOT EXECUTED.
-  if (!CAN_CLEANUP) {
-    console.log(`NOT EXECUTED: deterministic cleanup of ${createdUsers.join(", ")} (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY not both set).`);
-    console.log("Operator must remove these test users from the Supabase dashboard (on delete cascade clears rows).");
-  } else {
-    // Best-effort delete via Admin API; never print the key.
-    try {
-      const adminUrl = `${process.env.SUPABASE_URL}/auth/v1/admin/users`;
-      for (const email of createdUsers) {
-        // list users, find by email, delete
-        const listRes = await fetch(`${adminUrl}?per_page=1000`, {
-          headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
-        });
-        const list = await listRes.json().catch(() => ({ users: [] }));
-        const u = (list.users || []).find((x) => x.email === email);
-        if (u) {
-          await fetch(`${adminUrl}/${u.id}`, {
-            method: "DELETE",
-            headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}` },
-          });
-        }
-      }
-      console.log(`PASS: deterministic cleanup of ${createdUsers.length} test user(s).`);
-    } catch (e) {
-      console.log(`CLEANUP FAILED: ${e.message} — operator must remove ${createdUsers.join(", ")} manually.`);
-    }
-  }
-  await browser.close();
-}
-
-// Honest summary line: only PASS if nothing failed and nothing was skipped.
-const failed = steps.filter((s) => s.status === "FAIL");
-if (failed.length === 0 && process.exitCode === 0) {
-  console.log("SUMMARY: ALL PREVIEW BROWSER E2E STEPS PASS");
+} else if (!await canLoadPlaywright()) {
+  markNotExecuted("playwright is not installed; see docs/PREVIEW_E2E_RUNBOOK.md for the reproduceable install.");
 } else {
-  console.log(`SUMMARY: ${failed.length} step(s) FAILED; see above. (overall NOT PASS)`);
+  await runScenario();
+}
+
+async function canLoadPlaywright() {
+  try {
+    await import("playwright");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function runScenario() {
+  const PREVIEW = process.env.PREVIEW_URL.replace(/\/$/, "");
+  const BYPASS = process.env.VERCEL_AUTOMATION_BYPASS_SECRET; // header-only, never logged
+  const { chromium } = await import("playwright");
+
+  const browser = await chromium.launch();
+  // We use a single try/finally so browser.close() is guaranteed.
+  try {
+    const context = await browser.newContext({
+      extraHTTPHeaders: { "x-vercel-protection-bypass": BYPASS, "x-vercel-set-bypass-cookie": "true" },
+    });
+    // Pin interface language to English so assertions target stable strings.
+    await context.addCookies([{ name: "dhamma_lang", value: "en", url: PREVIEW }]);
+    const page = await context.newPage();
+
+    const stamp = Date.now();
+    const emailA = `preview-e2e-a-${stamp}@example.test`;
+    const emailB = `preview-e2e-b-${stamp}@example.test`;
+    const password = "Test-pass-12345!";
+    createdUsers = [emailA, emailB];
+
+    // 1. Anonymous reader is MANDATORY.
+    const readerRes = await page.goto(`${PREVIEW}/reader/dn1`, { waitUntil: "domcontentloaded" });
+    const readerStatus = readerRes ? readerRes.status() : 0;
+    if (readerStatus !== 200) {
+      markFail(`anonymous /reader/dn1 status=${readerStatus}`);
+      return;
+    }
+    markPass("anonymous /reader/dn1 returns 200");
+
+    // 2. Sign-up user A. We do NOT weaken email confirmation; we report the
+    //    resulting state honestly. If confirmation is required, the dependent
+    //    mandatory steps cannot run -> overall NOT EXECUTED.
+    await page.goto(`${PREVIEW}/auth/sign-up`, { waitUntil: "domcontentloaded" });
+    await page.locator('input[name="email"]').fill(emailA);
+    await page.locator('input[name="password"]').fill(password);
+    await Promise.all([
+      page.waitForURL(/\/(account|auth\/sign-in)/, { waitUntil: "domcontentloaded" }).catch(() => null),
+      page.locator('button[type="submit"]').click(),
+    ]);
+    const afterSignupUrl = page.url();
+    if (/state=confirm/.test(afterSignupUrl)) {
+      // Email confirmation required and we cannot receive it here: the
+      // remaining mandatory steps depend on a session, so this is NOT
+      // EXECUTED, not a PASS.
+      markNotExecuted("signup required email confirmation; no authenticated session could be established");
+      return;
+    }
+    if (!/\/account/.test(afterSignupUrl)) {
+      markFail(`signup A navigation unexpected: ${afterSignupUrl}`);
+      return;
+    }
+    markPass("signup A established a session (no confirmation required)");
+
+    // 3. Authenticated /account shell is MANDATORY (no not-signed-in notice).
+    if (await showsNotSignedIn(page)) {
+      markFail("post-signup /account rendered the not-signed-in shell");
+      return;
+    }
+    markPass("authenticated /account shell renders");
+
+    // 4. SSR session persists across navigation is MANDATORY.
+    await page.goto(`${PREVIEW}/library`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
+    if (await showsNotSignedIn(page)) {
+      markFail("SSR session did not persist across navigation");
+      return;
+    }
+    markPass("SSR session persists across navigation");
+
+    // 5. BookmarkButton aria-pressed false -> true is MANDATORY.
+    await page.goto(`${PREVIEW}/reader/dn1?page=2&edition=pli`, { waitUntil: "domcontentloaded" });
+    const offBtn = page.locator('button[aria-pressed="false"]').first();
+    if (!(await offBtn.count())) {
+      markFail("BookmarkButton with aria-pressed=false not found");
+      return;
+    }
+    await offBtn.click();
+    const onBtn = page.locator('button[aria-pressed="true"]').first();
+    if (!(await onBtn.count())) {
+      markFail("BookmarkButton did not flip aria-pressed to true");
+      return;
+    }
+    markPass("BookmarkButton toggles aria-pressed false -> true");
+
+    // 6. Bookmark page + anchor persistence is MANDATORY.
+    await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
+    const bookmarkLink = page.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
+    if (!(await bookmarkLink.count())) {
+      markFail("bookmark link not present on /account");
+      return;
+    }
+    const href = await bookmarkLink.getAttribute("href");
+    if (!href || !/page=2/.test(href) || !/#/.test(href)) {
+      markFail(`bookmark href did not preserve page/anchor: ${href}`);
+      return;
+    }
+    markPass("bookmark page + anchor persistence", href);
+
+    // 7. Click the bookmark link and confirm the actual target element EXISTS
+    //    and is reached/scrolled into view — MANDATORY.
+    await Promise.all([
+      page.waitForURL(/\/reader\/dn1/, { waitUntil: "domcontentloaded" }),
+      bookmarkLink.click(),
+    ]);
+    const anchorEnc = (href.match(/#(.+)$/) || [])[1];
+    if (!anchorEnc) {
+      markFail("bookmark href has no anchor fragment");
+      return;
+    }
+    const anchorId = decodeURIComponent(anchorEnc);
+    const targetEl = page.locator(`#${CSS.escape(anchorId)}`).first();
+    if (!(await targetEl.count())) {
+      markFail(`bookmark target DOM element not found: id=${anchorId}`);
+      return;
+    }
+    markPass("bookmark target DOM element exists", `id=${anchorId}`);
+    await targetEl.scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
+    if (!(await targetEl.isVisible())) {
+      markFail(`bookmark target not visible after scroll: id=${anchorId}`);
+      return;
+    }
+    markPass("bookmark target reached/scrolled into view");
+
+    // 8. Reading-progress entry is MANDATORY.
+    await page.goto(`${PREVIEW}/reader/dn1?page=3&edition=pli`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
+    const progressLink = page.locator('a[href*="/reader/"]').filter({ hasText: /dn1/i }).first();
+    const progressHref = await progressLink.getAttribute("href").catch(() => null);
+    if (!progressHref) {
+      markFail("reading-progress entry not present on /account");
+      return;
+    }
+    markPass("reading-progress entry present", progressHref);
+
+    // 9. Sign-out is MANDATORY; a failed sign-out is a FAIL (never swallowed).
+    const signOutBtn = page.locator('button').filter({ hasText: /sign out/i }).first();
+    if (!(await signOutBtn.count())) {
+      markFail("Sign out button not found");
+      return;
+    }
+    await Promise.all([
+      page.waitForLoadState("domcontentloaded"),
+      signOutBtn.click(),
+    ]);
+    await page.goto(`${PREVIEW}/account`, { waitUntil: "domcontentloaded" });
+    if (!(await showsNotSignedIn(page))) {
+      markFail("sign-out did not remove /account access");
+      return;
+    }
+    markPass("sign-out removed /account access");
+
+    // 10. Two-user isolation is MANDATORY: sign up B, B must see none of A's data.
+    await page.goto(`${PREVIEW}/auth/sign-up`, { waitUntil: "domcontentloaded" });
+    await page.locator('input[name="email"]').fill(emailB);
+    await page.locator('input[name="password"]').fill(password);
+    await Promise.all([
+      page.waitForURL(/\/(account|auth\/sign-in)/, { waitUntil: "domcontentloaded" }).catch(() => null),
+      page.locator('button[type="submit"]').click(),
+    ]);
+    const bUrl = page.url();
+    if (/state=confirm/.test(bUrl)) {
+      // Cannot establish B's session without email; isolation step is mandatory
+      // and not satisfiable -> NOT EXECUTED (not a silent PASS).
+      markNotExecuted("user B signup required email confirmation; isolation step could not run");
+      return;
+    }
+    if (!/\/account/.test(bUrl)) {
+      markFail(`user B signup navigation unexpected: ${bUrl}`);
+      return;
+    }
+    const bHtml = await page.content();
+    const bLeaksA = /dn1/i.test(bHtml) && /page=2/.test(bHtml);
+    if (bLeaksA) {
+      markFail("user B can see user A's bookmark (isolation broken)");
+      return;
+    }
+    markPass("two-user isolation: B sees none of A's bookmark");
+
+    // All mandatory steps asserted successfully.
+    outcome = "PASS";
+    outcomeReason = "";
+  } catch (e) {
+    markFail(`unexpected exception: ${e && e.message ? e.message : String(e)}`);
+  } finally {
+    // Guaranteed cleanup of the browser process. No process.exit() here.
+    try {
+      await browser.close();
+    } catch {
+      // ignore — best effort, never mask the real outcome.
+    }
+  }
+}
+
+async function showsNotSignedIn(page) {
+  const html = await page.content();
+  return /You are not signed in/i.test(html);
+}
+
+// --- Final resolution (after browser is guaranteed closed) --------------
+console.log(`---`);
+console.log(`RESULT: ${outcome}${outcomeReason ? ` — ${outcomeReason}` : ""}`);
+if (createdUsers.length > 0) {
+  console.log(
+    `CLEANUP: manually delete these test users from the Supabase Dashboard (on delete cascade clears their rows): ${createdUsers.join(", ")}`
+  );
+}
+
+if (outcome === "PASS") {
+  process.exitCode = 0;
+} else if (outcome === "FAIL") {
+  process.exitCode = 1;
+} else {
+  // NOT_EXECUTED
+  process.exitCode = 2;
 }

@@ -132,7 +132,11 @@ Every user-data table enforces, by construction:
 - **service_role gets nothing through the app.** `revoke all ... from
   service_role`; the service_role key is never read in code and is never
   shipped to the browser (`NEXT_PUBLIC_*` exposes only the publishable/anon
-  key). The three application functions marked `SECURITY DEFINER`
+  key). This invariant covers both the application code **and all test
+  scripts** (including `scripts/test/preview-browser-e2e.mjs`, which performs
+  no Admin API / service-role operations — test-user cleanup is manual via the
+  Supabase Dashboard; see `docs/PREVIEW_E2E_RUNBOOK.md`). The three application
+  functions marked `SECURITY DEFINER`
   (`handle_new_user_preferences`, `set_user_preferences_updated_at`,
   `set_reading_progress_updated_at`) have EXECUTE granted only to
   `postgres`/`service_role` (revoked from PUBLIC/anon/authenticated), and each
