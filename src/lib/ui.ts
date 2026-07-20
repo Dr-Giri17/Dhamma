@@ -13,6 +13,9 @@ export interface UiStrings {
     voice: string;
     wisdom: string;
     terms: string;
+    account: string;
+    signIn: string;
+    signOut: string;
   };
   subtitle: string;
   footer: {
@@ -101,12 +104,51 @@ export interface UiStrings {
     sourceAndLicense: string;
     backToLibrary: string;
     fallbackBadge: string;
+    corpusUnavailable: string;
   };
   terms: {
     title: string;
     description: string;
     refs: string;
     draft: string;
+  };
+  auth: {
+    signInTitle: string;
+    signUpTitle: string;
+    signInDescription: string;
+    signUpDescription: string;
+    emailLabel: string;
+    passwordLabel: string;
+    signInButton: string;
+    signUpButton: string;
+    signingIn: string;
+    noAccountPrompt: string;
+    haveAccountPrompt: string;
+    invalidCredentials: string;
+    signUpFailed: string;
+    missingConfig: string;
+    backToReader: string;
+    signOutButton: string;
+  };
+  account: {
+    title: string;
+    description: string;
+    signedInAs: string;
+    bookmarksTitle: string;
+    progressTitle: string;
+    noBookmarks: string;
+    noProgress: string;
+    notSignedIn: string;
+    signInPrompt: string;
+    persistenceSignInPrompt: string;
+    bookmarkAdded: string;
+    bookmarkRemoved: string;
+    bookmarkAddLabel: string;
+    bookmarkRemoveLabel: string;
+    bookmarkError: string;
+    resumeLabel: string;
+    pageLabel: string;
+    openLabel: string;
   };
 }
 
@@ -121,6 +163,9 @@ const en: UiStrings = {
     voice: "Dhamma Voice",
     wisdom: "Wisdom",
     terms: "Terms",
+    account: "Account",
+    signIn: "Sign in",
+    signOut: "Sign out",
   },
   subtitle: "a source-grounded Theravada companion",
   footer: {
@@ -223,6 +268,8 @@ const en: UiStrings = {
     sourceAndLicense: "Source and license",
     backToLibrary: "Library / Tipiṭaka",
     fallbackBadge: "fallback EN",
+    corpusUnavailable:
+      "This scripture could not be loaded right now. The public corpus assets are temporarily unavailable; please try again shortly.",
   },
   terms: {
     title: "Terms",
@@ -230,6 +277,47 @@ const en: UiStrings = {
       "A short Pali glossary. Each term includes canonical references so definitions stay tied to sources.",
     refs: "Refs:",
     draft: "draft",
+  },
+  auth: {
+    signInTitle: "Sign in",
+    signUpTitle: "Create account",
+    signInDescription:
+      "Sign in to save bookmarks and resume your reading progress. Public reading and search stay available without an account.",
+    signUpDescription:
+      "Create an account to save bookmarks and resume your reading progress. Scripture reading never asks personal or doctrinal questions.",
+    emailLabel: "Email",
+    passwordLabel: "Password",
+    signInButton: "Sign in",
+    signUpButton: "Create account",
+    signingIn: "Signing in…",
+    noAccountPrompt: "New here? Create an account",
+    haveAccountPrompt: "Already have an account? Sign in",
+    invalidCredentials: "Sign-in failed. Check your email and password.",
+    signUpFailed: "Sign-up failed. Please try again.",
+    missingConfig: "Account features are not configured on this deployment.",
+    backToReader: "Back to reading",
+    signOutButton: "Sign out",
+  },
+  account: {
+    title: "Account",
+    description:
+      "Your bookmarks and reading progress are private to your account and are not used for any other purpose.",
+    signedInAs: "Signed in as",
+    bookmarksTitle: "Bookmarks",
+    progressTitle: "Reading progress",
+    noBookmarks: "No bookmarks yet.",
+    noProgress: "No reading progress yet.",
+    notSignedIn: "You are not signed in.",
+    signInPrompt: "Sign in to save bookmarks and reading progress.",
+    persistenceSignInPrompt: "Sign in to save this across devices.",
+    bookmarkAdded: "Bookmarked",
+    bookmarkRemoved: "Bookmark removed",
+    bookmarkAddLabel: "Bookmark this segment",
+    bookmarkRemoveLabel: "Remove bookmark",
+    bookmarkError: "Could not save this bookmark. Please try again.",
+    resumeLabel: "Resume",
+    pageLabel: "page",
+    openLabel: "Open",
   },
 };
 
@@ -244,6 +332,9 @@ const ru: UiStrings = {
     voice: "Голос Дхаммы",
     wisdom: "Мудрость",
     terms: "Термины",
+    account: "Аккаунт",
+    signIn: "Войти",
+    signOut: "Выйти",
   },
   subtitle: "приложение по Тхераваде с опорой на источники",
   footer: {
@@ -346,6 +437,8 @@ const ru: UiStrings = {
     sourceAndLicense: "Источник и лицензия",
     backToLibrary: "Библиотека / Трипитака",
     fallbackBadge: "резервный EN",
+    corpusUnavailable:
+      "Не удалось загрузить этот текст прямо сейчас. Публичные ресурсы корпуса временно недоступны; пожалуйста, повторите попытку чуть позже.",
   },
   terms: {
     title: "Термины",
@@ -353,6 +446,47 @@ const ru: UiStrings = {
       "Краткий словарь пали. Каждый термин снабжен каноническими ссылками, чтобы определения оставались привязаны к источникам.",
     refs: "Ссылки:",
     draft: "черновик",
+  },
+  auth: {
+    signInTitle: "Вход",
+    signUpTitle: "Создать аккаунт",
+    signInDescription:
+      "Войдите, чтобы сохранять закладки и продолжать чтение. Публичное чтение и поиск доступны и без аккаунта.",
+    signUpDescription:
+      "Создайте аккаунт, чтобы сохранять закладки и продолжать чтение. Чтение текстов никогда не задаёт личных или доктринальных вопросов.",
+    emailLabel: "Электронная почта",
+    passwordLabel: "Пароль",
+    signInButton: "Войти",
+    signUpButton: "Создать аккаунт",
+    signingIn: "Вход…",
+    noAccountPrompt: "Впервые здесь? Создать аккаунт",
+    haveAccountPrompt: "Уже есть аккаунт? Войти",
+    invalidCredentials: "Не удалось войти. Проверьте почту и пароль.",
+    signUpFailed: "Не удалось зарегистрироваться. Попробуйте ещё раз.",
+    missingConfig: "Функции аккаунта не настроены для этого развертывания.",
+    backToReader: "Вернуться к чтению",
+    signOutButton: "Выйти",
+  },
+  account: {
+    title: "Аккаунт",
+    description:
+      "Ваши закладки и прогресс чтения принадлежат только вашему аккаунту и не используются ни для чего другого.",
+    signedInAs: "Вы вошли как",
+    bookmarksTitle: "Закладки",
+    progressTitle: "Прогресс чтения",
+    noBookmarks: "Закладок пока нет.",
+    noProgress: "Прогресс чтения пока пуст.",
+    notSignedIn: "Вы не вошли в аккаунт.",
+    signInPrompt: "Войдите, чтобы сохранять закладки и прогресс чтения.",
+    persistenceSignInPrompt: "Войдите, чтобы сохранять это между устройствами.",
+    bookmarkAdded: "В закладках",
+    bookmarkRemoved: "Закладка удалена",
+    bookmarkAddLabel: "Добавить фрагмент в закладки",
+    bookmarkRemoveLabel: "Убрать закладку",
+    bookmarkError: "Не удалось сохранить закладку. Попробуйте ещё раз.",
+    resumeLabel: "Продолжить",
+    pageLabel: "страница",
+    openLabel: "Открыть",
   },
 };
 
@@ -367,6 +501,9 @@ const id: UiStrings = {
     voice: "Suara Dhamma",
     wisdom: "Kebijaksanaan",
     terms: "Istilah",
+    account: "Akun",
+    signIn: "Masuk",
+    signOut: "Keluar",
   },
   subtitle: "pendamping Theravada yang berpijak pada sumber",
   footer: {
@@ -469,6 +606,8 @@ const id: UiStrings = {
     sourceAndLicense: "Sumber dan lisensi",
     backToLibrary: "Pustaka / Tipiṭaka",
     fallbackBadge: "cadangan EN",
+    corpusUnavailable:
+      "Teks suci ini tidak dapat dimuat saat ini. Aset korpus publik untuk sementara tidak tersedia; silakan coba lagi sebentar lagi.",
   },
   terms: {
     title: "Istilah",
@@ -476,6 +615,47 @@ const id: UiStrings = {
       "Glosarium Pali singkat. Setiap istilah memiliki rujukan kanonis agar definisi tetap terkait dengan sumber.",
     refs: "Rujukan:",
     draft: "draf",
+  },
+  auth: {
+    signInTitle: "Masuk",
+    signUpTitle: "Buat akun",
+    signInDescription:
+      "Masuk untuk menyimpan penanda dan melanjutkan kemajuan membaca. Membaca dan pencarian publik tetap tersedia tanpa akun.",
+    signUpDescription:
+      "Buat akun untuk menyimpan penanda dan melanjutkan kemajuan membaca. Membaca teks suci tidak pernah menanyakan hal pribadi atau doktrinal.",
+    emailLabel: "Surel",
+    passwordLabel: "Kata sandi",
+    signInButton: "Masuk",
+    signUpButton: "Buat akun",
+    signingIn: "Memproses…",
+    noAccountPrompt: "Baru di sini? Buat akun",
+    haveAccountPrompt: "Sudah punya akun? Masuk",
+    invalidCredentials: "Gagal masuk. Periksa surel dan kata sandi Anda.",
+    signUpFailed: "Gagal mendaftar. Silakan coba lagi.",
+    missingConfig: "Fitur akun tidak dikonfigurasi pada deployment ini.",
+    backToReader: "Kembali membaca",
+    signOutButton: "Keluar",
+  },
+  account: {
+    title: "Akun",
+    description:
+      "Penanda dan kemajuan membaca Anda bersifat pribadi untuk akun Anda dan tidak digunakan untuk tujuan lain.",
+    signedInAs: "Masuk sebagai",
+    bookmarksTitle: "Penanda",
+    progressTitle: "Kemajuan membaca",
+    noBookmarks: "Belum ada penanda.",
+    noProgress: "Belum ada kemajuan membaca.",
+    notSignedIn: "Anda belum masuk.",
+    signInPrompt: "Masuk untuk menyimpan penanda dan kemajuan membaca.",
+    persistenceSignInPrompt: "Masuk untuk menyimpan ini antar perangkat.",
+    bookmarkAdded: "Ditandai",
+    bookmarkRemoved: "Penanda dihapus",
+    bookmarkAddLabel: "Tandai bagian ini",
+    bookmarkRemoveLabel: "Hapus penanda",
+    bookmarkError: "Tidak dapat menyimpan penanda. Silakan coba lagi.",
+    resumeLabel: "Lanjutkan",
+    pageLabel: "halaman",
+    openLabel: "Buka",
   },
 };
 

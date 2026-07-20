@@ -47,3 +47,11 @@ body {
 .card-dhamma {
   @apply bg-surface border border-line rounded-lg p-5 shadow-sm;
 }
+
+.btn-dhamma {
+  @apply inline-flex items-center justify-center rounded-md border border-accent/60 bg-accent-soft/40 px-4 py-2 text-sm font-medium text-ink transition hover:bg-accent-soft/70 disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+.input-dhamma {
+  @apply rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink outline-none focus:border-accent focus:ring-1 focus:ring-accent/40;
+}

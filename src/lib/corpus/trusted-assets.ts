@@ -23,8 +23,13 @@ export async function fetchTrustedJson<T>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   try {
+    // Do NOT opt into the Next.js Data Cache here. The Data Cache caps a single
+    // entry at 2 MB, but decoded search shards may reach tens of MB, so
+    // force-cache is an invalid strategy for these assets. Immutable CDN caching
+    // is provided by the /corpus/:path* Cache-Control header set in next.config,
+    // and memory stays bounded by the maxBytes check below.
     const response = await fetch(url, {
-      cache: "force-cache",
+      cache: "no-store",
       headers: forwarded,
       redirect: "manual",
       signal: controller.signal,

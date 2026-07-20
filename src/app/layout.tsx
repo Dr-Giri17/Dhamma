@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import LanguageSwitcher from "@/components/language-switcher";
+import AccountNav from "@/components/account-nav";
 import { getRequestLanguage } from "@/lib/i18n/server";
+import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { getUi } from "@/lib/ui";
 import "./globals.css";
 
@@ -16,6 +18,9 @@ export default async function RootLayout({
 }) {
   const language = await getRequestLanguage();
   const ui = getUi(language);
+  // Supabase failure must not break scripture reading: if getAuthenticatedUser
+  // throws (e.g. Supabase misconfigured or unreachable), treat as signed-out.
+  const { user } = await getAuthenticatedUser().catch(() => ({ user: null }));
   const navItems = [
     { href: "/", label: ui.nav.home },
     { href: "/library", label: ui.nav.library },
@@ -45,6 +50,11 @@ export default async function RootLayout({
                     {n.label}
                   </a>
                 ))}
+                <AccountNav
+                  signedIn={Boolean(user)}
+                  signInLabel={ui.nav.signIn}
+                  accountLabel={ui.nav.account}
+                />
                 <LanguageSwitcher
                   currentLanguage={language}
                   label={ui.language.label}

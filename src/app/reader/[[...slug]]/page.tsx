@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import EditionControls from "@/components/edition-controls";
+import BookmarkButton from "@/components/bookmark-button";
+import ReadingProgressSaver from "@/components/reading-progress-saver";
 import { getCorpus } from "@/lib/server";
 import { getRequestLanguage } from "@/lib/i18n/server";
+import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { getUi } from "@/lib/ui";
 import { manifestEdition } from "@/lib/corpus/manifest";
 import {
@@ -11,6 +14,7 @@ import {
   type FullCorpusReaderPage,
   type TranslationReaderPage,
 } from "@/lib/corpus/full-corpus";
+import { CorpusAssetError } from "@/lib/corpus/trusted-assets";
 import {
   selectTranslation,
   translationLanguages,
@@ -22,6 +26,7 @@ import {
   normalizeTextEdition,
   type TextEditionLanguage,
 } from "@/lib/reader/navigation";
+import { listBookmarks } from "@/lib/account/queries";
 
 export default async function ReaderPage({
   params,
@@ -34,6 +39,19 @@ export default async function ReaderPage({
   const language = await getRequestLanguage();
   const ui = getUi(language);
   const corpus = getCorpus();
+  // Auth state for optional persistence controls. Supabase failure must not
+  // break reading: any error resolves to signed-out, anonymous-friendly mode.
+  const { user } = await getAuthenticatedUser().catch(() => ({ user: null }));
+  const signedIn = Boolean(user);
+  // Bookmark lookup is best-effort; an unreachable persistence layer yields an
+  // empty set so the page still renders without persistence affordances.
+  const bookmarkSet = user
+    ? new Set(
+        (await listBookmarks(user.id).catch(() => [] as Awaited<ReturnType<typeof listBookmarks>>)).map(
+          (b) => `${b.segment_id}|${b.edition}`
+        )
+      )
+    : new Set<string>();
 
   if (!slug || slug.length === 0) {
     const texts = corpus.texts.map((text) => {
@@ -118,14 +136,41 @@ export default async function ReaderPage({
   const text = corpus.texts.find((candidate) => candidate.slug === requestedSlug);
   if (!text || requestedSlug === "visuddhimagga") {
     const pageNumber = Number(query.page ?? 1);
-    const [fullPage, englishPage] = await Promise.all([
-      getFullCorpusReaderPage(requestedSlug, pageNumber),
-      getBilaraEnglishReaderPage(requestedSlug, pageNumber),
-    ]);
+    let fullPage: FullCorpusReaderPage | undefined;
+    let englishPage: TranslationReaderPage | undefined;
+    try {
+      [fullPage, englishPage] = await Promise.all([
+        getFullCorpusReaderPage(requestedSlug, pageNumber),
+        getBilaraEnglishReaderPage(requestedSlug, pageNumber),
+      ]);
+    } catch (error) {
+      // Public scripture reading must never surface as an unhandled 500.
+      // When the corpus asset fetch fails (origin mismatch, timeout, redirect,
+      // oversize, invalid JSON), render a localized notice with HTTP 503 — the
+      // same status the /api/search route returns for the same failure.
+      if (error instanceof CorpusAssetError) {
+        return <CorpusUnavailable backLabel={ui.reader.backToLibrary} message={ui.reader.corpusUnavailable} />;
+      }
+      throw error;
+    }
     if (!fullPage) notFound();
     const edition = query.edition === "en" || query.edition === "ru" ? query.edition : "pli";
     const parallel = query.parallel === "1" && edition !== "pli";
-    return <FullPaliReader page={fullPage} englishPage={englishPage} edition={edition} parallel={parallel} backLabel={ui.reader.backToLibrary} />;
+    return (
+      <>
+        <ReadingProgressSaver signedIn={signedIn} readerSlug={requestedSlug} edition={edition} page={pageNumber} />
+        <FullPaliReader
+          page={fullPage}
+          englishPage={englishPage}
+          edition={edition}
+          parallel={parallel}
+          backLabel={ui.reader.backToLibrary}
+          bookmarkSet={bookmarkSet}
+          signedIn={signedIn}
+          readerSlug={requestedSlug}
+        />
+      </>
+    );
   }
   const work = corpus.works.find((candidate) => candidate.id === text.workId);
   const segments = corpus.segments
@@ -153,6 +198,7 @@ export default async function ReaderPage({
 
   return (
     <div className="space-y-6">
+      <ReadingProgressSaver signedIn={signedIn} readerSlug={requestedSlug} edition={requestedEdition} page={1} />
       <div>
         <Link href="/library" className="link-dhamma text-sm">
           ← {ui.reader.backToLibrary}
@@ -228,6 +274,18 @@ export default async function ReaderPage({
                 </Link>
                 {segment.verseNumber ? ` · ${ui.reader.verse} ${segment.verseNumber}` : ""}
               </p>
+              <div className="mt-2">
+                <BookmarkButton
+                  segmentId={segment.segmentUid}
+                  sourceRef={segment.sourceRef}
+                  readerSlug={text.slug}
+                  edition={requestedEdition}
+                  page={1}
+                  segmentAnchor={segment.segmentUid}
+                  initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${requestedEdition}`)}
+                  signedIn={signedIn}
+                />
+              </div>
             </section>
           );
         })}
@@ -242,12 +300,18 @@ function FullPaliReader({
   edition,
   parallel,
   backLabel,
+  bookmarkSet,
+  signedIn,
+  readerSlug,
 }: {
   page: FullCorpusReaderPage;
   englishPage?: TranslationReaderPage;
   edition: "pli" | "en" | "ru";
   parallel: boolean;
   backLabel: string;
+  bookmarkSet: Set<string>;
+  signedIn: boolean;
+  readerSlug: string;
 }) {
   const selectedTranslation = edition === "en" ? englishPage : undefined;
   const selectedPage = selectedTranslation?.page ?? page.page;
@@ -290,15 +354,33 @@ function FullPaliReader({
       {parallel ? <p className="text-xs text-ink-faint">The editions use independent segment systems; both retain their source segment IDs and are paginated independently.</p> : null}
       <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
       <div className={parallel ? "grid lg:grid-cols-2 gap-5 items-start" : ""}>
-        {(edition === "pli" || parallel) ? <PaliColumn page={page} /> : null}
-        {selectedTranslation ? <TranslationColumn page={selectedTranslation} /> : null}
+        {(edition === "pli" || parallel) ? (
+          <PaliColumn page={page} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="pli" pageNumber={selectedPage} />
+        ) : null}
+        {selectedTranslation ? (
+          <TranslationColumn page={selectedTranslation} bookmarkSet={bookmarkSet} signedIn={signedIn} readerSlug={readerSlug} edition="en" pageNumber={selectedPage} />
+        ) : null}
       </div>
       <ReaderPagination current={selectedPage} count={selectedPageCount} pageHref={pageHref} />
     </div>
   );
 }
 
-function PaliColumn({ page }: { page: FullCorpusReaderPage }) {
+function PaliColumn({
+  page,
+  bookmarkSet,
+  signedIn,
+  readerSlug,
+  edition,
+  pageNumber,
+}: {
+  page: FullCorpusReaderPage;
+  bookmarkSet: Set<string>;
+  signedIn: boolean;
+  readerSlug: string;
+  edition: "pli";
+  pageNumber: number;
+}) {
   return (
     <article className="space-y-5">
       {page.segments.map((segment) => (
@@ -314,13 +396,39 @@ function PaliColumn({ page }: { page: FullCorpusReaderPage }) {
             </details>
           ) : null}
           <p className="text-xs text-accent-strong mt-3"><a href={`#${segment.segmentUid}`} className="link-dhamma">{segment.segmentUid}</a> · {segment.sourceRef}</p>
+          <div className="mt-2">
+            <BookmarkButton
+              segmentId={segment.segmentUid}
+              sourceRef={segment.sourceRef}
+              readerSlug={readerSlug}
+              edition={edition}
+              page={pageNumber}
+              segmentAnchor={segment.segmentUid}
+              initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${edition}`)}
+              signedIn={signedIn}
+            />
+          </div>
         </section>
       ))}
     </article>
   );
 }
 
-function TranslationColumn({ page }: { page: TranslationReaderPage }) {
+function TranslationColumn({
+  page,
+  bookmarkSet,
+  signedIn,
+  readerSlug,
+  edition,
+  pageNumber,
+}: {
+  page: TranslationReaderPage;
+  bookmarkSet: Set<string>;
+  signedIn: boolean;
+  readerSlug: string;
+  edition: "en";
+  pageNumber: number;
+}) {
   return (
     <article className="space-y-5">
       <div className="card-dhamma bg-accent-soft/35 text-sm space-y-1">
@@ -334,6 +442,18 @@ function TranslationColumn({ page }: { page: TranslationReaderPage }) {
         <section key={segment.id} id={`en-${segment.segmentUid}`} className="card-dhamma prose-dhamma scroll-mt-6">
           <p>{segment.text}</p>
           <p className="text-xs text-accent-strong mt-3"><a href={`#en-${segment.segmentUid}`} className="link-dhamma">{segment.segmentUid}</a></p>
+          <div className="mt-2">
+            <BookmarkButton
+              segmentId={segment.segmentUid}
+              sourceRef={segment.segmentUid}
+              readerSlug={readerSlug}
+              edition={edition}
+              page={pageNumber}
+              segmentAnchor={`en-${segment.segmentUid}`}
+              initialBookmarked={bookmarkSet.has(`${segment.segmentUid}|${edition}`)}
+              signedIn={signedIn}
+            />
+          </div>
         </section>
       ))}
     </article>
@@ -400,5 +520,21 @@ function Badge({ children, muted = false }: { children: React.ReactNode; muted?:
     >
       {children}
     </span>
+  );
+}
+
+/**
+ * Rendered when the public corpus asset fetch fails (origin mismatch, timeout,
+ * redirect, oversize, or invalid JSON). Replaces what was previously an
+ * unhandled 500 so public scripture reading degrades gracefully.
+ */
+function CorpusUnavailable({ backLabel, message }: { backLabel: string; message: string }) {
+  return (
+    <div className="space-y-4">
+      <Link href="/library" className="link-dhamma text-sm">← {backLabel}</Link>
+      <div className="card-dhamma space-y-2">
+        <p className="text-ink-soft">{message}</p>
+      </div>
+    </div>
   );
 }
